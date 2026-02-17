@@ -5,6 +5,8 @@ export type RequestPriority = 'low' | 'medium' | 'high' | 'urgent'
 export type RequestStatus = 'open' | 'in_progress' | 'pending_customer' | 'resolved' | 'closed'
 export type ChannelType = 'direct' | 'group' | 'team'
 export type NotificationType = 'offer_created' | 'offer_approved' | 'offer_rejected' | 'request_created' | 'request_assigned' | 'request_updated' | 'chat_message' | 'system'
+export type ProductBrand = 'AGFRI' | 'MYSAIR'
+export type ProductStatus = 'active' | 'inactive' | 'draft'
 
 export interface Profile {
   id: string
@@ -120,4 +122,37 @@ export interface ActivityLog {
   details: any | null
   ip_address: string | null
   created_at: string
+}
+
+export interface Product {
+  id: string
+  marca: ProductBrand
+  referencia: string
+  descripcion: string | null
+  texto_prescripcion: string | null
+  pvp_25: string | number | null
+  pvp_26: string | number | null
+  pvp_27: string | number | null
+  largo: string | number | null
+  alto: string | number | null
+  ancho: string | number | null
+  volumen: string | number | null
+  larguero_largo: string | number | null
+  larguero_alto: string | number | null
+  familia: string | null
+  subfamilia: string | null
+  motorizada: boolean
+  modelo_nombre: string | null
+  tipo_deflexion: string | null
+  fijacion: string | null
+  acabado: string | null
+  compuerta: string | null
+  regulacion_compuerta: string | null
+  ficha_tecnica: string | null
+  area_efectiva: string | number | null
+  status: ProductStatus
+  art_personalizado: boolean
+  created_by: string | null
+  created_at: string
+  updated_at: string
 }
