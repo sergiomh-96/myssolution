@@ -22,7 +22,7 @@ ALTER TABLE public.customers ENABLE ROW LEVEL SECURITY;
 -- RLS Policies for customers
 -- Admins and managers can view all customers
 -- Sales reps can view customers assigned to them
--- Support agents can view customers they're working with (via requests)
+-- Support agents can view all customers (they may need customer info for support requests)
 -- Viewers can view all customers
 CREATE POLICY "customers_select" ON public.customers
   FOR SELECT
@@ -31,11 +31,8 @@ CREATE POLICY "customers_select" ON public.customers
       SELECT 1 FROM public.profiles
       WHERE id = auth.uid()
       AND (
-        role IN ('admin', 'manager', 'viewer')
+        role IN ('admin', 'manager', 'viewer', 'support_agent')
         OR (role = 'sales_rep' AND (assigned_to = auth.uid() OR created_by = auth.uid()))
-        OR (role = 'support_agent' AND id IN (
-          SELECT DISTINCT assigned_to FROM public.technical_requests WHERE customer_id = customers.id
-        ))
       )
     )
   );
