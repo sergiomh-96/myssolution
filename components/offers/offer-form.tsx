@@ -20,10 +20,15 @@ interface OfferFormProps {
 }
 
 interface OfferItem {
+  id: string
   description: string
   quantity: number
-  unit_price: number
-  total: number
+  pvp: number
+  pvp_total: number
+  discount1: number
+  discount2: number
+  neto_total1: number
+  neto_total2: number
 }
 
 export function OfferForm({ offer, currentUserId, currentUserRole, customers }: OfferFormProps) {
@@ -43,25 +48,61 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
     notes: offer?.notes || '',
   })
 
+  const createEmptyItem = (): OfferItem => ({
+    id: crypto.randomUUID(),
+    description: '',
+    quantity: 1,
+    pvp: 0,
+    pvp_total: 0,
+    discount1: 0,
+    discount2: 0,
+    neto_total1: 0,
+    neto_total2: 0,
+  })
+
   const [items, setItems] = useState<OfferItem[]>(
-    existingItems.length > 0 ? existingItems : [{ description: '', quantity: 1, unit_price: 0, total: 0 }]
+    existingItems.length > 0 
+      ? existingItems 
+      : Array.from({ length: 15 }, () => createEmptyItem())
   )
+
+  const calculateItemTotals = (item: OfferItem): OfferItem => {
+    const quantity = Number(item.quantity) || 0
+    const pvp = Number(item.pvp) || 0
+    const discount1 = Number(item.discount1) || 0
+    const discount2 = Number(item.discount2) || 0
+
+    // PVP Total = Cantidad * PVP
+    const pvp_total = quantity * pvp
+
+    // Neto Total 1 = PVP Total - (PVP Total * Descuento1 / 100)
+    const neto_total1 = pvp_total - (pvp_total * discount1 / 100)
+
+    // Neto Total 2 = Neto Total 1 - (Neto Total 1 * Descuento2 / 100)
+    const neto_total2 = neto_total1 - (neto_total1 * discount2 / 100)
+
+    return {
+      ...item,
+      pvp_total,
+      neto_total1,
+      neto_total2,
+    }
+  }
 
   const handleItemChange = (index: number, field: keyof OfferItem, value: string | number) => {
     const newItems = [...items]
     newItems[index] = { ...newItems[index], [field]: value }
     
-    if (field === 'quantity' || field === 'unit_price') {
-      const quantity = Number(newItems[index].quantity)
-      const unitPrice = Number(newItems[index].unit_price)
-      newItems[index].total = quantity * unitPrice
+    // Recalcular totales cuando cambian campos relevantes
+    if (['quantity', 'pvp', 'discount1', 'discount2'].includes(field)) {
+      newItems[index] = calculateItemTotals(newItems[index])
     }
     
     setItems(newItems)
   }
 
   const addItem = () => {
-    setItems([...items, { description: '', quantity: 1, unit_price: 0, total: 0 }])
+    setItems([...items, createEmptyItem()])
   }
 
   const removeItem = (index: number) => {
@@ -70,7 +111,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
     }
   }
 
-  const totalAmount = items.reduce((sum, item) => sum + item.total, 0)
+  const totalAmount = items.reduce((sum, item) => sum + (item.neto_total2 || 0), 0)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -235,79 +276,119 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
           </Button>
         </div>
 
-        {items.map((item, index) => (
-          <div key={index} className="p-4 border border-border rounded-lg space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">Item {index + 1}</span>
-              {items.length > 1 && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => removeItem(index)}
-                  disabled={loading}
-                >
-                  <X className="w-4 h-4" />
-                </Button>
-              )}
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="md:col-span-2 space-y-2">
-                <Label htmlFor={`item-description-${index}`}>Description</Label>
-                <Input
-                  id={`item-description-${index}`}
-                  value={item.description}
-                  onChange={(e) => handleItemChange(index, 'description', e.target.value)}
-                  required
-                  disabled={loading}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor={`item-quantity-${index}`}>Quantity</Label>
-                <Input
-                  id={`item-quantity-${index}`}
-                  type="number"
-                  min="1"
-                  step="1"
-                  value={item.quantity}
-                  onChange={(e) => handleItemChange(index, 'quantity', Number(e.target.value))}
-                  required
-                  disabled={loading}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor={`item-unit-price-${index}`}>Unit Price</Label>
-                <Input
-                  id={`item-unit-price-${index}`}
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={item.unit_price}
-                  onChange={(e) => handleItemChange(index, 'unit_price', Number(e.target.value))}
-                  required
-                  disabled={loading}
-                />
-              </div>
-            </div>
-
-            <div className="text-right">
-              <span className="text-sm font-medium">
-                Total: {formData.currency} {item.total.toFixed(2)}
-              </span>
-            </div>
-          </div>
-        ))}
-
-        <div className="flex justify-end pt-4 border-t border-border">
-          <div className="text-right">
-            <p className="text-sm text-muted-foreground">Total Amount</p>
-            <p className="text-2xl font-semibold">
-              {formData.currency} {totalAmount.toFixed(2)}
-            </p>
-          </div>
+        <div className="border border-border rounded-lg overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-muted/50">
+              <tr>
+                <th className="px-3 py-2 text-left font-medium w-12">#</th>
+                <th className="px-3 py-2 text-left font-medium min-w-[200px]">Descripción</th>
+                <th className="px-3 py-2 text-right font-medium w-24">Cantidad</th>
+                <th className="px-3 py-2 text-right font-medium w-28">PVP</th>
+                <th className="px-3 py-2 text-right font-medium w-28">PVP Total</th>
+                <th className="px-3 py-2 text-right font-medium w-28">Desc. 1 (%)</th>
+                <th className="px-3 py-2 text-right font-medium w-28">Desc. 2 (%)</th>
+                <th className="px-3 py-2 text-right font-medium w-28">Neto Total 1</th>
+                <th className="px-3 py-2 text-right font-medium w-28">Neto Total 2</th>
+                <th className="px-3 py-2 text-center font-medium w-12"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((item, index) => (
+                <tr key={item.id} className="border-t border-border hover:bg-muted/20">
+                  <td className="px-3 py-2 text-muted-foreground">{index + 1}</td>
+                  <td className="px-3 py-2">
+                    <Input
+                      value={item.description}
+                      onChange={(e) => handleItemChange(index, 'description', e.target.value)}
+                      placeholder="Descripción del artículo"
+                      className="h-8 text-sm"
+                      disabled={loading}
+                    />
+                  </td>
+                  <td className="px-3 py-2">
+                    <Input
+                      type="number"
+                      min="0"
+                      step="1"
+                      value={item.quantity || ''}
+                      onChange={(e) => handleItemChange(index, 'quantity', Number(e.target.value))}
+                      className="h-8 text-sm text-right"
+                      disabled={loading}
+                    />
+                  </td>
+                  <td className="px-3 py-2">
+                    <Input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={item.pvp || ''}
+                      onChange={(e) => handleItemChange(index, 'pvp', Number(e.target.value))}
+                      className="h-8 text-sm text-right"
+                      disabled={loading}
+                    />
+                  </td>
+                  <td className="px-3 py-2 text-right font-medium">
+                    {item.pvp_total.toFixed(2)}
+                  </td>
+                  <td className="px-3 py-2">
+                    <Input
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="0.01"
+                      value={item.discount1 || ''}
+                      onChange={(e) => handleItemChange(index, 'discount1', Number(e.target.value))}
+                      className="h-8 text-sm text-right"
+                      disabled={loading}
+                    />
+                  </td>
+                  <td className="px-3 py-2">
+                    <Input
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="0.01"
+                      value={item.discount2 || ''}
+                      onChange={(e) => handleItemChange(index, 'discount2', Number(e.target.value))}
+                      className="h-8 text-sm text-right"
+                      disabled={loading}
+                    />
+                  </td>
+                  <td className="px-3 py-2 text-right font-medium">
+                    {item.neto_total1.toFixed(2)}
+                  </td>
+                  <td className="px-3 py-2 text-right font-medium text-primary">
+                    {item.neto_total2.toFixed(2)}
+                  </td>
+                  <td className="px-3 py-2 text-center">
+                    {items.length > 1 && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeItem(index)}
+                        disabled={loading}
+                        className="h-7 w-7 p-0"
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+            <tfoot className="border-t-2 border-border bg-muted/30">
+              <tr>
+                <td colSpan={8} className="px-3 py-3 text-right font-semibold">
+                  Total Oferta:
+                </td>
+                <td className="px-3 py-3 text-right font-bold text-lg text-primary">
+                  {formData.currency} {totalAmount.toFixed(2)}
+                </td>
+                <td></td>
+              </tr>
+            </tfoot>
+          </table>
         </div>
       </div>
 
