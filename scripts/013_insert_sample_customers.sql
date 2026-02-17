@@ -68,7 +68,7 @@ INSERT INTO public.customers (
   'Paseo de la Castellana 200, Madrid 28035, Spain',
   'www.hip.es',
   'b3f44b6d-005c-4ee6-a304-3208dd3bbadc',
-  'lead',
+  'prospect',
   'b3f44b6d-005c-4ee6-a304-3208dd3bbadc',
   NOW(),
   NOW()
@@ -140,22 +140,9 @@ INSERT INTO public.customers (
   'Calle Startup 999, Barcelona 08008, Spain',
   'www.startupinnovadora.es',
   NULL,
-  'lead',
-  'b3f44b6d-005c-4ee6-a304-3208dd3bbadc',
-  NOW(),
-  NOW()
-),
-(
-  'Retail 360 Omnicanal',
-  'Retail',
-  'negocios@retail360.es',
-  '+34 91 222 3333',
-  'Patricia Fernández',
-  'Centro Comercial Norte 111, Madrid 28020, Spain',
-  'www.retail360.es',
-  NULL,
   'prospect',
   'b3f44b6d-005c-4ee6-a304-3208dd3bbadc',
   NOW(),
   NOW()
 );
+
