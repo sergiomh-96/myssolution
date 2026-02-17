@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
@@ -21,6 +21,7 @@ interface OfferFormProps {
 
 interface OfferItem {
   id: string
+  product_id: string | null
   description: string
   quantity: number
   pvp: number
@@ -35,6 +36,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [products, setProducts] = useState<any[]>([])
   
   const existingItems = offer?.items as OfferItem[] || []
   
@@ -50,6 +52,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
 
   const createEmptyItem = (): OfferItem => ({
     id: crypto.randomUUID(),
+    product_id: null,
     description: '',
     quantity: 1,
     pvp: 0,
@@ -65,6 +68,23 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
       ? existingItems 
       : Array.from({ length: 15 }, () => createEmptyItem())
   )
+
+  // Load active products
+  useEffect(() => {
+    const loadProducts = async () => {
+      const supabase = createClient()
+      const { data } = await supabase
+        .from('products')
+        .select('id, referencia, descripcion, marca, modelo_nombre, pvp_25, pvp_26, pvp_27')
+        .eq('status', 'active')
+        .order('referencia')
+      
+      if (data) {
+        setProducts(data)
+      }
+    }
+    loadProducts()
+  }, [])
 
   const calculateItemTotals = (item: OfferItem): OfferItem => {
     const quantity = Number(item.quantity) || 0
@@ -87,6 +107,21 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
       neto_total1,
       neto_total2,
     }
+  }
+
+  const handleProductSelect = (index: number, productId: string) => {
+    const product = products.find(p => p.id === productId)
+    if (!product) return
+
+    const newItems = [...items]
+    newItems[index] = {
+      ...newItems[index],
+      product_id: productId,
+      description: `${product.marca} - ${product.referencia} - ${product.modelo_nombre || product.descripcion || ''}`,
+      pvp: Number(product.pvp_25) || Number(product.pvp_26) || Number(product.pvp_27) || 0,
+    }
+    newItems[index] = calculateItemTotals(newItems[index])
+    setItems(newItems)
   }
 
   const handleItemChange = (index: number, field: keyof OfferItem, value: string | number) => {
@@ -280,8 +315,8 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
           <table className="w-full text-sm table-fixed">
             <thead className="bg-muted/50">
               <tr>
-                <th className="px-3 py-2 text-left font-medium w-14">#</th>
-                <th className="px-3 py-2 text-left font-medium w-[30%]">Descripción</th>
+                <th className="px-3 py-2 text-left font-medium w-[15%]">Artículo</th>
+                <th className="px-3 py-2 text-left font-medium w-[25%]">Descripción</th>
                 <th className="px-3 py-2 text-right font-medium w-28">Cantidad</th>
                 <th className="px-3 py-2 text-right font-medium w-32">PVP</th>
                 <th className="px-3 py-2 text-right font-medium w-32">PVP Total</th>
@@ -295,7 +330,24 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
             <tbody>
               {items.map((item, index) => (
                 <tr key={item.id} className="border-t border-border hover:bg-muted/20">
-                  <td className="px-3 py-2 text-muted-foreground">{index + 1}</td>
+                  <td className="px-3 py-2">
+                    <Select
+                      value={item.product_id || ''}
+                      onValueChange={(value) => handleProductSelect(index, value)}
+                      disabled={loading}
+                    >
+                      <SelectTrigger className="h-8 text-sm">
+                        <SelectValue placeholder="Seleccionar..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {products.map((product) => (
+                          <SelectItem key={product.id} value={product.id}>
+                            {product.marca} - {product.referencia}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </td>
                   <td className="px-3 py-2">
                     <Input
                       value={item.description}
