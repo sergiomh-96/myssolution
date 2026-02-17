@@ -12,7 +12,8 @@ import {
   MessageSquare, 
   Settings, 
   Building2,
-  BarChart3
+  BarChart3,
+  Package
 } from 'lucide-react'
 import { canManageOffers, canManageRequests, canViewAnalytics, canManageUsers } from '@/lib/auth'
 
@@ -32,6 +33,12 @@ const navItems = [
     label: 'Customers',
     icon: Users,
     allowedRoles: ['admin', 'manager', 'sales_rep']
+  },
+  {
+    href: '/dashboard/products',
+    label: 'Products',
+    icon: Package,
+    allowedRoles: ['admin', 'manager', 'sales_rep', 'support_agent', 'viewer']
   },
   {
     href: '/dashboard/offers',
