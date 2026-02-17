@@ -277,19 +277,19 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
         </div>
 
         <div className="border border-border rounded-lg overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full text-sm table-fixed">
             <thead className="bg-muted/50">
               <tr>
-                <th className="px-3 py-2 text-left font-medium w-12">#</th>
-                <th className="px-3 py-2 text-left font-medium min-w-[200px]">Descripción</th>
-                <th className="px-3 py-2 text-right font-medium w-24">Cantidad</th>
-                <th className="px-3 py-2 text-right font-medium w-28">PVP</th>
-                <th className="px-3 py-2 text-right font-medium w-28">PVP Total</th>
-                <th className="px-3 py-2 text-right font-medium w-28">Desc. 1 (%)</th>
-                <th className="px-3 py-2 text-right font-medium w-28">Desc. 2 (%)</th>
-                <th className="px-3 py-2 text-right font-medium w-28">Neto Total 1</th>
-                <th className="px-3 py-2 text-right font-medium w-28">Neto Total 2</th>
-                <th className="px-3 py-2 text-center font-medium w-12"></th>
+                <th className="px-3 py-2 text-left font-medium w-14">#</th>
+                <th className="px-3 py-2 text-left font-medium w-[30%]">Descripción</th>
+                <th className="px-3 py-2 text-right font-medium w-28">Cantidad</th>
+                <th className="px-3 py-2 text-right font-medium w-32">PVP</th>
+                <th className="px-3 py-2 text-right font-medium w-32">PVP Total</th>
+                <th className="px-3 py-2 text-right font-medium w-32">Desc. 1 (%)</th>
+                <th className="px-3 py-2 text-right font-medium w-32">Desc. 2 (%)</th>
+                <th className="px-3 py-2 text-right font-medium w-36">Neto Total 1</th>
+                <th className="px-3 py-2 text-right font-medium w-36">Neto Total 2</th>
+                <th className="px-3 py-2 text-center font-medium w-14"></th>
               </tr>
             </thead>
             <tbody>

@@ -20,7 +20,7 @@ export default async function NewOfferPage() {
   const { data: customers } = await customersQuery
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-[1800px] mx-auto space-y-6 px-4">
       <div>
         <h1 className="text-3xl font-semibold text-foreground">Create New Offer</h1>
         <p className="text-muted-foreground mt-1">
