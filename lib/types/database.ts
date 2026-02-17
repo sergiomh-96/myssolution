@@ -1,0 +1,123 @@
+export type UserRole = 'admin' | 'manager' | 'sales_rep' | 'support_agent' | 'viewer'
+export type CustomerStatus = 'lead' | 'prospect' | 'active' | 'inactive' | 'churned'
+export type OfferStatus = 'draft' | 'pending' | 'approved' | 'rejected' | 'sent' | 'accepted' | 'declined'
+export type RequestPriority = 'low' | 'medium' | 'high' | 'urgent'
+export type RequestStatus = 'open' | 'in_progress' | 'pending_customer' | 'resolved' | 'closed'
+export type ChannelType = 'direct' | 'group' | 'team'
+export type NotificationType = 'offer_created' | 'offer_approved' | 'offer_rejected' | 'request_created' | 'request_assigned' | 'request_updated' | 'chat_message' | 'system'
+
+export interface Profile {
+  id: string
+  email: string
+  full_name: string | null
+  avatar_url: string | null
+  role: UserRole
+  department: string | null
+  phone: string | null
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface Customer {
+  id: string
+  company_name: string
+  contact_name: string
+  contact_email: string
+  contact_phone: string | null
+  address: string | null
+  city: string | null
+  country: string | null
+  website: string | null
+  industry: string | null
+  status: CustomerStatus
+  assigned_to: string | null
+  notes: string | null
+  created_by: string
+  created_at: string
+  updated_at: string
+}
+
+export interface Offer {
+  id: string
+  title: string
+  description: string | null
+  customer_id: string
+  total_amount: number
+  currency: string
+  status: OfferStatus
+  valid_until: string | null
+  items: any | null
+  notes: string | null
+  created_by: string
+  approved_by: string | null
+  approved_at: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface TechnicalRequest {
+  id: string
+  title: string
+  description: string
+  customer_id: string | null
+  priority: RequestPriority
+  status: RequestStatus
+  category: string | null
+  assigned_to: string | null
+  resolution_notes: string | null
+  created_by: string
+  resolved_at: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface ChatChannel {
+  id: string
+  name: string
+  description: string | null
+  type: ChannelType
+  created_by: string
+  created_at: string
+  updated_at: string
+}
+
+export interface ChatMessage {
+  id: string
+  channel_id: string
+  sender_id: string
+  content: string
+  is_edited: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface ChatMember {
+  id: string
+  channel_id: string
+  user_id: string
+  joined_at: string
+  last_read_at: string | null
+}
+
+export interface Notification {
+  id: string
+  user_id: string
+  type: NotificationType
+  title: string
+  content: string | null
+  link: string | null
+  is_read: boolean
+  created_at: string
+}
+
+export interface ActivityLog {
+  id: string
+  user_id: string
+  action: string
+  entity_type: string | null
+  entity_id: string | null
+  details: any | null
+  ip_address: string | null
+  created_at: string
+}

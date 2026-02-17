@@ -7,8 +7,11 @@ const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'v0 App',
-  description: 'Created with v0',
+  title: {
+    default: 'MYSSolution - B2B CRM Platform',
+    template: '%s | MYSSolution'
+  },
+  description: 'Comprehensive B2B CRM solution for managing customers, offers, technical support, and team communication',
   generator: 'v0.app',
   icons: {
     icon: [
