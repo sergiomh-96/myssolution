@@ -287,34 +287,34 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-3">
       {error && (
         <Alert variant="destructive">
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-        <div className="space-y-1">
-          <Label htmlFor="title" className="text-sm">Offer Title *</Label>
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
+        <div className="space-y-0.5">
+          <Label htmlFor="title" className="text-xs">Offer Title *</Label>
           <Input
             id="title"
             value={formData.title}
             onChange={(e) => setFormData({ ...formData, title: e.target.value })}
             required
             disabled={loading}
-            className="h-9"
+            className="h-8 text-sm"
           />
         </div>
 
-        <div className="space-y-1">
-          <Label htmlFor="customer_id" className="text-sm">Customer *</Label>
+        <div className="space-y-0.5">
+          <Label htmlFor="customer_id" className="text-xs">Customer *</Label>
           <Select 
             value={formData.customer_id} 
             onValueChange={(value) => setFormData({ ...formData, customer_id: value })}
             disabled={loading}
           >
-            <SelectTrigger id="customer_id" className="h-9">
+            <SelectTrigger id="customer_id" className="h-8 text-sm">
               <SelectValue placeholder="Select a customer" />
             </SelectTrigger>
             <SelectContent>
@@ -327,15 +327,15 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
           </Select>
         </div>
 
-        <div className="space-y-1">
-          <Label htmlFor="tarifa_id" className="text-sm">Tarifa (Pricing) *</Label>
+        <div className="space-y-0.5">
+          <Label htmlFor="tarifa_id" className="text-xs">Tarifa *</Label>
           <Select 
             value={formData.tarifa_id?.toString() || ''} 
             onValueChange={(value) => setFormData({ ...formData, tarifa_id: parseInt(value) })}
             disabled={loading}
           >
-            <SelectTrigger id="tarifa_id" className="h-9">
-              <SelectValue placeholder="Select a pricing tier" />
+            <SelectTrigger id="tarifa_id" className="h-8 text-sm">
+              <SelectValue placeholder="Select tarifa" />
             </SelectTrigger>
             <SelectContent>
               {tarifas.map((tarifa) => (
@@ -347,15 +347,15 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
           </Select>
         </div>
 
-        <div className="space-y-1">
-          <Label htmlFor="contact_id" className="text-sm">Contacto</Label>
+        <div className="space-y-0.5">
+          <Label htmlFor="contact_id" className="text-xs">Contacto</Label>
           <Select 
             value={formData.contact_id} 
             onValueChange={(value) => setFormData({ ...formData, contact_id: value })}
             disabled={loading || !formData.customer_id || contacts.length === 0}
           >
-            <SelectTrigger id="contact_id" className="h-9">
-              <SelectValue placeholder="Select a contact" />
+            <SelectTrigger id="contact_id" className="h-8 text-sm">
+              <SelectValue placeholder="Select contact" />
             </SelectTrigger>
             <SelectContent>
               {contacts.map((contact) => (
@@ -365,101 +365,95 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
               ))}
             </SelectContent>
           </Select>
-          {!formData.customer_id && (
-            <p className="text-xs text-muted-foreground">Select a customer first</p>
-          )}
-          {formData.customer_id && contacts.length === 0 && (
-            <p className="text-xs text-muted-foreground">No contacts for this customer</p>
-          )}
         </div>
 
-        <div className="space-y-1">
-          <Label htmlFor="status" className="text-sm">Status</Label>
+        <div className="space-y-0.5">
+          <Label htmlFor="status" className="text-xs">Status</Label>
           <Select 
             value={formData.status} 
             onValueChange={(value) => setFormData({ ...formData, status: value as OfferStatus })}
             disabled={loading}
           >
-            <SelectTrigger id="status" className="h-9">
+            <SelectTrigger id="status" className="h-8 text-sm">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="draft">Draft</SelectItem>
-              <SelectItem value="pending">Pending Approval</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
               {(currentUserRole === 'admin' || currentUserRole === 'manager') && (
                 <>
                   <SelectItem value="approved">Approved</SelectItem>
                   <SelectItem value="rejected">Rejected</SelectItem>
                 </>
               )}
-              <SelectItem value="sent">Sent to Customer</SelectItem>
+              <SelectItem value="sent">Sent</SelectItem>
               <SelectItem value="accepted">Accepted</SelectItem>
               <SelectItem value="declined">Declined</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
-        <div className="space-y-1">
-          <Label htmlFor="valid_until" className="text-sm">Valid Until</Label>
+        <div className="space-y-0.5">
+          <Label htmlFor="valid_until" className="text-xs">Valid Until</Label>
           <Input
             id="valid_until"
             type="date"
             value={formData.valid_until}
             onChange={(e) => setFormData({ ...formData, valid_until: e.target.value })}
             disabled={loading}
-            className="h-9"
+            className="h-8 text-sm"
           />
         </div>
 
-        <div className="space-y-1">
-          <Label htmlFor="description" className="text-sm">Description</Label>
+        <div className="space-y-0.5 col-span-2">
+          <Label htmlFor="description" className="text-xs">Description</Label>
           <Textarea
             id="description"
             value={formData.description}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
             rows={1}
             disabled={loading}
-            className="min-h-[36px] resize-none"
+            className="min-h-[32px] resize-none text-sm"
           />
         </div>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <Label>Offer Items</Label>
-          <Button type="button" variant="outline" size="sm" onClick={addItem} disabled={loading}>
-            <Plus className="w-4 h-4 mr-1" />
+          <Label className="text-xs">Offer Items</Label>
+          <Button type="button" variant="outline" size="sm" onClick={addItem} disabled={loading} className="h-7 text-xs">
+            <Plus className="w-3 h-3 mr-1" />
             Add Item
           </Button>
         </div>
 
         <div className="border border-border rounded-lg overflow-x-auto">
-          <table className="w-full text-sm table-fixed">
+          <table className="w-full text-xs table-fixed">
             <thead className="bg-muted/50">
               <tr>
-                <th className="px-3 py-2 text-left font-medium w-[15%]">Artículo</th>
-                <th className="px-3 py-2 text-left font-medium w-[25%]">Descripción</th>
-                <th className="px-3 py-2 text-right font-medium w-28">Cantidad</th>
-                <th className="px-3 py-2 text-right font-medium w-32">PVP</th>
-                <th className="px-3 py-2 text-right font-medium w-32">PVP Total</th>
-                <th className="px-3 py-2 text-right font-medium w-32">Desc. 1 (%)</th>
-                <th className="px-3 py-2 text-right font-medium w-32">Desc. 2 (%)</th>
-                <th className="px-3 py-2 text-right font-medium w-36">Neto Total 1</th>
-                <th className="px-3 py-2 text-right font-medium w-36">Neto Total 2</th>
-                <th className="px-3 py-2 text-center font-medium w-14"></th>
+                <th className="px-2 py-1 text-left font-medium text-xs w-[15%]">Artículo</th>
+                <th className="px-2 py-1 text-left font-medium text-xs w-[25%]">Descripción</th>
+                <th className="px-2 py-1 text-right font-medium text-xs w-24">Cantidad</th>
+                <th className="px-2 py-1 text-right font-medium text-xs w-28">PVP</th>
+                <th className="px-2 py-1 text-right font-medium text-xs w-28">PVP Total</th>
+                <th className="px-2 py-1 text-right font-medium text-xs w-28">Desc. 1 (%)</th>
+                <th className="px-2 py-1 text-right font-medium text-xs w-28">Desc. 2 (%)</th>
+                <th className="px-2 py-1 text-right font-medium text-xs w-32">Neto Total 1</th>
+                <th className="px-2 py-1 text-right font-medium text-xs w-32">Neto Total 2</th>
+                <th className="px-2 py-1 text-center font-medium text-xs w-12"></th>
               </tr>
             </thead>
             <tbody>
               {items.map((item, index) => (
                 <tr key={item.id} className="border-t border-border hover:bg-muted/20">
-                  <td className="px-3 py-2">
+                  <td className="px-2 py-1">
                     <Select
                       value={item.product_id || ''}
                       onValueChange={(value) => handleProductSelect(index, value)}
                       disabled={loading}
                     >
-                      <SelectTrigger className="h-8 text-sm">
-                        <SelectValue placeholder="Seleccionar..." />
+                      <SelectTrigger className="h-7 text-xs">
+                        <SelectValue placeholder="Select..." />
                       </SelectTrigger>
                       <SelectContent>
                         {products.map((product) => (
@@ -470,42 +464,42 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
                       </SelectContent>
                     </Select>
                   </td>
-                  <td className="px-3 py-2">
+                  <td className="px-2 py-1">
                     <Input
                       value={item.description}
                       onChange={(e) => handleItemChange(index, 'description', e.target.value)}
-                      placeholder="Descripción del artículo"
-                      className="h-8 text-sm"
+                      placeholder="Description"
+                      className="h-7 text-xs"
                       disabled={loading}
                     />
                   </td>
-                  <td className="px-3 py-2">
+                  <td className="px-2 py-1">
                     <Input
                       type="number"
                       min="0"
                       step="1"
                       value={item.quantity || ''}
                       onChange={(e) => handleItemChange(index, 'quantity', Number(e.target.value))}
-                      className="h-8 text-sm text-right"
+                      className="h-7 text-xs text-right"
                       disabled={loading}
                     />
                   </td>
-                  <td className="px-3 py-2">
+                  <td className="px-2 py-1">
                     <Input
                       type="number"
                       min="0"
                       step="0.01"
                       value={item.pvp || ''}
                       onChange={(e) => handleItemChange(index, 'pvp', Number(e.target.value))}
-                      className="h-8 text-sm text-right"
+                      className="h-7 text-xs text-right"
                       disabled={loading}
                       placeholder="-"
                     />
                   </td>
-                  <td className="px-3 py-2 text-right font-medium">
+                  <td className="px-2 py-1 text-right font-medium text-xs">
                     {item.pvp > 0 ? item.pvp_total.toFixed(2) : '-'}
                   </td>
-                  <td className="px-3 py-2">
+                  <td className="px-2 py-1">
                     <Input
                       type="number"
                       min="0"
@@ -513,11 +507,11 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
                       step="0.01"
                       value={item.discount1 || ''}
                       onChange={(e) => handleItemChange(index, 'discount1', Number(e.target.value))}
-                      className="h-8 text-sm text-right"
+                      className="h-7 text-xs text-right"
                       disabled={loading}
                     />
                   </td>
-                  <td className="px-3 py-2">
+                  <td className="px-2 py-1">
                     <Input
                       type="number"
                       min="0"
@@ -525,17 +519,17 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
                       step="0.01"
                       value={item.discount2 || ''}
                       onChange={(e) => handleItemChange(index, 'discount2', Number(e.target.value))}
-                      className="h-8 text-sm text-right"
+                      className="h-7 text-xs text-right"
                       disabled={loading}
                     />
                   </td>
-                  <td className="px-3 py-2 text-right font-medium">
+                  <td className="px-2 py-1 text-right font-medium text-xs">
                     {item.pvp > 0 ? item.neto_total1.toFixed(2) : '-'}
                   </td>
-                  <td className="px-3 py-2 text-right font-medium text-primary">
+                  <td className="px-2 py-1 text-right font-medium text-primary text-xs">
                     {item.pvp > 0 ? item.neto_total2.toFixed(2) : '-'}
                   </td>
-                  <td className="px-3 py-2 text-center">
+                  <td className="px-2 py-1 text-center">
                     {items.length > 1 && (
                       <Button
                         type="button"
@@ -543,9 +537,9 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
                         size="sm"
                         onClick={() => removeItem(index)}
                         disabled={loading}
-                        className="h-7 w-7 p-0"
+                        className="h-6 w-6 p-0"
                       >
-                        <X className="w-4 h-4" />
+                        <X className="w-3 h-3" />
                       </Button>
                     )}
                   </td>
@@ -554,10 +548,10 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
             </tbody>
             <tfoot className="border-t-2 border-border bg-muted/30">
               <tr>
-                <td colSpan={8} className="px-3 py-3 text-right font-semibold">
+                <td colSpan={8} className="px-2 py-1.5 text-right font-semibold text-xs">
                   Total Oferta:
                 </td>
-                <td className="px-3 py-3 text-right font-bold text-lg text-primary">
+                <td className="px-2 py-1.5 text-right font-bold text-sm text-primary">
                   EUR {totalAmount.toFixed(2)}
                 </td>
                 <td></td>
@@ -567,15 +561,27 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
         </div>
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="notes">Notes</Label>
+      <div className="space-y-1">
+        <Label htmlFor="notes" className="text-xs">Internal Notes</Label>
         <Textarea
           id="notes"
           value={formData.notes}
           onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-          rows={3}
+          rows={2}
           disabled={loading}
+          placeholder="Internal notes visible only to sales team"
+          className="text-sm"
         />
+      </div>
+
+      <div className="flex justify-end gap-2">
+        <Button type="button" variant="outline" onClick={() => router.back()} disabled={loading} className="h-8 text-xs">
+          Cancel
+        </Button>
+        <Button type="submit" disabled={loading} className="h-8 text-xs">
+          {loading && <Loader2 className="mr-2 h-3 w-3 animate-spin" />}
+          {offer ? 'Update Offer' : 'Create Offer'}
+        </Button>
       </div>
 
       <div className="flex gap-4">
