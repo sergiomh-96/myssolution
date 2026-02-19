@@ -16,10 +16,12 @@ export default async function ProductsPage() {
     redirect('/auth/login')
   }
 
-  const { data: products } = await supabase
+  const { data: products, error } = await supabase
     .from('products')
     .select('*')
     .order('created_at', { ascending: false })
+
+  console.log('[v0] Products query result:', { productsCount: products?.length || 0, error })
 
   return (
     <div className="space-y-6">
