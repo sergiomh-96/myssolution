@@ -40,6 +40,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
   const [tarifas, setTarifas] = useState<any[]>([])
   const [precios, setPrecios] = useState<any[]>([])
   const [defaultTarifa, setDefaultTarifa] = useState<number | null>(null)
+  const [contacts, setContacts] = useState<any[]>([])
   
   const existingItems = offer?.items as OfferItem[] || []
   
@@ -47,6 +48,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
     title: offer?.title || '',
     description: offer?.description || '',
     customer_id: offer?.customer_id || '',
+    contact_id: offer?.contact_id || '',
     tarifa_id: offer?.tarifa_id || null,
     status: (offer?.status || 'draft') as OfferStatus,
     valid_until: offer?.valid_until ? offer.valid_until.split('T')[0] : '',
@@ -72,8 +74,30 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
       : Array.from({ length: 15 }, () => createEmptyItem())
   )
 
-  // Load active products and tarifas
+  // Load contacts when customer changes
   useEffect(() => {
+    if (!formData.customer_id) {
+      setContacts([])
+      setFormData(prev => ({ ...prev, contact_id: '' }))
+      return
+    }
+
+    const loadContacts = async () => {
+      const supabase = createClient()
+      const { data } = await supabase
+        .from('clients_contacts')
+        .select('id, nombre, apellidos, email, puesto')
+        .eq('customer_id', formData.customer_id)
+        .order('apellidos, nombre')
+      
+      if (data) {
+        setContacts(data)
+        // Clear contact selection when customer changes
+        setFormData(prev => ({ ...prev, contact_id: '' }))
+      }
+    }
+    loadContacts()
+  }, [formData.customer_id])
     const loadData = async () => {
       const supabase = createClient()
       
@@ -317,6 +341,32 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
               ))}
             </SelectContent>
           </Select>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="contact_id">Contacto</Label>
+          <Select 
+            value={formData.contact_id} 
+            onValueChange={(value) => setFormData({ ...formData, contact_id: value })}
+            disabled={loading || !formData.customer_id || contacts.length === 0}
+          >
+            <SelectTrigger id="contact_id">
+              <SelectValue placeholder="Select a contact" />
+            </SelectTrigger>
+            <SelectContent>
+              {contacts.map((contact) => (
+                <SelectItem key={contact.id} value={contact.id.toString()}>
+                  {contact.nombre} {contact.apellidos} - {contact.puesto}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {!formData.customer_id && (
+            <p className="text-xs text-muted-foreground">Select a customer first</p>
+          )}
+          {formData.customer_id && contacts.length === 0 && (
+            <p className="text-xs text-muted-foreground">No contacts for this customer</p>
+          )}
         </div>
 
         <div className="space-y-2">
