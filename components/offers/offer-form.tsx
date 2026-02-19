@@ -308,7 +308,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
           <Label htmlFor="customer_id" className="text-xs">Cliente *</Label>
           <Select 
             value={formData.customer_id} 
-            onValueChange={(value) => setFormData({ ...formData, customer_id: value })}
+            onValueChange={(value) => setFormData(prev => ({ ...prev, customer_id: value }))}
             disabled={loading}
           >
             <SelectTrigger id="customer_id" className="h-8 text-sm">
@@ -328,7 +328,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
           <Label htmlFor="tarifa_id" className="text-xs">Tarifa *</Label>
           <Select 
             value={formData.tarifa_id?.toString() || ''} 
-            onValueChange={(value) => setFormData({ ...formData, tarifa_id: parseInt(value) })}
+            onValueChange={(value) => setFormData(prev => ({ ...prev, tarifa_id: parseInt(value) }))}
             disabled={loading}
           >
             <SelectTrigger id="tarifa_id" className="h-8 text-sm">
@@ -348,7 +348,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
           <Label htmlFor="contact_id" className="text-xs">Contacto</Label>
           <Select 
             value={formData.contact_id} 
-            onValueChange={(value) => setFormData({ ...formData, contact_id: value })}
+            onValueChange={(value) => setFormData(prev => ({ ...prev, contact_id: value }))}
             disabled={loading || !formData.customer_id || contacts.length === 0}
           >
             <SelectTrigger id="contact_id" className="h-8 text-sm">
