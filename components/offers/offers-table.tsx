@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -18,6 +18,7 @@ import {
 import { Search } from 'lucide-react'
 import type { Offer, UserRole } from '@/lib/types/database'
 import { formatDistanceToNow } from 'date-fns'
+import { es } from 'date-fns/locale'
 
 interface OffersTableProps {
   offers: (Omit<Offer, 'total_amount' | 'currency'> & {
@@ -43,6 +44,27 @@ const statusColors = {
 export function OffersTable({ offers, userRole, userId }: OffersTableProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
+  const [mounted, setMounted] = useState(false)
+  const [formattedDates, setFormattedDates] = useState<Record<string | number, string>>({})
+
+  // Format dates only on client side
+  useEffect(() => {
+    setMounted(true)
+    const dates: Record<string | number, string> = {}
+    
+    offers.forEach((offer) => {
+      try {
+        dates[offer.id] = formatDistanceToNow(new Date(offer.created_at), {
+          addSuffix: true,
+          locale: es,
+        })
+      } catch (error) {
+        dates[offer.id] = 'hace poco'
+      }
+    })
+    
+    setFormattedDates(dates)
+  }, [offers])
 
   const filteredOffers = offers.filter((offer) => {
     const search = searchQuery.toLowerCase()
@@ -55,32 +77,44 @@ export function OffersTable({ offers, userRole, userId }: OffersTableProps) {
     return matchesSearch && matchesStatus
   })
 
+  if (!mounted) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <div className="text-center py-12 text-muted-foreground">
+            Cargando...
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
   return (
     <Card>
       <CardContent className="p-6">
-        <div className="flex items-center gap-4 mb-6">
-          <div className="relative flex-1">
+        <div className="flex flex-col md:flex-row items-center gap-4 mb-6">
+          <div className="relative flex-1 w-full">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
-              placeholder="Search offers..."
+              placeholder="Buscar ofertas..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
             />
           </div>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-40">
+            <SelectTrigger className="w-full md:w-40">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="all">Todos los estados</SelectItem>
               <SelectItem value="draft">Draft</SelectItem>
-              <SelectItem value="pending">Pending</SelectItem>
-              <SelectItem value="approved">Approved</SelectItem>
-              <SelectItem value="rejected">Rejected</SelectItem>
-              <SelectItem value="sent">Sent</SelectItem>
-              <SelectItem value="accepted">Accepted</SelectItem>
-              <SelectItem value="declined">Declined</SelectItem>
+              <SelectItem value="pending">Pendiente</SelectItem>
+              <SelectItem value="approved">Aprobada</SelectItem>
+              <SelectItem value="rejected">Rechazada</SelectItem>
+              <SelectItem value="sent">Enviada</SelectItem>
+              <SelectItem value="accepted">Aceptada</SelectItem>
+              <SelectItem value="declined">Declinada</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -88,21 +122,21 @@ export function OffersTable({ offers, userRole, userId }: OffersTableProps) {
         {filteredOffers.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground">
             {searchQuery || statusFilter !== 'all'
-              ? 'No offers found matching your filters'
-              : 'No offers yet'}
+              ? 'No se encontraron ofertas'
+              : 'No hay ofertas todavía'}
           </div>
         ) : (
           <div className="border border-border rounded-lg overflow-hidden">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Title</TableHead>
-                  <TableHead>Customer</TableHead>
-                  <TableHead>Amount</TableHead>
-                  <TableHead>Status</TableHead>
-                  {userRole !== 'sales_rep' && <TableHead>Created By</TableHead>}
-                  <TableHead>Created</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead>Título</TableHead>
+                  <TableHead>Cliente</TableHead>
+                  <TableHead>Importe</TableHead>
+                  <TableHead>Estado</TableHead>
+                  {userRole !== 'sales_rep' && <TableHead>Creado por</TableHead>}
+                  <TableHead>Fecha</TableHead>
+                  <TableHead className="text-right">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -113,7 +147,7 @@ export function OffersTable({ offers, userRole, userId }: OffersTableProps) {
                     </TableCell>
                     <TableCell>
                       <span className="text-sm text-foreground">
-                        {offer.customer?.company_name || 'Unknown'}
+                        {offer.customer?.company_name || 'Desconocido'}
                       </span>
                     </TableCell>
                     <TableCell>
@@ -129,20 +163,18 @@ export function OffersTable({ offers, userRole, userId }: OffersTableProps) {
                     {userRole !== 'sales_rep' && (
                       <TableCell>
                         <span className="text-sm text-muted-foreground">
-                          {offer.created_by_profile?.full_name || 'Unknown'}
+                          {offer.created_by_profile?.full_name || 'Desconocido'}
                         </span>
                       </TableCell>
                     )}
                     <TableCell>
                       <span className="text-sm text-muted-foreground">
-                        {formatDistanceToNow(new Date(offer.created_at), {
-                          addSuffix: true,
-                        })}
+                        {formattedDates[offer.id] || 'hace poco'}
                       </span>
                     </TableCell>
                     <TableCell className="text-right">
                       <Button asChild variant="ghost" size="sm">
-                        <Link href={`/dashboard/offers/${offer.id}`}>View</Link>
+                        <Link href={`/dashboard/offers/${offer.id}`}>Ver</Link>
                       </Button>
                     </TableCell>
                   </TableRow>

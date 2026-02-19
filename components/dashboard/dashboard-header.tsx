@@ -1,6 +1,6 @@
 'use client'
 
-import { Bell, LogOut, User } from 'lucide-react'
+import { Menu, LogOut, User } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -10,7 +10,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Badge } from '@/components/ui/badge'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import type { Profile } from '@/lib/types/database'
@@ -18,9 +17,11 @@ import { NotificationsPopover } from './notifications-popover'
 
 interface DashboardHeaderProps {
   profile: Profile
+  sidebarOpen?: boolean
+  onToggleSidebar?: () => void
 }
 
-export function DashboardHeader({ profile }: DashboardHeaderProps) {
+export function DashboardHeader({ profile, sidebarOpen, onToggleSidebar }: DashboardHeaderProps) {
   const router = useRouter()
 
   const handleLogout = async () => {
@@ -31,9 +32,19 @@ export function DashboardHeader({ profile }: DashboardHeaderProps) {
   }
 
   return (
-    <header className="h-16 border-b border-border bg-card flex items-center justify-between px-6">
+    <header className="h-16 border-b border-border bg-card flex items-center justify-between px-4 md:px-6">
       <div className="flex items-center gap-4">
-        <h2 className="text-lg font-semibold text-foreground">
+        {onToggleSidebar && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="md:hidden"
+            onClick={onToggleSidebar}
+          >
+            <Menu className="w-5 h-5" />
+          </Button>
+        )}
+        <h2 className="text-lg font-semibold text-foreground truncate">
           Bienvenido, {profile.full_name?.split(' ')[0] || 'Usuario'}
         </h2>
       </div>
