@@ -36,20 +36,6 @@ export function ProductsTable({ products: initialProducts }: ProductsTableProps)
     product.referencia?.toLowerCase().includes(search.toLowerCase()) ||
     product.modelo_nombre?.toLowerCase().includes(search.toLowerCase()) ||
     product.descripcion?.toLowerCase().includes(search.toLowerCase())
-  )
-
-  const handleDelete = async (id: string) => {
-    if (!confirm('¿Estás seguro de que deseas eliminar este producto?')) return
-
-    const { error } = await supabase.from('products').delete().eq('id', id)
-
-    if (!error) {
-      setProducts(products.filter(p => p.id !== id))
-    }
-  }
-
-  const getBrandColor = (marca: string) => {
-    return marca === 'AGFRI' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'
   }
 
   return (
@@ -66,14 +52,11 @@ export function ProductsTable({ products: initialProducts }: ProductsTableProps)
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Marca</TableHead>
             <TableHead>Referencia</TableHead>
             <TableHead>Modelo</TableHead>
             <TableHead>Familia</TableHead>
             <TableHead>Subfamilia</TableHead>
-            <TableHead className="text-right">PVP 25</TableHead>
-            <TableHead className="text-right">PVP 26</TableHead>
-            <TableHead className="text-right">PVP 27</TableHead>
+            <TableHead>Descripción</TableHead>
             <TableHead>Estado</TableHead>
             <TableHead className="w-10"></TableHead>
           </TableRow>
@@ -81,18 +64,11 @@ export function ProductsTable({ products: initialProducts }: ProductsTableProps)
         <TableBody>
           {filteredProducts.map((product) => (
             <TableRow key={product.id}>
-              <TableCell>
-                <Badge className={getBrandColor(product.marca || '')}>
-                  {product.marca}
-                </Badge>
-              </TableCell>
               <TableCell className="font-mono text-sm">{product.referencia}</TableCell>
               <TableCell>{product.modelo_nombre}</TableCell>
               <TableCell>{product.familia}</TableCell>
               <TableCell>{product.subfamilia}</TableCell>
-              <TableCell className="text-right">{product.pvp_25}€</TableCell>
-              <TableCell className="text-right">{product.pvp_26}€</TableCell>
-              <TableCell className="text-right">{product.pvp_27}€</TableCell>
+              <TableCell className="text-sm text-muted-foreground">{product.descripcion}</TableCell>
               <TableCell>
                 <Badge variant={product.status === 'active' ? 'default' : 'secondary'}>
                   {product.status}
@@ -111,7 +87,7 @@ export function ProductsTable({ products: initialProducts }: ProductsTableProps)
                       Editar
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      onClick={() => handleDelete(product.id)}
+                      onClick={() => handleDelete(product.id.toString())}
                       className="text-destructive"
                     >
                       <Trash2 className="mr-2 h-4 w-4" />

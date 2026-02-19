@@ -75,7 +75,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
       const supabase = createClient()
       const { data } = await supabase
         .from('products')
-        .select('id, referencia, descripcion, marca, modelo_nombre, price')
+        .select('id, referencia, descripcion, modelo_nombre')
         .eq('status', 'active')
         .order('referencia')
       

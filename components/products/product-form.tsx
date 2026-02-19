@@ -33,13 +33,9 @@ export function ProductForm() {
   const [isLoading, setIsLoading] = useState(false)
   const [selectedFamilia, setSelectedFamilia] = useState('')
   const [formData, setFormData] = useState({
-    marca: 'MYSAIR',
     referencia: '',
     descripcion: '',
     texto_prescripcion: '',
-    pvp_25: '',
-    pvp_26: '',
-    pvp_27: '',
     largo: '',
     alto: '',
     ancho: '',

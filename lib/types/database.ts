@@ -22,7 +22,7 @@ export interface Profile {
 }
 
 export interface Customer {
-  id: string
+  id: number
   company_name: string
   contact_name: string
   contact_email: string
@@ -41,10 +41,10 @@ export interface Customer {
 }
 
 export interface Offer {
-  id: string
+  id: number
   title: string
   description: string | null
-  customer_id: string
+  customer_id: number
   total_amount: number
   currency: string
   status: OfferStatus
@@ -59,10 +59,10 @@ export interface Offer {
 }
 
 export interface TechnicalRequest {
-  id: string
+  id: number
   title: string
   description: string
-  customer_id: string | null
+  customer_id: number | null
   priority: RequestPriority
   status: RequestStatus
   category: string | null
@@ -75,7 +75,7 @@ export interface TechnicalRequest {
 }
 
 export interface ChatChannel {
-  id: string
+  id: number
   name: string
   description: string | null
   type: ChannelType
@@ -85,8 +85,8 @@ export interface ChatChannel {
 }
 
 export interface ChatMessage {
-  id: string
-  channel_id: string
+  id: number
+  channel_id: number
   sender_id: string
   content: string
   is_edited: boolean
@@ -95,15 +95,15 @@ export interface ChatMessage {
 }
 
 export interface ChatMember {
-  id: string
-  channel_id: string
+  id: number
+  channel_id: number
   user_id: string
   joined_at: string
   last_read_at: string | null
 }
 
 export interface Notification {
-  id: string
+  id: number
   user_id: string
   type: NotificationType
   title: string
@@ -114,23 +114,21 @@ export interface Notification {
 }
 
 export interface ActivityLog {
-  id: string
+  id: number
   user_id: string
   action: string
   entity_type: string | null
-  entity_id: string | null
+  entity_id: number | null
   details: any | null
   ip_address: string | null
   created_at: string
 }
 
 export interface Product {
-  id: string
-  marca: ProductBrand
+  id: number
   referencia: string
   descripcion: string | null
   texto_prescripcion: string | null
-  price: number | null
   largo: string | number | null
   alto: string | number | null
   ancho: string | number | null
@@ -151,7 +149,7 @@ export interface Product {
   status: ProductStatus
   art_personalizado: boolean
   created_by: string | null
-  brand_id: string | null
+  brand_id: number | null
   created_at: string
   updated_at: string
 }
