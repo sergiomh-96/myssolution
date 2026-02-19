@@ -37,6 +37,9 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [products, setProducts] = useState<any[]>([])
+  const [tarifas, setTarifas] = useState<any[]>([])
+  const [precios, setPrecios] = useState<any[]>([])
+  const [defaultTarifa, setDefaultTarifa] = useState<number | null>(null)
   
   const existingItems = offer?.items as OfferItem[] || []
   
@@ -44,7 +47,8 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
     title: offer?.title || '',
     description: offer?.description || '',
     customer_id: offer?.customer_id || '',
-    currency: offer?.currency || 'USD',
+    tarifa_id: offer?.tarifa_id || null,
+    default_tarifa_id: offer?.default_tarifa_id || null,
     status: (offer?.status || 'draft') as OfferStatus,
     valid_until: offer?.valid_until ? offer.valid_until.split('T')[0] : '',
     notes: offer?.notes || '',
@@ -69,22 +73,63 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
       : Array.from({ length: 15 }, () => createEmptyItem())
   )
 
-  // Load active products
+  // Load active products and tarifas
   useEffect(() => {
-    const loadProducts = async () => {
+    const loadData = async () => {
       const supabase = createClient()
-      const { data } = await supabase
+      
+      // Load products
+      const { data: productsData } = await supabase
         .from('products')
         .select('id, referencia, descripcion, modelo_nombre')
         .eq('status', 'active')
         .order('referencia')
       
-      if (data) {
-        setProducts(data)
+      if (productsData) {
+        setProducts(productsData)
+      }
+
+      // Load tarifas
+      const { data: tarifasData } = await supabase
+        .from('tarifas')
+        .select('id_tarifa, nombre')
+        .order('id_tarifa')
+      
+      if (tarifasData) {
+        setTarifas(tarifasData)
+        if (tarifasData.length > 0) {
+          setDefaultTarifa(tarifasData[0].id_tarifa)
+          if (!formData.tarifa_id) {
+            setFormData(prev => ({ ...prev, tarifa_id: tarifasData[0].id_tarifa }))
+          }
+        }
       }
     }
-    loadProducts()
+    loadData()
   }, [])
+
+  // Load precios when tarifa changes
+  useEffect(() => {
+    if (!formData.tarifa_id) return
+
+    const loadPrecios = async () => {
+      const supabase = createClient()
+      const { data } = await supabase
+        .from('precios_producto')
+        .select('id_producto, id_tarifa, precio')
+        .eq('id_tarifa', formData.tarifa_id)
+      
+      if (data) {
+        setPrecios(data)
+      }
+    }
+    loadPrecios()
+  }, [formData.tarifa_id])
+
+  const getPrecioForProduct = (productId: number): number => {
+    const precio = precios.find(p => p.id_producto === productId)
+    return precio ? precio.precio : 0
+  }
 
   const calculateItemTotals = (item: OfferItem): OfferItem => {
     const quantity = Number(item.quantity) || 0
@@ -114,11 +159,13 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
     if (!product) return
 
     const newItems = [...items]
+    const precioFromTarifa = getPrecioForProduct(product.id)
+    
     newItems[index] = {
       ...newItems[index],
       product_id: productId,
-      description: `${product.marca} - ${product.referencia} - ${product.modelo_nombre || product.descripcion || ''}`,
-      pvp: Number(product.price) || 0,
+      description: `${product.referencia} - ${product.modelo_nombre || product.descripcion || ''}`,
+      pvp: precioFromTarifa || 0,
     }
     newItems[index] = calculateItemTotals(newItems[index])
     setItems(newItems)
@@ -235,20 +282,21 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="currency">Currency</Label>
+          <Label htmlFor="tarifa_id">Tarifa (Pricing) *</Label>
           <Select 
-            value={formData.currency} 
-            onValueChange={(value) => setFormData({ ...formData, currency: value })}
+            value={formData.tarifa_id?.toString() || ''} 
+            onValueChange={(value) => setFormData({ ...formData, tarifa_id: parseInt(value) })}
             disabled={loading}
           >
-            <SelectTrigger id="currency">
-              <SelectValue />
+            <SelectTrigger id="tarifa_id">
+              <SelectValue placeholder="Select a pricing tier" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="USD">USD</SelectItem>
-              <SelectItem value="EUR">EUR</SelectItem>
-              <SelectItem value="GBP">GBP</SelectItem>
-              <SelectItem value="JPY">JPY</SelectItem>
+              {tarifas.map((tarifa) => (
+                <SelectItem key={tarifa.id_tarifa} value={tarifa.id_tarifa.toString()}>
+                  {tarifa.nombre}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
@@ -275,6 +323,27 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
               <SelectItem value="sent">Sent to Customer</SelectItem>
               <SelectItem value="accepted">Accepted</SelectItem>
               <SelectItem value="declined">Declined</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="default_tarifa_id">Default Tarifa (for new items)</Label>
+          <Select 
+            value={formData.default_tarifa_id?.toString() || ''} 
+            onValueChange={(value) => setFormData({ ...formData, default_tarifa_id: value ? parseInt(value) : null })}
+            disabled={loading}
+          >
+            <SelectTrigger id="default_tarifa_id">
+              <SelectValue placeholder="Same as above" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">Same as current</SelectItem>
+              {tarifas.map((tarifa) => (
+                <SelectItem key={tarifa.id_tarifa} value={tarifa.id_tarifa.toString()}>
+                  {tarifa.nombre}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
@@ -435,7 +504,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
                   Total Oferta:
                 </td>
                 <td className="px-3 py-3 text-right font-bold text-lg text-primary">
-                  {formData.currency} {totalAmount.toFixed(2)}
+                  EUR {totalAmount.toFixed(2)}
                 </td>
                 <td></td>
               </tr>
