@@ -113,7 +113,6 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
   useEffect(() => {
     if (!formData.customer_id) {
       setContacts([])
-      setFormData(prev => ({ ...prev, contact_id: '' }))
       return
     }
 
@@ -127,8 +126,6 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
       
       if (data) {
         setContacts(data)
-        // Clear contact selection when customer changes
-        setFormData(prev => ({ ...prev, contact_id: '' }))
       }
     }
     loadContacts()
