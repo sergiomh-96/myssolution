@@ -11,12 +11,7 @@ export default async function RequestsPage() {
 
   let query = supabase
     .from('technical_requests')
-    .select(`
-      *,
-      customer:customers(id, company_name),
-      created_by_profile:profiles!technical_requests_created_by_fkey(full_name),
-      assigned_user:profiles!technical_requests_assigned_to_fkey(full_name)
-    `)
+    .select('*')
     .order('created_at', { ascending: false })
 
   // Support agents see their assigned or created requests

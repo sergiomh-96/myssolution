@@ -11,7 +11,7 @@ export default async function CustomersPage() {
 
   let query = supabase
     .from('customers')
-    .select('*, assigned_user:profiles!customers_assigned_to_fkey(full_name)')
+    .select('*')
     .order('created_at', { ascending: false })
 
   // Sales reps only see their assigned customers
