@@ -41,9 +41,9 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
   const [precios, setPrecios] = useState<any[]>([])
   const [defaultTarifa, setDefaultTarifa] = useState<number | null>(null)
   const [contacts, setContacts] = useState<any[]>([])
-  
+
   const existingItems = offer?.items as OfferItem[] || []
-  
+
   const [formData, setFormData] = useState({
     title: offer?.title || '',
     description: offer?.description || '',
@@ -69,8 +69,8 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
   })
 
   const [items, setItems] = useState<OfferItem[]>(
-    existingItems.length > 0 
-      ? existingItems 
+    existingItems.length > 0
+      ? existingItems
       : Array.from({ length: 15 }, () => createEmptyItem())
   )
 
@@ -78,14 +78,14 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
   useEffect(() => {
     const loadData = async () => {
       const supabase = createClient()
-      
+
       // Load products
       const { data: productsData } = await supabase
         .from('products')
         .select('id, referencia, descripcion, modelo_nombre')
         .eq('status', 'active')
         .order('referencia')
-      
+
       if (productsData) {
         setProducts(productsData)
       }
@@ -95,13 +95,13 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
         .from('tarifas')
         .select('id_tarifa, nombre')
         .order('nombre')
-      
+
       if (tarifasData) {
         setTarifas(tarifasData)
         // Find MYSAIR_2026 tarifa, fallback to first one
-        const mysairTarifa = tarifasData.find(t => t.nombre === 'MYSAIR_2026')
+        const mysairTarifa = tarifasData.find(t => t.nombre === 'Tarifa_MYSAIR_2026')
         const defaultTarifaId = mysairTarifa ? mysairTarifa.id_tarifa : (tarifasData.length > 0 ? tarifasData[0].id_tarifa : null)
-        
+
         if (defaultTarifaId) {
           setDefaultTarifa(defaultTarifaId)
           // Only set default tarifa if not already set
@@ -120,7 +120,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
   // Load contacts when customer changes
   useEffect(() => {
     console.log('[v0] Load contacts effect triggered, customer_id:', formData.customer_id)
-    
+
     if (!formData.customer_id) {
       setContacts([])
       return
@@ -133,9 +133,9 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
         .select('id, nombre, apellidos, email, puesto')
         .eq('customer_id', formData.customer_id)
         .order('apellidos, nombre')
-      
+
       console.log('[v0] Loaded contacts:', data?.length || 0)
-      
+
       if (data) {
         setContacts(data)
       }
@@ -153,7 +153,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
         .from('precios_producto')
         .select('id_producto, id_tarifa, precio')
         .eq('id_tarifa', formData.tarifa_id)
-      
+
       if (data) {
         setPrecios(data)
       }
@@ -169,7 +169,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
       if (!item.product_id) return item
 
       const newPrecio = precios.find(p => p.id_producto === parseInt(item.product_id))
-      
+
       const updatedItem = {
         ...item,
         pvp: newPrecio ? newPrecio.precio : 0,
@@ -214,7 +214,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
 
     const newItems = [...items]
     const precioFromTarifa = getPrecioForProduct(product.id)
-    
+
     newItems[index] = {
       ...newItems[index],
       product_id: productId,
@@ -228,12 +228,12 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
   const handleItemChange = (index: number, field: keyof OfferItem, value: string | number) => {
     const newItems = [...items]
     newItems[index] = { ...newItems[index], [field]: value }
-    
+
     // Recalcular totales cuando cambian campos relevantes
     if (['quantity', 'pvp', 'discount1', 'discount2'].includes(field)) {
       newItems[index] = calculateItemTotals(newItems[index])
     }
-    
+
     setItems(newItems)
   }
 
@@ -318,8 +318,8 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
 
         <div className="space-y-0.5">
           <Label htmlFor="customer_id" className="text-xs">Cliente *</Label>
-          <Select 
-            value={formData.customer_id} 
+          <Select
+            value={formData.customer_id}
             onValueChange={(value) => {
               console.log('[v0] Customer changed to:', value)
               console.log('[v0] Current formData before:', formData)
@@ -346,8 +346,8 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
 
         <div className="space-y-0.5">
           <Label htmlFor="tarifa_id" className="text-xs">Tarifa *</Label>
-          <Select 
-            value={formData.tarifa_id?.toString() || ''} 
+          <Select
+            value={formData.tarifa_id?.toString() || ''}
             onValueChange={(value) => {
               console.log('[v0] Tarifa changed to:', value)
               setFormData(prev => ({ ...prev, tarifa_id: parseInt(value) }))
@@ -369,8 +369,8 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
 
         <div className="space-y-0.5">
           <Label htmlFor="contact_id" className="text-xs">Contacto</Label>
-          <Select 
-            value={formData.contact_id} 
+          <Select
+            value={formData.contact_id}
             onValueChange={(value) => {
               console.log('[v0] Contact changed to:', value)
               console.log('[v0] Current formData before contact change:', formData)
@@ -397,8 +397,8 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
 
         <div className="space-y-0.5">
           <Label htmlFor="status" className="text-xs">Estado</Label>
-          <Select 
-            value={formData.status} 
+          <Select
+            value={formData.status}
             onValueChange={(value) => setFormData({ ...formData, status: value as OfferStatus })}
             disabled={loading}
           >
