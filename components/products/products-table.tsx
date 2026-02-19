@@ -86,10 +86,10 @@ export function ProductsTable({ products: initialProducts }: ProductsTableProps)
     return precio ? `€${precio.precio.toFixed(2)}` : 'N/A'
   }
 
-  const filteredProducts = products.filter(product =>
+  const filteredProducts = products.filter((product) =>
     product.referencia?.toLowerCase().includes(search.toLowerCase()) ||
     product.modelo_nombre?.toLowerCase().includes(search.toLowerCase()) ||
-    product.descripcion?.toLowerCase().includes(search.toLowerCase())
+    product.descripcion?.toLowerCase().includes(search.toLowerCase()),
   )
 
   const handleDelete = async (id: string) => {
