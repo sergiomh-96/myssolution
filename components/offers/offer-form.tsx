@@ -75,7 +75,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
       const supabase = createClient()
       const { data } = await supabase
         .from('products')
-        .select('id, referencia, descripcion, marca, modelo_nombre, pvp_25, pvp_26, pvp_27')
+        .select('id, referencia, descripcion, marca, modelo_nombre, price')
         .eq('status', 'active')
         .order('referencia')
       
@@ -118,7 +118,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
       ...newItems[index],
       product_id: productId,
       description: `${product.marca} - ${product.referencia} - ${product.modelo_nombre || product.descripcion || ''}`,
-      pvp: Number(product.pvp_25) || Number(product.pvp_26) || Number(product.pvp_27) || 0,
+      pvp: Number(product.price) || 0,
     }
     newItems[index] = calculateItemTotals(newItems[index])
     setItems(newItems)

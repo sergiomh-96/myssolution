@@ -130,9 +130,7 @@ export interface Product {
   referencia: string
   descripcion: string | null
   texto_prescripcion: string | null
-  pvp_25: string | number | null
-  pvp_26: string | number | null
-  pvp_27: string | number | null
+  price: number | null
   largo: string | number | null
   alto: string | number | null
   ancho: string | number | null
@@ -153,6 +151,7 @@ export interface Product {
   status: ProductStatus
   art_personalizado: boolean
   created_by: string | null
+  brand_id: string | null
   created_at: string
   updated_at: string
 }
