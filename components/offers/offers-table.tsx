@@ -20,8 +20,9 @@ import type { Offer, UserRole } from '@/lib/types/database'
 import { formatDistanceToNow } from 'date-fns'
 
 interface OffersTableProps {
-  offers: (Offer & {
-    customer: { id: string; company_name: string } | null
+  offers: (Omit<Offer, 'total_amount' | 'currency'> & {
+    amount: number
+    customer: { id: number; company_name: string } | null
     created_by_profile: { full_name: string | null } | null
     approved_by_profile: { full_name: string | null } | null
   })[]
@@ -117,7 +118,7 @@ export function OffersTable({ offers, userRole, userId }: OffersTableProps) {
                     </TableCell>
                     <TableCell>
                       <span className="font-medium text-foreground">
-                        {offer.currency} {offer.total_amount.toLocaleString()}
+                        €{(offer.amount || 0).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </span>
                     </TableCell>
                     <TableCell>

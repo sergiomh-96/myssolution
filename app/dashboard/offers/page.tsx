@@ -11,7 +11,12 @@ export default async function OffersPage() {
 
   let query = supabase
     .from('offers')
-    .select('*')
+    .select(`
+      *,
+      customer:customers!customer_id(id, company_name),
+      created_by_profile:profiles!created_by(full_name),
+      approved_by_profile:profiles!approved_by(full_name)
+    `)
     .order('created_at', { ascending: false })
 
   // Sales reps only see their own offers
