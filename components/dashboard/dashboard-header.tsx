@@ -34,7 +34,7 @@ export function DashboardHeader({ profile }: DashboardHeaderProps) {
     <header className="h-16 border-b border-border bg-card flex items-center justify-between px-6">
       <div className="flex items-center gap-4">
         <h2 className="text-lg font-semibold text-foreground">
-          Welcome back, {profile.full_name?.split(' ')[0] || 'User'}
+          Bienvenido, {profile.full_name?.split(' ')[0] || 'Usuario'}
         </h2>
       </div>
       
@@ -57,7 +57,7 @@ export function DashboardHeader({ profile }: DashboardHeaderProps) {
             <DropdownMenuSeparator />
             <DropdownMenuItem className="text-destructive" onClick={handleLogout}>
               <LogOut className="w-4 h-4 mr-2" />
-              Sign Out
+              Cerrar Sesión
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

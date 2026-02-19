@@ -25,21 +25,21 @@ export default async function OffersPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-semibold text-foreground">Offers</h1>
+          <h1 className="text-3xl font-semibold text-foreground">Ofertas</h1>
           <p className="text-muted-foreground mt-1">
-            Manage sales proposals and quotations
+            Gestiona propuestas comerciales y presupuestos
           </p>
         </div>
         <Button asChild>
           <Link href="/dashboard/offers/new">
             <Plus className="w-4 h-4 mr-2" />
-            Create Offer
+            Crear Oferta
           </Link>
         </Button>
       </div>
 
       {error ? (
-        <div className="text-destructive">Error loading offers: {error.message}</div>
+        <div className="text-destructive">Error cargando ofertas: {error.message}</div>
       ) : (
         <OffersTable offers={offers || []} userRole={profile.role} userId={profile.id} />
       )}

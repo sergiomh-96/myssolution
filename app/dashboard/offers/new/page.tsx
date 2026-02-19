@@ -22,15 +22,15 @@ export default async function NewOfferPage() {
   return (
     <div className="max-w-[1800px] mx-auto space-y-6 px-4">
       <div>
-        <h1 className="text-3xl font-semibold text-foreground">Create New Offer</h1>
+        <h1 className="text-3xl font-semibold text-foreground">Crear Nueva Oferta</h1>
         <p className="text-muted-foreground mt-1">
-          Prepare a new sales proposal
+          Prepara una nueva propuesta comercial
         </p>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Offer Details</CardTitle>
+          <CardTitle>Detalles de la Oferta</CardTitle>
         </CardHeader>
         <CardContent>
           <OfferForm

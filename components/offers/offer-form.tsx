@@ -296,7 +296,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
         <div className="space-y-0.5">
-          <Label htmlFor="title" className="text-xs">Offer Title *</Label>
+          <Label htmlFor="title" className="text-xs">Título Oferta *</Label>
           <Input
             id="title"
             value={formData.title}
@@ -308,14 +308,14 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
         </div>
 
         <div className="space-y-0.5">
-          <Label htmlFor="customer_id" className="text-xs">Customer *</Label>
+          <Label htmlFor="customer_id" className="text-xs">Cliente *</Label>
           <Select 
             value={formData.customer_id} 
             onValueChange={(value) => setFormData({ ...formData, customer_id: value })}
             disabled={loading}
           >
             <SelectTrigger id="customer_id" className="h-8 text-sm">
-              <SelectValue placeholder="Select a customer" />
+              <SelectValue placeholder="Seleccionar cliente" />
             </SelectTrigger>
             <SelectContent>
               {customers.map((customer) => (
@@ -335,7 +335,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
             disabled={loading}
           >
             <SelectTrigger id="tarifa_id" className="h-8 text-sm">
-              <SelectValue placeholder="Select tarifa" />
+              <SelectValue placeholder="Seleccionar tarifa" />
             </SelectTrigger>
             <SelectContent>
               {tarifas.map((tarifa) => (
@@ -355,7 +355,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
             disabled={loading || !formData.customer_id || contacts.length === 0}
           >
             <SelectTrigger id="contact_id" className="h-8 text-sm">
-              <SelectValue placeholder="Select contact" />
+              <SelectValue placeholder="Seleccionar contacto" />
             </SelectTrigger>
             <SelectContent>
               {contacts.map((contact) => (
@@ -368,7 +368,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
         </div>
 
         <div className="space-y-0.5">
-          <Label htmlFor="status" className="text-xs">Status</Label>
+          <Label htmlFor="status" className="text-xs">Estado</Label>
           <Select 
             value={formData.status} 
             onValueChange={(value) => setFormData({ ...formData, status: value as OfferStatus })}
@@ -378,23 +378,23 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="draft">Draft</SelectItem>
-              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="draft">Borrador</SelectItem>
+              <SelectItem value="pending">Pendiente</SelectItem>
               {(currentUserRole === 'admin' || currentUserRole === 'manager') && (
                 <>
-                  <SelectItem value="approved">Approved</SelectItem>
-                  <SelectItem value="rejected">Rejected</SelectItem>
+                  <SelectItem value="approved">Aprobada</SelectItem>
+                  <SelectItem value="rejected">Rechazada</SelectItem>
                 </>
               )}
-              <SelectItem value="sent">Sent</SelectItem>
-              <SelectItem value="accepted">Accepted</SelectItem>
-              <SelectItem value="declined">Declined</SelectItem>
+              <SelectItem value="sent">Enviada</SelectItem>
+              <SelectItem value="accepted">Aceptada</SelectItem>
+              <SelectItem value="declined">Declinada</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
         <div className="space-y-0.5">
-          <Label htmlFor="valid_until" className="text-xs">Valid Until</Label>
+          <Label htmlFor="valid_until" className="text-xs">Válida Hasta</Label>
           <Input
             id="valid_until"
             type="date"
@@ -406,7 +406,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
         </div>
 
         <div className="space-y-0.5 col-span-2">
-          <Label htmlFor="description" className="text-xs">Description</Label>
+          <Label htmlFor="description" className="text-xs">Descripción</Label>
           <Textarea
             id="description"
             value={formData.description}
@@ -420,10 +420,10 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
 
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <Label className="text-xs">Offer Items</Label>
+          <Label className="text-xs">Artículos de la Oferta</Label>
           <Button type="button" variant="outline" size="sm" onClick={addItem} disabled={loading} className="h-7 text-xs">
             <Plus className="w-3 h-3 mr-1" />
-            Add Item
+            Añadir Artículo
           </Button>
         </div>
 
@@ -453,7 +453,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
                       disabled={loading}
                     >
                       <SelectTrigger className="h-7 text-xs">
-                        <SelectValue placeholder="Select..." />
+                        <SelectValue placeholder="Seleccionar..." />
                       </SelectTrigger>
                       <SelectContent>
                         {products.map((product) => (
@@ -468,7 +468,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
                     <Input
                       value={item.description}
                       onChange={(e) => handleItemChange(index, 'description', e.target.value)}
-                      placeholder="Description"
+                      placeholder="Descripción"
                       className="h-7 text-xs"
                       disabled={loading}
                     />
@@ -562,25 +562,25 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
       </div>
 
       <div className="space-y-1">
-        <Label htmlFor="notes" className="text-xs">Internal Notes</Label>
+        <Label htmlFor="notes" className="text-xs">Notas Internas</Label>
         <Textarea
           id="notes"
           value={formData.notes}
           onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
           rows={2}
           disabled={loading}
-          placeholder="Internal notes visible only to sales team"
+          placeholder="Notas internas visibles solo para el equipo de ventas"
           className="text-sm"
         />
       </div>
 
       <div className="flex justify-end gap-2">
         <Button type="button" variant="outline" onClick={() => router.back()} disabled={loading} className="h-8 text-xs">
-          Cancel
+          Cancelar
         </Button>
         <Button type="submit" disabled={loading} className="h-8 text-xs">
           {loading && <Loader2 className="mr-2 h-3 w-3 animate-spin" />}
-          {offer ? 'Update Offer' : 'Create Offer'}
+          {offer ? 'Actualizar Oferta' : 'Crear Oferta'}
         </Button>
       </div>
 

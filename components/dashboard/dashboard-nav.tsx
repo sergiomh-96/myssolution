@@ -24,31 +24,31 @@ interface DashboardNavProps {
 const navItems = [
   {
     href: '/dashboard',
-    label: 'Dashboard',
+    label: 'Panel',
     icon: LayoutDashboard,
     allowedRoles: ['admin', 'manager', 'sales_rep', 'support_agent', 'viewer']
   },
   {
     href: '/dashboard/customers',
-    label: 'Customers',
+    label: 'Clientes',
     icon: Users,
     allowedRoles: ['admin', 'manager', 'sales_rep']
   },
   {
     href: '/dashboard/products',
-    label: 'Products',
+    label: 'Productos',
     icon: Package,
     allowedRoles: ['admin', 'manager', 'sales_rep', 'support_agent', 'viewer']
   },
   {
     href: '/dashboard/offers',
-    label: 'Offers',
+    label: 'Ofertas',
     icon: FileText,
     allowedRoles: ['admin', 'manager', 'sales_rep']
   },
   {
     href: '/dashboard/requests',
-    label: 'Tech Support',
+    label: 'Soporte Técnico',
     icon: Headphones,
     allowedRoles: ['admin', 'manager', 'support_agent']
   },
@@ -60,13 +60,13 @@ const navItems = [
   },
   {
     href: '/dashboard/analytics',
-    label: 'Analytics',
+    label: 'Analíticas',
     icon: BarChart3,
     allowedRoles: ['admin', 'manager', 'viewer']
   },
   {
     href: '/dashboard/settings',
-    label: 'Settings',
+    label: 'Configuración',
     icon: Settings,
     allowedRoles: ['admin']
   },
