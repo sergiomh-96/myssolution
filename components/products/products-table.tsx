@@ -36,6 +36,19 @@ export function ProductsTable({ products: initialProducts }: ProductsTableProps)
     product.referencia?.toLowerCase().includes(search.toLowerCase()) ||
     product.modelo_nombre?.toLowerCase().includes(search.toLowerCase()) ||
     product.descripcion?.toLowerCase().includes(search.toLowerCase())
+  )
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('¿Estás seguro de que deseas eliminar este producto?')) return
+
+    try {
+      const { error } = await supabase.from('products').delete().eq('id', parseInt(id))
+      if (!error) {
+        setProducts(products.filter(p => p.id !== parseInt(id)))
+      }
+    } catch (err) {
+      console.error('Error deleting product:', err)
+    }
   }
 
   return (
