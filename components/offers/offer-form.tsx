@@ -133,11 +133,10 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
       if (!item.product_id) return item
 
       const newPrecio = precios.find(p => p.id_producto === parseInt(item.product_id))
-      if (!newPrecio) return item
-
+      
       const updatedItem = {
         ...item,
-        pvp: newPrecio.precio,
+        pvp: newPrecio ? newPrecio.precio : 0,
       }
       return calculateItemTotals(updatedItem)
     })
@@ -145,9 +144,9 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
     setItems(updatedItems)
   }, [precios])
 
-  const getPrecioForProduct = (productId: number): number => {
+  const getPrecioForProduct = (productId: number): number | null => {
     const precio = precios.find(p => p.id_producto === productId)
-    return precio ? precio.precio : 0
+    return precio ? precio.precio : null
   }
 
   const calculateItemTotals = (item: OfferItem): OfferItem => {
@@ -184,7 +183,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
       ...newItems[index],
       product_id: productId,
       description: `${product.referencia} - ${product.modelo_nombre || product.descripcion || ''}`,
-      pvp: precioFromTarifa || 0,
+      pvp: precioFromTarifa !== null ? precioFromTarifa : 0,
     }
     newItems[index] = calculateItemTotals(newItems[index])
     setItems(newItems)
@@ -444,10 +443,11 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
                       onChange={(e) => handleItemChange(index, 'pvp', Number(e.target.value))}
                       className="h-8 text-sm text-right"
                       disabled={loading}
+                      placeholder="-"
                     />
                   </td>
                   <td className="px-3 py-2 text-right font-medium">
-                    {item.pvp_total.toFixed(2)}
+                    {item.pvp > 0 ? item.pvp_total.toFixed(2) : '-'}
                   </td>
                   <td className="px-3 py-2">
                     <Input
@@ -474,10 +474,10 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
                     />
                   </td>
                   <td className="px-3 py-2 text-right font-medium">
-                    {item.neto_total1.toFixed(2)}
+                    {item.pvp > 0 ? item.neto_total1.toFixed(2) : '-'}
                   </td>
                   <td className="px-3 py-2 text-right font-medium text-primary">
-                    {item.neto_total2.toFixed(2)}
+                    {item.pvp > 0 ? item.neto_total2.toFixed(2) : '-'}
                   </td>
                   <td className="px-3 py-2 text-center">
                     {items.length > 1 && (
