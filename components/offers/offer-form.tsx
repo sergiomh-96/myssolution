@@ -344,6 +344,15 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
           </Select>
         </div>
 
+        {formData.customer_id && (
+          <div className="space-y-0.5">
+            <Label className="text-xs">Empresa</Label>
+            <div className="h-8 px-3 py-1 bg-muted rounded-md border border-input flex items-center text-sm">
+              {customers.find(c => c.id === formData.customer_id)?.company_name || '-'}
+            </div>
+          </div>
+        )}
+
         <div className="space-y-0.5">
           <Label htmlFor="tarifa_id" className="text-xs">Tarifa *</Label>
           <Select
