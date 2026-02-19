@@ -125,6 +125,26 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
     loadPrecios()
   }, [formData.tarifa_id])
 
+  // Update prices of existing items when tarifa changes and precios are loaded
+  useEffect(() => {
+    if (precios.length === 0 || items.length === 0) return
+
+    const updatedItems = items.map((item) => {
+      if (!item.product_id) return item
+
+      const newPrecio = precios.find(p => p.id_producto === parseInt(item.product_id))
+      if (!newPrecio) return item
+
+      const updatedItem = {
+        ...item,
+        pvp: newPrecio.precio,
+      }
+      return calculateItemTotals(updatedItem)
+    })
+
+    setItems(updatedItems)
+  }, [precios])
+
   const getPrecioForProduct = (productId: number): number => {
     const precio = precios.find(p => p.id_producto === productId)
     return precio ? precio.precio : 0
