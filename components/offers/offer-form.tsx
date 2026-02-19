@@ -202,7 +202,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
         </Alert>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="space-y-2">
           <Label htmlFor="title">Offer Title *</Label>
           <Input
@@ -254,17 +254,6 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="valid_until">Valid Until</Label>
-          <Input
-            id="valid_until"
-            type="date"
-            value={formData.valid_until}
-            onChange={(e) => setFormData({ ...formData, valid_until: e.target.value })}
-            disabled={loading}
-          />
-        </div>
-
-        <div className="space-y-2">
           <Label htmlFor="status">Status</Label>
           <Select 
             value={formData.status} 
@@ -289,17 +278,28 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
             </SelectContent>
           </Select>
         </div>
-      </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="description">Description</Label>
-        <Textarea
-          id="description"
-          value={formData.description}
-          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-          rows={3}
-          disabled={loading}
-        />
+        <div className="space-y-2">
+          <Label htmlFor="valid_until">Valid Until</Label>
+          <Input
+            id="valid_until"
+            type="date"
+            value={formData.valid_until}
+            onChange={(e) => setFormData({ ...formData, valid_until: e.target.value })}
+            disabled={loading}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="description">Description</Label>
+          <Textarea
+            id="description"
+            value={formData.description}
+            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+            rows={2}
+            disabled={loading}
+          />
+        </div>
       </div>
 
       <div className="space-y-4">
