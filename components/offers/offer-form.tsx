@@ -74,30 +74,8 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
       : Array.from({ length: 15 }, () => createEmptyItem())
   )
 
-  // Load contacts when customer changes
+  // Load active products and tarifas
   useEffect(() => {
-    if (!formData.customer_id) {
-      setContacts([])
-      setFormData(prev => ({ ...prev, contact_id: '' }))
-      return
-    }
-
-    const loadContacts = async () => {
-      const supabase = createClient()
-      const { data } = await supabase
-        .from('clients_contacts')
-        .select('id, nombre, apellidos, email, puesto')
-        .eq('customer_id', formData.customer_id)
-        .order('apellidos, nombre')
-      
-      if (data) {
-        setContacts(data)
-        // Clear contact selection when customer changes
-        setFormData(prev => ({ ...prev, contact_id: '' }))
-      }
-    }
-    loadContacts()
-  }, [formData.customer_id])
     const loadData = async () => {
       const supabase = createClient()
       
@@ -130,6 +108,31 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
     }
     loadData()
   }, [])
+
+  // Load contacts when customer changes
+  useEffect(() => {
+    if (!formData.customer_id) {
+      setContacts([])
+      setFormData(prev => ({ ...prev, contact_id: '' }))
+      return
+    }
+
+    const loadContacts = async () => {
+      const supabase = createClient()
+      const { data } = await supabase
+        .from('clients_contacts')
+        .select('id, nombre, apellidos, email, puesto')
+        .eq('customer_id', formData.customer_id)
+        .order('apellidos, nombre')
+      
+      if (data) {
+        setContacts(data)
+        // Clear contact selection when customer changes
+        setFormData(prev => ({ ...prev, contact_id: '' }))
+      }
+    }
+    loadContacts()
+  }, [formData.customer_id])
 
   // Load precios when tarifa changes
   useEffect(() => {
