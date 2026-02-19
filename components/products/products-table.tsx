@@ -48,7 +48,6 @@ export function ProductsTable({ products: initialProducts }: ProductsTableProps)
   const [precios, setPrecios] = useState<PrecioProducto[]>([])
   const supabase = createClient()
 
-  // Load tarifas
   useEffect(() => {
     const loadTarifas = async () => {
       const { data } = await supabase
@@ -64,7 +63,6 @@ export function ProductsTable({ products: initialProducts }: ProductsTableProps)
     loadTarifas()
   }, [supabase])
 
-  // Load prices when tarifa changes
   useEffect(() => {
     if (!selectedTarifa) return
 
