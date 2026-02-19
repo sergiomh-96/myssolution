@@ -100,9 +100,13 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
         setTarifas(tarifasData)
         if (tarifasData.length > 0) {
           setDefaultTarifa(tarifasData[0].id_tarifa)
-          if (!formData.tarifa_id) {
-            setFormData(prev => ({ ...prev, tarifa_id: tarifasData[0].id_tarifa }))
-          }
+          // Only set default tarifa if not already set
+          setFormData(prev => {
+            if (!prev.tarifa_id) {
+              return { ...prev, tarifa_id: tarifasData[0].id_tarifa }
+            }
+            return prev
+          })
         }
       }
     }
@@ -111,6 +115,8 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
 
   // Load contacts when customer changes
   useEffect(() => {
+    console.log('[v0] Load contacts effect triggered, customer_id:', formData.customer_id)
+    
     if (!formData.customer_id) {
       setContacts([])
       return
@@ -123,6 +129,8 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
         .select('id, nombre, apellidos, email, puesto')
         .eq('customer_id', formData.customer_id)
         .order('apellidos, nombre')
+      
+      console.log('[v0] Loaded contacts:', data?.length || 0)
       
       if (data) {
         setContacts(data)
@@ -308,7 +316,15 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
           <Label htmlFor="customer_id" className="text-xs">Cliente *</Label>
           <Select 
             value={formData.customer_id} 
-            onValueChange={(value) => setFormData(prev => ({ ...prev, customer_id: value }))}
+            onValueChange={(value) => {
+              console.log('[v0] Customer changed to:', value)
+              console.log('[v0] Current formData before:', formData)
+              setFormData(prev => {
+                const newData = { ...prev, customer_id: value }
+                console.log('[v0] New formData after:', newData)
+                return newData
+              })
+            }}
             disabled={loading}
           >
             <SelectTrigger id="customer_id" className="h-8 text-sm">
@@ -328,7 +344,10 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
           <Label htmlFor="tarifa_id" className="text-xs">Tarifa *</Label>
           <Select 
             value={formData.tarifa_id?.toString() || ''} 
-            onValueChange={(value) => setFormData(prev => ({ ...prev, tarifa_id: parseInt(value) }))}
+            onValueChange={(value) => {
+              console.log('[v0] Tarifa changed to:', value)
+              setFormData(prev => ({ ...prev, tarifa_id: parseInt(value) }))
+            }}
             disabled={loading}
           >
             <SelectTrigger id="tarifa_id" className="h-8 text-sm">
@@ -348,7 +367,15 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
           <Label htmlFor="contact_id" className="text-xs">Contacto</Label>
           <Select 
             value={formData.contact_id} 
-            onValueChange={(value) => setFormData(prev => ({ ...prev, contact_id: value }))}
+            onValueChange={(value) => {
+              console.log('[v0] Contact changed to:', value)
+              console.log('[v0] Current formData before contact change:', formData)
+              setFormData(prev => {
+                const newData = { ...prev, contact_id: value }
+                console.log('[v0] New formData after contact change:', newData)
+                return newData
+              })
+            }}
             disabled={loading || !formData.customer_id || contacts.length === 0}
           >
             <SelectTrigger id="contact_id" className="h-8 text-sm">

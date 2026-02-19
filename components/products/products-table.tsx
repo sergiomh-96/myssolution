@@ -86,124 +86,125 @@ export function ProductsTable({ products: initialProducts }: ProductsTableProps)
     return precio ? `€${precio.precio.toFixed(2)}` : 'N/A'
   }
 
-  const filteredProducts = products.filter((product) =>
-    product.referencia?.toLowerCase().includes(search.toLowerCase()) ||
-    product.modelo_nombre?.toLowerCase().includes(search.toLowerCase()) ||
-    product.descripcion?.toLowerCase().includes(search.toLowerCase())
-  )
+  const filteredProducts = products.filter((product) => {
+    const searchLower = search.toLowerCase()
+    return (
+      product.referencia?.toLowerCase().includes(searchLower) ||
+      product.modelo_nombre?.toLowerCase().includes(searchLower) ||
+      product.descripcion?.toLowerCase().includes(searchLower)
+    )
+  })
 
   const handleDelete = async (id: string) => {
     if (!confirm('¿Estás seguro de que deseas eliminar este producto?')) return
 
     try {
       const { error } = await supabase.from('products').delete().eq('id', parseInt(id))
-      if (!error) {
-        setProducts(products.filter(p => p.id !== parseInt(id)))
-      }
-    } catch (err) {
-      console.error('Error deleting product:', err)
+      
+      if (error) throw error
+      
+      setProducts(products.filter(p => p.id !== id))
+    } catch (error) {
+      console.error('Error deleting product:', error)
+      alert('Error al eliminar el producto')
     }
   }
 
   return (
     <Card>
-      <div className="p-4 border-b border-border space-y-4">
-        <div className="flex items-center justify-between gap-4">
+      <div className="p-6 space-y-4">
+        <div className="flex gap-4 items-center">
           <Input
-            placeholder="Buscar por referencia, modelo o descripción..."
+            placeholder="Buscar productos por referencia, modelo o descripción..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="max-w-sm"
+            className="max-w-md"
           />
           
           {tarifas.length > 0 && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline">
-                  Tarifa: {tarifas.find(t => t.id_tarifa === selectedTarifa)?.nombre || 'Seleccionar'}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Seleccionar Tarifa</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                {tarifas.map(tarifa => (
-                  <DropdownMenuItem
-                    key={tarifa.id_tarifa}
-                    onClick={() => setSelectedTarifa(tarifa.id_tarifa)}
-                    className={selectedTarifa === tarifa.id_tarifa ? 'bg-accent' : ''}
-                  >
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Tarifa:</span>
+              <select
+                value={selectedTarifa || ''}
+                onChange={(e) => setSelectedTarifa(Number(e.target.value))}
+                className="border border-input bg-background px-3 py-2 text-sm rounded-md"
+              >
+                {tarifas.map((tarifa) => (
+                  <option key={tarifa.id_tarifa} value={tarifa.id_tarifa}>
                     {tarifa.nombre}
-                  </DropdownMenuItem>
+                  </option>
                 ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
+              </select>
+            </div>
           )}
         </div>
-      </div>
 
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Referencia</TableHead>
-            <TableHead>Modelo</TableHead>
-            <TableHead>Familia</TableHead>
-            <TableHead>Subfamilia</TableHead>
-            <TableHead>Descripción</TableHead>
-            {selectedTarifa && <TableHead className="text-right">Precio</TableHead>}
-            <TableHead>Estado</TableHead>
-            <TableHead className="w-10"></TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {filteredProducts.map((product) => (
-            <TableRow key={product.id}>
-              <TableCell className="font-mono text-sm">{product.referencia}</TableCell>
-              <TableCell>{product.modelo_nombre}</TableCell>
-              <TableCell>{product.familia}</TableCell>
-              <TableCell>{product.subfamilia}</TableCell>
-              <TableCell className="text-sm text-muted-foreground">{product.descripcion}</TableCell>
-              {selectedTarifa && (
-                <TableCell className="text-right font-semibold">
-                  {getPrecioForProduct(product.id)}
-                </TableCell>
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Referencia</TableHead>
+                <TableHead>Marca</TableHead>
+                <TableHead>Modelo</TableHead>
+                <TableHead>Descripción</TableHead>
+                <TableHead>Precio</TableHead>
+                <TableHead>Estado</TableHead>
+                <TableHead className="w-[70px]"></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredProducts.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center text-muted-foreground">
+                    No se encontraron productos
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filteredProducts.map((product) => (
+                  <TableRow key={product.id}>
+                    <TableCell className="font-medium">{product.referencia}</TableCell>
+                    <TableCell>{product.marca}</TableCell>
+                    <TableCell>{product.modelo_nombre}</TableCell>
+                    <TableCell className="max-w-xs truncate">{product.descripcion}</TableCell>
+                    <TableCell className="font-semibold">
+                      {getPrecioForProduct(product.id)}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={product.status === 'active' ? 'default' : 'secondary'}>
+                        {product.status === 'active' ? 'Activo' : 'Inactivo'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem>
+                            <Edit className="h-4 w-4 mr-2" />
+                            Editar
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            className="text-destructive"
+                            onClick={() => handleDelete(product.id)}
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Eliminar
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))
               )}
-              <TableCell>
-                <Badge variant={product.status === 'active' ? 'default' : 'secondary'}>
-                  {product.status}
-                </Badge>
-              </TableCell>
-              <TableCell>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon">
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem>
-                      <Edit className="mr-2 h-4 w-4" />
-                      Editar
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => handleDelete(product.id.toString())}
-                      className="text-destructive"
-                    >
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      Eliminar
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-
-      {filteredProducts.length === 0 && (
-        <div className="p-8 text-center text-muted-foreground">
-          No se encontraron productos
+            </TableBody>
+          </Table>
         </div>
-      )}
+      </div>
     </Card>
   )
 }
