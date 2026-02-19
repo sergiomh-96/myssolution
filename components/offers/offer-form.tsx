@@ -287,33 +287,34 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-4">
       {error && (
         <Alert variant="destructive">
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="space-y-2">
-          <Label htmlFor="title">Offer Title *</Label>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div className="space-y-1">
+          <Label htmlFor="title" className="text-sm">Offer Title *</Label>
           <Input
             id="title"
             value={formData.title}
             onChange={(e) => setFormData({ ...formData, title: e.target.value })}
             required
             disabled={loading}
+            className="h-9"
           />
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="customer_id">Customer *</Label>
+        <div className="space-y-1">
+          <Label htmlFor="customer_id" className="text-sm">Customer *</Label>
           <Select 
             value={formData.customer_id} 
             onValueChange={(value) => setFormData({ ...formData, customer_id: value })}
             disabled={loading}
           >
-            <SelectTrigger id="customer_id">
+            <SelectTrigger id="customer_id" className="h-9">
               <SelectValue placeholder="Select a customer" />
             </SelectTrigger>
             <SelectContent>
@@ -326,14 +327,14 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
           </Select>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="tarifa_id">Tarifa (Pricing) *</Label>
+        <div className="space-y-1">
+          <Label htmlFor="tarifa_id" className="text-sm">Tarifa (Pricing) *</Label>
           <Select 
             value={formData.tarifa_id?.toString() || ''} 
             onValueChange={(value) => setFormData({ ...formData, tarifa_id: parseInt(value) })}
             disabled={loading}
           >
-            <SelectTrigger id="tarifa_id">
+            <SelectTrigger id="tarifa_id" className="h-9">
               <SelectValue placeholder="Select a pricing tier" />
             </SelectTrigger>
             <SelectContent>
@@ -346,14 +347,14 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
           </Select>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="contact_id">Contacto</Label>
+        <div className="space-y-1">
+          <Label htmlFor="contact_id" className="text-sm">Contacto</Label>
           <Select 
             value={formData.contact_id} 
             onValueChange={(value) => setFormData({ ...formData, contact_id: value })}
             disabled={loading || !formData.customer_id || contacts.length === 0}
           >
-            <SelectTrigger id="contact_id">
+            <SelectTrigger id="contact_id" className="h-9">
               <SelectValue placeholder="Select a contact" />
             </SelectTrigger>
             <SelectContent>
@@ -372,14 +373,14 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
           )}
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="status">Status</Label>
+        <div className="space-y-1">
+          <Label htmlFor="status" className="text-sm">Status</Label>
           <Select 
             value={formData.status} 
             onValueChange={(value) => setFormData({ ...formData, status: value as OfferStatus })}
             disabled={loading}
           >
-            <SelectTrigger id="status">
+            <SelectTrigger id="status" className="h-9">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -398,25 +399,27 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
           </Select>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="valid_until">Valid Until</Label>
+        <div className="space-y-1">
+          <Label htmlFor="valid_until" className="text-sm">Valid Until</Label>
           <Input
             id="valid_until"
             type="date"
             value={formData.valid_until}
             onChange={(e) => setFormData({ ...formData, valid_until: e.target.value })}
             disabled={loading}
+            className="h-9"
           />
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="description">Description</Label>
+        <div className="space-y-1">
+          <Label htmlFor="description" className="text-sm">Description</Label>
           <Textarea
             id="description"
             value={formData.description}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            rows={2}
+            rows={1}
             disabled={loading}
+            className="min-h-[36px] resize-none"
           />
         </div>
       </div>
