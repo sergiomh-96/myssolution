@@ -94,16 +94,20 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
       const { data: tarifasData } = await supabase
         .from('tarifas')
         .select('id_tarifa, nombre')
-        .order('id_tarifa')
+        .order('nombre')
       
       if (tarifasData) {
         setTarifas(tarifasData)
-        if (tarifasData.length > 0) {
-          setDefaultTarifa(tarifasData[0].id_tarifa)
+        // Find MYSAIR_2026 tarifa, fallback to first one
+        const mysairTarifa = tarifasData.find(t => t.nombre === 'MYSAIR_2026')
+        const defaultTarifaId = mysairTarifa ? mysairTarifa.id_tarifa : (tarifasData.length > 0 ? tarifasData[0].id_tarifa : null)
+        
+        if (defaultTarifaId) {
+          setDefaultTarifa(defaultTarifaId)
           // Only set default tarifa if not already set
           setFormData(prev => {
             if (!prev.tarifa_id) {
-              return { ...prev, tarifa_id: tarifasData[0].id_tarifa }
+              return { ...prev, tarifa_id: defaultTarifaId }
             }
             return prev
           })
