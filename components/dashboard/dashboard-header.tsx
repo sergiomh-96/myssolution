@@ -1,6 +1,6 @@
 'use client'
 
-import { Bell, LogOut, User } from 'lucide-react'
+import { Bell, LogOut, User, Menu } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -18,9 +18,11 @@ import { NotificationsPopover } from './notifications-popover'
 
 interface DashboardHeaderProps {
   profile: Profile
+  sidebarOpen: boolean
+  setSidebarOpen: (open: boolean) => void
 }
 
-export function DashboardHeader({ profile }: DashboardHeaderProps) {
+export function DashboardHeader({ profile, sidebarOpen, setSidebarOpen }: DashboardHeaderProps) {
   const router = useRouter()
 
   const handleLogout = async () => {
@@ -31,8 +33,16 @@ export function DashboardHeader({ profile }: DashboardHeaderProps) {
   }
 
   return (
-    <header className="h-16 border-b border-border bg-card flex items-center justify-between px-6">
+    <header className="h-16 border-b border-border bg-card flex items-center justify-between px-4 md:px-6">
       <div className="flex items-center gap-4">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="md:hidden"
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+        >
+          <Menu className="w-5 h-5" />
+        </Button>
         <h2 className="text-lg font-semibold text-foreground">
           Bienvenido, {profile.full_name?.split(' ')[0] || 'Usuario'}
         </h2>
