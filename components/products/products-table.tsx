@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Table,
   TableBody,
@@ -16,6 +16,8 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -27,10 +29,62 @@ interface ProductsTableProps {
   products: Product[]
 }
 
+interface Tarifa {
+  id_tarifa: number
+  nombre: string
+}
+
+interface PrecioProducto {
+  id_producto: number
+  id_tarifa: number
+  precio: number
+}
+
 export function ProductsTable({ products: initialProducts }: ProductsTableProps) {
   const [products, setProducts] = useState(initialProducts)
   const [search, setSearch] = useState('')
+  const [selectedTarifa, setSelectedTarifa] = useState<number | null>(null)
+  const [tarifas, setTarifas] = useState<Tarifa[]>([])
+  const [precios, setPrecios] = useState<PrecioProducto[]>([])
   const supabase = createClient()
+
+  // Load tarifas
+  useEffect(() => {
+    const loadTarifas = async () => {
+      const { data } = await supabase
+        .from('tarifas')
+        .select('id_tarifa, nombre')
+        .order('id_tarifa')
+      
+      if (data && data.length > 0) {
+        setTarifas(data)
+        setSelectedTarifa(data[0].id_tarifa)
+      }
+    }
+    loadTarifas()
+  }, [supabase])
+
+  // Load prices when tarifa changes
+  useEffect(() => {
+    if (!selectedTarifa) return
+
+    const loadPrecios = async () => {
+      const { data } = await supabase
+        .from('precios_producto')
+        .select('id_producto, id_tarifa, precio')
+        .eq('id_tarifa', selectedTarifa)
+      
+      if (data) {
+        setPrecios(data)
+      }
+    }
+    loadPrecios()
+  }, [selectedTarifa, supabase])
+
+  const getPrecioForProduct = (productId: number): string => {
+    const precio = precios.find(p => p.id_producto === productId)
+    return precio ? `€${precio.precio.toFixed(2)}` : 'N/A'
+  }
 
   const filteredProducts = products.filter(product =>
     product.referencia?.toLowerCase().includes(search.toLowerCase()) ||
@@ -53,13 +107,38 @@ export function ProductsTable({ products: initialProducts }: ProductsTableProps)
 
   return (
     <Card>
-      <div className="p-4 border-b border-border">
-        <Input
-          placeholder="Buscar por referencia, modelo o descripción..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="max-w-sm"
-        />
+      <div className="p-4 border-b border-border space-y-4">
+        <div className="flex items-center justify-between gap-4">
+          <Input
+            placeholder="Buscar por referencia, modelo o descripción..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="max-w-sm"
+          />
+          
+          {tarifas.length > 0 && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline">
+                  Tarifa: {tarifas.find(t => t.id_tarifa === selectedTarifa)?.nombre || 'Seleccionar'}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Seleccionar Tarifa</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {tarifas.map(tarifa => (
+                  <DropdownMenuItem
+                    key={tarifa.id_tarifa}
+                    onClick={() => setSelectedTarifa(tarifa.id_tarifa)}
+                    className={selectedTarifa === tarifa.id_tarifa ? 'bg-accent' : ''}
+                  >
+                    {tarifa.nombre}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+        </div>
       </div>
 
       <Table>
@@ -70,6 +149,7 @@ export function ProductsTable({ products: initialProducts }: ProductsTableProps)
             <TableHead>Familia</TableHead>
             <TableHead>Subfamilia</TableHead>
             <TableHead>Descripción</TableHead>
+            {selectedTarifa && <TableHead className="text-right">Precio</TableHead>}
             <TableHead>Estado</TableHead>
             <TableHead className="w-10"></TableHead>
           </TableRow>
@@ -82,6 +162,11 @@ export function ProductsTable({ products: initialProducts }: ProductsTableProps)
               <TableCell>{product.familia}</TableCell>
               <TableCell>{product.subfamilia}</TableCell>
               <TableCell className="text-sm text-muted-foreground">{product.descripcion}</TableCell>
+              {selectedTarifa && (
+                <TableCell className="text-right font-semibold">
+                  {getPrecioForProduct(product.id)}
+                </TableCell>
+              )}
               <TableCell>
                 <Badge variant={product.status === 'active' ? 'default' : 'secondary'}>
                   {product.status}
