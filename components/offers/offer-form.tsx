@@ -48,7 +48,6 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
     description: offer?.description || '',
     customer_id: offer?.customer_id || '',
     tarifa_id: offer?.tarifa_id || null,
-    default_tarifa_id: offer?.default_tarifa_id || null,
     status: (offer?.status || 'draft') as OfferStatus,
     valid_until: offer?.valid_until ? offer.valid_until.split('T')[0] : '',
     notes: offer?.notes || '',
@@ -323,27 +322,6 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
               <SelectItem value="sent">Sent to Customer</SelectItem>
               <SelectItem value="accepted">Accepted</SelectItem>
               <SelectItem value="declined">Declined</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="default_tarifa_id">Default Tarifa (for new items)</Label>
-          <Select 
-            value={formData.default_tarifa_id?.toString() || ''} 
-            onValueChange={(value) => setFormData({ ...formData, default_tarifa_id: value ? parseInt(value) : null })}
-            disabled={loading}
-          >
-            <SelectTrigger id="default_tarifa_id">
-              <SelectValue placeholder="Same as above" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="">Same as current</SelectItem>
-              {tarifas.map((tarifa) => (
-                <SelectItem key={tarifa.id_tarifa} value={tarifa.id_tarifa.toString()}>
-                  {tarifa.nombre}
-                </SelectItem>
-              ))}
             </SelectContent>
           </Select>
         </div>
