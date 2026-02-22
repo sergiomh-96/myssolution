@@ -161,7 +161,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
   const [formData, setFormData] = useState({
     title: offer?.title || '',
     description: offer?.description || '',
-    customer_id: offer?.customer_id || '',
+    customer_id: offer?.customer_id || null,
     contact_id: offer?.contact_id || '',
     tarifa_id: offer?.tarifa_id || null,
     status: (offer?.status || 'draft') as OfferStatus,
@@ -380,9 +380,9 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
       const offerData = {
         title: formData.title,
         description: formData.description,
-        customer_id: formData.customer_id,
+        customer_id: formData.customer_id ? parseInt(String(formData.customer_id)) : null,
         contact_id: formData.contact_id,
-        tarifa_id: formData.tarifa_id,
+        tarifa_id: formData.tarifa_id ? parseInt(String(formData.tarifa_id)) : null,
         status: formData.status,
         valid_until: formData.valid_until || null,
         notes: formData.notes,
@@ -552,7 +552,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
           <Select
             value={formData.customer_id?.toString() || ''}
             onValueChange={(value) => {
-              setFormData(prev => ({ ...prev, customer_id: value }))
+              setFormData(prev => ({ ...prev, customer_id: parseInt(value) }))
             }}
             disabled={loading}
           >
