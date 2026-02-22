@@ -150,7 +150,6 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
   const [nextOfferNumber, setNextOfferNumber] = useState<number | null>(null)
   const [precios, setPrecios] = useState<any[]>([])
   const [defaultTarifa, setDefaultTarifa] = useState<number | null>(null)
-  const [contacts, setContacts] = useState<any[]>([])
 
   const existingItems: OfferItem[] = []
 
