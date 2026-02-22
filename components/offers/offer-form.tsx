@@ -151,27 +151,8 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
   const [nextOfferNumber, setNextOfferNumber] = useState<number | null>(null)
   const [precios, setPrecios] = useState<any[]>([])
   const [defaultTarifa, setDefaultTarifa] = useState<number | null>(null)
-  const [items, setItems] = useState<OfferItem[]>(existingItems)
 
   const existingItems: OfferItem[] = []
-
-  // Helper to add 30 days to a date
-  const addDays = (dateStr: string, days: number) => {
-    const date = new Date(dateStr)
-    date.setDate(date.getDate() + days)
-    return date.toISOString().split('T')[0]
-  }
-
-  const [formData, setFormData] = useState({
-    title: offer?.title || '',
-    description: offer?.description || '',
-    customer_id: offer?.customer_id || null,
-    contact_id: offer?.contact_id || null,
-    tarifa_id: offer?.tarifa_id || null,
-    status: (offer?.status || 'draft') as OfferStatus,
-    valid_until: offer?.valid_until ? offer.valid_until.split('T')[0] : addDays(new Date().toISOString().split('T')[0], 30),
-    notes: offer?.notes || '',
-  })
 
   const createEmptyItem = (): OfferItem => ({
     id: crypto.randomUUID(),
@@ -191,6 +172,24 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
       ? existingItems
       : Array.from({ length: 15 }, () => createEmptyItem())
   )
+
+  // Helper to add 30 days to a date
+  const addDays = (dateStr: string, days: number) => {
+    const date = new Date(dateStr)
+    date.setDate(date.getDate() + days)
+    return date.toISOString().split('T')[0]
+  }
+
+  const [formData, setFormData] = useState({
+    title: offer?.title || '',
+    description: offer?.description || '',
+    customer_id: offer?.customer_id || null,
+    contact_id: offer?.contact_id || null,
+    tarifa_id: offer?.tarifa_id || null,
+    status: (offer?.status || 'draft') as OfferStatus,
+    valid_until: offer?.valid_until ? offer.valid_until.split('T')[0] : addDays(new Date().toISOString().split('T')[0], 30),
+    notes: offer?.notes || '',
+  })
 
   // Load active products and tarifas
   useEffect(() => {
