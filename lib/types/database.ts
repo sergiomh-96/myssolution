@@ -45,6 +45,9 @@ export interface Offer {
   title: string
   description: string | null
   customer_id: number
+  contact_id: number | null
+  tarifa_id: number | null
+  offer_number: number
   total_amount: number
   currency: string
   status: OfferStatus
