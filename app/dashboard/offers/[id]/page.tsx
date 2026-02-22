@@ -187,14 +187,14 @@ export default async function OfferDetailPage({ params }: PageProps) {
               <table className="w-full border-collapse" style={{ tableLayout: 'fixed' }}>
                 <thead>
                   <tr className="border-b border-border">
-                    <th className="text-left py-2 px-2 text-xs font-medium text-muted-foreground" style={{ width: '100px' }}>Producto</th>
-                    <th className="text-left py-2 px-2 text-xs font-medium text-muted-foreground" style={{ width: '200px' }}>Descripción</th>
-                    <th className="text-right py-2 px-1 text-xs font-medium text-muted-foreground" style={{ width: '60px' }}>Cantidad</th>
-                    <th className="text-right py-2 px-1 text-xs font-medium text-muted-foreground" style={{ width: '60px' }}>PVP</th>
-                    <th className="text-right py-2 px-1 text-xs font-medium text-muted-foreground" style={{ width: '50px' }}>Dto 1 %</th>
-                    <th className="text-right py-2 px-1 text-xs font-medium text-muted-foreground" style={{ width: '50px' }}>Dto 2 %</th>
-                    <th className="text-right py-2 px-1 text-xs font-medium text-muted-foreground" style={{ width: '70px' }}>Neto 1</th>
-                    <th className="text-right py-2 px-1 text-xs font-medium text-muted-foreground" style={{ width: '70px' }}>Neto 2</th>
+                    <th className="text-left py-2 px-1 text-xs font-medium text-muted-foreground" style={{ width: '40px' }}>Producto</th>
+                    <th className="text-left py-2 px-2 text-xs font-medium text-muted-foreground" style={{ width: '300px' }}>Descripción</th>
+                    <th className="text-right py-2 px-1 text-xs font-medium text-muted-foreground" style={{ width: '40px' }}>Cantidad</th>
+                    <th className="text-right py-2 px-1 text-xs font-medium text-muted-foreground" style={{ width: '40px' }}>PVP</th>
+                    <th className="text-right py-2 px-1 text-xs font-medium text-muted-foreground" style={{ width: '35px' }}>Dto 1 %</th>
+                    <th className="text-right py-2 px-1 text-xs font-medium text-muted-foreground" style={{ width: '35px' }}>Dto 2 %</th>
+                    <th className="text-right py-2 px-1 text-xs font-medium text-muted-foreground" style={{ width: '50px' }}>Neto 1</th>
+                    <th className="text-right py-2 px-1 text-xs font-medium text-muted-foreground" style={{ width: '50px' }}>Neto 2</th>
                   </tr>
                 </thead>
                 <tbody>
