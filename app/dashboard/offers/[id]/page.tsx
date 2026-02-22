@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
-import { format } from 'date-fns'
+import { AddOfferItem } from '@/components/offers/add-offer-item'
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -175,6 +175,9 @@ export default async function OfferDetailPage({ params }: PageProps) {
           </CardContent>
         </Card>
       </div>
+
+      {/* Add Item Section */}
+      <AddOfferItem offerId={params.id} onItemAdded={() => window.location.reload()} />
 
       {/* Offer Items */}
       {items && items.length > 0 && (
