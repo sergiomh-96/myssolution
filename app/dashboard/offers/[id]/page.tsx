@@ -1,9 +1,10 @@
+import { requireProfile } from '@/lib/auth'
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Edit } from 'lucide-react'
 import Link from 'next/link'
 import { AddOfferItem } from '@/components/offers/add-offer-item'
 
@@ -55,18 +56,26 @@ export default async function OfferDetailPage({ params }: PageProps) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" asChild>
-          <Link href="/dashboard/offers">
-            <ArrowLeft className="h-4 w-4" />
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" asChild>
+            <Link href="/dashboard/offers">
+              <ArrowLeft className="h-4 w-4" />
+            </Link>
+          </Button>
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">{offer.title}</h1>
+            <p className="text-sm text-muted-foreground">
+              Oferta #{offer.id}
+            </p>
+          </div>
+        </div>
+        <Button asChild>
+          <Link href={`/dashboard/offers/${offer.id}/edit`}>
+            <Edit className="h-4 w-4 mr-2" />
+            Editar Oferta
           </Link>
         </Button>
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">{offer.title}</h1>
-          <p className="text-sm text-muted-foreground">
-            Oferta #{offer.id}
-          </p>
-        </div>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">

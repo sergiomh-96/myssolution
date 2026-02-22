@@ -1,6 +1,6 @@
 'use client'
 
-// v2 - Fixed duplicate contacts state
+// v3 - Clean contacts state
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
