@@ -32,6 +32,113 @@ interface OfferItem {
   neto_total2: number
 }
 
+// Product Search Input Component
+function ProductSearchInput({
+  value,
+  products,
+  onSelect,
+  disabled,
+}: {
+  value: string
+  products: Array<{ id: string; referencia: string; descripcion: string; modelo_nombre?: string }>
+  onSelect: (productId: string) => void
+  disabled?: boolean
+}) {
+  const [searchTerm, setSearchTerm] = useState('')
+  const [isOpen, setIsOpen] = useState(false)
+  const [selectedProduct, setSelectedProduct] = useState<typeof products[0] | null>(null)
+
+  // Update selected product when value changes
+  useEffect(() => {
+    const product = products.find(p => p.id === value)
+    setSelectedProduct(product || null)
+    if (product) {
+      setSearchTerm('')
+    }
+  }, [value, products])
+
+  // Filter products by search term
+  const filteredProducts = searchTerm.trim()
+    ? products.filter(p => 
+        p.referencia.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        p.descripcion.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (p.modelo_nombre && p.modelo_nombre.toLowerCase().includes(searchTerm.toLowerCase()))
+      ).slice(0, 10)
+    : []
+
+  const handleProductSelect = (product: typeof products[0]) => {
+    onSelect(product.id)
+    setSelectedProduct(product)
+    setSearchTerm('')
+    setIsOpen(false)
+  }
+
+  const handleClear = () => {
+    onSelect('')
+    setSelectedProduct(null)
+    setSearchTerm('')
+  }
+
+  return (
+    <div className="relative">
+      {selectedProduct ? (
+        <div className="flex items-center gap-1">
+          <div className="flex-1 h-7 px-2 py-1 border border-input rounded-md bg-background text-xs truncate">
+            {selectedProduct.referencia}
+          </div>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="h-7 w-7 p-0"
+            onClick={handleClear}
+            disabled={disabled}
+          >
+            <X className="w-3 h-3" />
+          </Button>
+        </div>
+      ) : (
+        <>
+          <Input
+            value={searchTerm}
+            onChange={(e) => {
+              setSearchTerm(e.target.value)
+              setIsOpen(true)
+            }}
+            onFocus={() => setIsOpen(true)}
+            placeholder="Buscar por referencia o descripción..."
+            className="h-7 text-xs"
+            disabled={disabled}
+          />
+          {isOpen && filteredProducts.length > 0 && (
+            <>
+              <div 
+                className="fixed inset-0 z-40" 
+                onClick={() => setIsOpen(false)}
+              />
+              <div className="absolute z-50 w-full mt-1 max-h-60 overflow-y-auto bg-popover border border-border rounded-md shadow-lg">
+                {filteredProducts.map((product) => (
+                  <button
+                    key={product.id}
+                    type="button"
+                    className="w-full text-left px-2 py-1.5 text-xs hover:bg-accent cursor-pointer"
+                    onClick={() => handleProductSelect(product)}
+                  >
+                    <div className="font-medium">{product.referencia}</div>
+                    <div className="text-muted-foreground truncate text-[10px]">
+                      {product.descripcion}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+        </>
+      )}
+    </div>
+  )
+}
+
 export function OfferForm({ offer, currentUserId, currentUserRole, customers }: OfferFormProps) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
@@ -520,22 +627,12 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
               {items.map((item, index) => (
                 <tr key={item.id} className="border-t border-border hover:bg-muted/20">
                   <td className="px-2 py-1">
-                    <Select
+                    <ProductSearchInput
                       value={item.product_id || ''}
-                      onValueChange={(value) => handleProductSelect(index, value)}
+                      products={products}
+                      onSelect={(productId) => handleProductSelect(index, productId)}
                       disabled={loading}
-                    >
-                      <SelectTrigger className="h-7 text-xs">
-                        <SelectValue placeholder="Seleccionar..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {products.map((product) => (
-                          <SelectItem key={product.id} value={product.id}>
-                            {product.marca} - {product.referencia}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    />
                   </td>
                   <td className="px-2 py-1">
                     <Input
