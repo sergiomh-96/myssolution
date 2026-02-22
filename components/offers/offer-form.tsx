@@ -1,6 +1,6 @@
 'use client'
 
-// v3 - Clean contacts state
+// Version: force-rebuild-contacts-fix
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'

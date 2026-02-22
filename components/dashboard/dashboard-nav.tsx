@@ -19,6 +19,8 @@ import { canManageOffers, canManageRequests, canViewAnalytics, canManageUsers } 
 
 interface DashboardNavProps {
   profile: Profile
+  isMobile?: boolean
+  onNavigate?: () => void
 }
 
 const navItems = [
@@ -72,7 +74,7 @@ const navItems = [
   },
 ]
 
-export function DashboardNav({ profile }: DashboardNavProps) {
+export function DashboardNav({ profile, onNavigate }: DashboardNavProps) {
   const pathname = usePathname()
 
   const filteredItems = navItems.filter(item => 
@@ -102,6 +104,7 @@ export function DashboardNav({ profile }: DashboardNavProps) {
             <Link
               key={item.href}
               href={item.href}
+              onClick={onNavigate}
               className={cn(
                 'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
                 isActive
