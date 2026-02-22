@@ -378,10 +378,14 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
       const supabase = createClient()
 
       const offerData = {
-        ...formData,
-        total_amount: totalAmount,
-        items: items,
+        title: formData.title,
+        description: formData.description,
+        customer_id: formData.customer_id,
+        contact_id: formData.contact_id,
+        tarifa_id: formData.tarifa_id,
+        status: formData.status,
         valid_until: formData.valid_until || null,
+        notes: formData.notes,
       }
 
       if (offer) {
@@ -395,16 +399,82 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
           .eq('id', offer.id)
 
         if (updateError) throw updateError
+
+        // Update offer items if they exist
+        if (items.length > 0) {
+          // Delete existing items first
+          const { error: deleteError } = await supabase
+            .from('offer_items')
+            .delete()
+            .eq('offer_id', offer.id)
+
+          if (deleteError) throw deleteError
+
+          // Insert new items
+          const itemsToInsert = items
+            .filter(item => item.product_id) // Only save items with a product
+            .map(item => ({
+              offer_id: offer.id,
+              product_id: item.product_id,
+              description: item.description,
+              quantity: item.quantity,
+              pvp: item.pvp,
+              pvp_total: item.pvp_total,
+              discount1: item.discount1,
+              discount2: item.discount2,
+              neto_total1: item.neto_total1,
+              neto_total2: item.neto_total2,
+            }))
+
+          if (itemsToInsert.length > 0) {
+            const { error: insertError } = await supabase
+              .from('offer_items')
+              .insert(itemsToInsert)
+
+            if (insertError) throw insertError
+          }
+        }
       } else {
         // Create new offer
-        const { error: insertError } = await supabase
+        const { data: newOffer, error: insertError } = await supabase
           .from('offers')
           .insert({
             ...offerData,
             created_by: currentUserId,
+            amount: totalAmount,
           })
+          .select()
 
         if (insertError) throw insertError
+        if (!newOffer || newOffer.length === 0) throw new Error('Failed to create offer')
+
+        const offerId = newOffer[0].id
+
+        // Insert offer items
+        if (items.length > 0) {
+          const itemsToInsert = items
+            .filter(item => item.product_id) // Only save items with a product
+            .map(item => ({
+              offer_id: offerId,
+              product_id: item.product_id,
+              description: item.description,
+              quantity: item.quantity,
+              pvp: item.pvp,
+              pvp_total: item.pvp_total,
+              discount1: item.discount1,
+              discount2: item.discount2,
+              neto_total1: item.neto_total1,
+              neto_total2: item.neto_total2,
+            }))
+
+          if (itemsToInsert.length > 0) {
+            const { error: insertItemsError } = await supabase
+              .from('offer_items')
+              .insert(itemsToInsert)
+
+            if (insertItemsError) throw insertItemsError
+          }
+        }
       }
 
       router.push('/dashboard/offers')
