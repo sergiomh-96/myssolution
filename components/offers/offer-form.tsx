@@ -149,7 +149,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
   const [defaultTarifa, setDefaultTarifa] = useState<number | null>(null)
   const [contacts, setContacts] = useState<any[]>([])
 
-  const existingItems = offer?.items as OfferItem[] || []
+  const existingItems: OfferItem[] = []
 
   // Helper to add 30 days to a date
   const addDays = (dateStr: string, days: number) => {
