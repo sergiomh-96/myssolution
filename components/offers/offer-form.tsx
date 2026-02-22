@@ -119,27 +119,33 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
 
   // Load contacts when customer changes
   useEffect(() => {
-    console.log('[v0] Load contacts effect triggered, customer_id:', formData.customer_id)
-
-    if (!formData.customer_id) {
-      setContacts([])
-      return
-    }
-
     const loadContacts = async () => {
-      const supabase = createClient()
-      const { data } = await supabase
-        .from('clients_contacts')
-        .select('id, nombre, apellidos, email, puesto')
-        .eq('customer_id', formData.customer_id)
-        .order('apellidos, nombre')
+      if (!formData.customer_id) {
+        setContacts([])
+        return
+      }
 
-      console.log('[v0] Loaded contacts:', data?.length || 0)
+      try {
+        const supabase = createClient()
+        const { data, error } = await supabase
+          .from('clients_contacts')
+          .select('*')
+          .eq('customer_id', formData.customer_id)
+          .order('nombre')
 
-      if (data) {
-        setContacts(data)
+        if (error) {
+          console.error('Error loading contacts:', error)
+          setError('Error loading contacts')
+          return
+        }
+
+        setContacts(data || [])
+      } catch (err) {
+        console.error('Error:', err)
+        setError('Error loading contacts')
       }
     }
+
     loadContacts()
   }, [formData.customer_id])
 
@@ -319,15 +325,9 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
         <div className="space-y-0.5">
           <Label htmlFor="customer_id" className="text-xs">Cliente *</Label>
           <Select
-            value={formData.customer_id}
+            value={formData.customer_id?.toString() || ''}
             onValueChange={(value) => {
-              console.log('[v0] Customer changed to:', value)
-              console.log('[v0] Current formData before:', formData)
-              setFormData(prev => {
-                const newData = { ...prev, customer_id: value }
-                console.log('[v0] New formData after:', newData)
-                return newData
-              })
+              setFormData(prev => ({ ...prev, customer_id: value }))
             }}
             disabled={loading}
           >
@@ -336,7 +336,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
             </SelectTrigger>
             <SelectContent>
               {customers.map((customer) => (
-                <SelectItem key={customer.id} value={customer.id}>
+                <SelectItem key={customer.id} value={customer.id.toString()}>
                   {customer.company_name}
                 </SelectItem>
               ))}
@@ -344,21 +344,11 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
           </Select>
         </div>
 
-        {formData.customer_id && (
-          <div className="space-y-0.5">
-            <Label className="text-xs">Empresa</Label>
-            <div className="h-8 px-3 py-1 bg-muted rounded-md border border-input flex items-center text-sm">
-              {customers.find(c => c.id === formData.customer_id)?.company_name || '-'}
-            </div>
-          </div>
-        )}
-
         <div className="space-y-0.5">
           <Label htmlFor="tarifa_id" className="text-xs">Tarifa *</Label>
           <Select
             value={formData.tarifa_id?.toString() || ''}
             onValueChange={(value) => {
-              console.log('[v0] Tarifa changed to:', value)
               setFormData(prev => ({ ...prev, tarifa_id: parseInt(value) }))
             }}
             disabled={loading}
@@ -381,13 +371,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
           <Select
             value={formData.contact_id}
             onValueChange={(value) => {
-              console.log('[v0] Contact changed to:', value)
-              console.log('[v0] Current formData before contact change:', formData)
-              setFormData(prev => {
-                const newData = { ...prev, contact_id: value }
-                console.log('[v0] New formData after contact change:', newData)
-                return newData
-              })
+              setFormData(prev => ({ ...prev, contact_id: value }))
             }}
             disabled={loading || !formData.customer_id || contacts.length === 0}
           >
