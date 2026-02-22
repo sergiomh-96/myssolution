@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Loader2, Plus, X } from 'lucide-react'
 import type { Offer, OfferStatus, UserRole } from '@/lib/types/database'
+import { formatOfferNumber } from '@/lib/utils/offer'
 
 interface OfferFormProps {
   offer?: Offer
@@ -143,8 +144,10 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [contacts, setContacts] = useState<any[]>([])
   const [products, setProducts] = useState<any[]>([])
   const [tarifas, setTarifas] = useState<any[]>([])
+  const [nextOfferNumber, setNextOfferNumber] = useState<number | null>(null)
   const [precios, setPrecios] = useState<any[]>([])
   const [defaultTarifa, setDefaultTarifa] = useState<number | null>(null)
   const [contacts, setContacts] = useState<any[]>([])
@@ -162,7 +165,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
     title: offer?.title || '',
     description: offer?.description || '',
     customer_id: offer?.customer_id || null,
-    contact_id: offer?.contact_id || '',
+    contact_id: offer?.contact_id || null,
     tarifa_id: offer?.tarifa_id || null,
     status: (offer?.status || 'draft') as OfferStatus,
     valid_until: offer?.valid_until ? offer.valid_until.split('T')[0] : addDays(new Date().toISOString().split('T')[0], 30),
@@ -230,6 +233,42 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
     }
     loadData()
   }, [])
+
+  // Calculate next offer number for new offers
+  useEffect(() => {
+    const calculateNextOfferNumber = async () => {
+      if (offer) return // Only for new offers
+      
+      try {
+        const supabase = createClient()
+        const currentYear = new Date().getFullYear()
+        
+        const { data: existingOffers, error } = await supabase
+          .from('offers')
+          .select('offer_number')
+          .eq('created_by', currentUserId)
+          .gte('created_at', `${currentYear}-01-01`)
+          .lte('created_at', `${currentYear}-12-31`)
+          .order('offer_number', { ascending: false })
+          .limit(1)
+
+        if (error) {
+          console.error('Error calculating offer number:', error)
+          return
+        }
+
+        const nextNumber = (existingOffers && existingOffers.length > 0) 
+          ? (existingOffers[0].offer_number as number) + 1 
+          : 1
+        
+        setNextOfferNumber(nextNumber)
+      } catch (err) {
+        console.error('Error:', err)
+      }
+    }
+
+    calculateNextOfferNumber()
+  }, [currentUserId, offer])
 
   // Load contacts when customer changes
   useEffect(() => {
@@ -381,7 +420,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
         title: formData.title,
         description: formData.description,
         customer_id: formData.customer_id ? parseInt(String(formData.customer_id)) : null,
-        contact_id: formData.contact_id,
+        contact_id: formData.contact_id ? parseInt(String(formData.contact_id)) : null,
         tarifa_id: formData.tarifa_id ? parseInt(String(formData.tarifa_id)) : null,
         status: formData.status,
         valid_until: formData.valid_until || null,
@@ -542,8 +581,19 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
 
       {/* Form Fields */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-        {/* Row 1: Title (3 cols), Valid Until (1 col) */}
-        <div className="space-y-0.5 md:col-span-3">
+        {/* Row 1: Offer Number (1 col), Title (2 cols), Valid Until (1 col) */}
+        <div className="space-y-0.5">
+          <Label className="text-xs">Nº Oferta</Label>
+          <div className="h-9 px-3 py-2 bg-muted rounded-md border border-input flex items-center text-sm font-medium">
+            {offer 
+              ? formatOfferNumber(offer.offer_number, new Date(offer.created_at).getFullYear())
+              : nextOfferNumber 
+                ? formatOfferNumber(nextOfferNumber, new Date().getFullYear())
+                : 'Calculando...'}
+          </div>
+        </div>
+
+        <div className="space-y-0.5 md:col-span-2">
           <Label htmlFor="title" className="text-xs">Título Oferta *</Label>
           <Input
             id="title"
@@ -593,9 +643,9 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
         <div className="space-y-0.5">
           <Label htmlFor="contact_id" className="text-xs">Contacto</Label>
           <Select
-            value={formData.contact_id}
+            value={formData.contact_id?.toString() || ''}
             onValueChange={(value) => {
-              setFormData(prev => ({ ...prev, contact_id: value }))
+              setFormData(prev => ({ ...prev, contact_id: value ? parseInt(value) : null }))
             }}
             disabled={loading || !formData.customer_id || contacts.length === 0}
           >
