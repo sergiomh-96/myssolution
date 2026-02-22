@@ -145,12 +145,13 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [contacts, setContacts] = useState<any[]>([])
   const [products, setProducts] = useState<any[]>([])
   const [tarifas, setTarifas] = useState<any[]>([])
+  const [contacts, setContacts] = useState<any[]>([])
   const [nextOfferNumber, setNextOfferNumber] = useState<number | null>(null)
   const [precios, setPrecios] = useState<any[]>([])
   const [defaultTarifa, setDefaultTarifa] = useState<number | null>(null)
+  const [items, setItems] = useState<OfferItem[]>(existingItems)
 
   const existingItems: OfferItem[] = []
 

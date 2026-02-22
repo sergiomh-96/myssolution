@@ -15,7 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Search } from 'lucide-react'
+import { Search, Edit } from 'lucide-react'
 import type { Offer, UserRole } from '@/lib/types/database'
 import { formatDistanceToNow } from 'date-fns'
 import { es } from 'date-fns/locale'
@@ -180,9 +180,16 @@ export function OffersTable({ offers, userRole, userId }: OffersTableProps) {
                       </span>
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button asChild variant="ghost" size="sm">
-                        <Link href={`/dashboard/offers/${offer.id}`}>Ver</Link>
-                      </Button>
+                      <div className="flex items-center justify-end gap-2">
+                        <Button asChild variant="ghost" size="sm">
+                          <Link href={`/dashboard/offers/${offer.id}`}>Ver</Link>
+                        </Button>
+                        <Button asChild variant="ghost" size="sm">
+                          <Link href={`/dashboard/offers/${offer.id}/edit`}>
+                            <Edit className="h-4 w-4" />
+                          </Link>
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
