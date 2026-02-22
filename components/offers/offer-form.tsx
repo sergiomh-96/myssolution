@@ -173,6 +173,35 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
       : Array.from({ length: 15 }, () => createEmptyItem())
   )
 
+  // Load offer items when offer is provided
+  useEffect(() => {
+    const loadOfferItems = async () => {
+      if (!offer?.id) return
+
+      try {
+        const supabase = createClient()
+        const { data: offerItems, error } = await supabase
+          .from('offer_items')
+          .select('*')
+          .eq('offer_id', offer.id)
+          .order('id')
+
+        if (error) {
+          console.error('Error loading offer items:', error)
+          return
+        }
+
+        if (offerItems && offerItems.length > 0) {
+          setItems(offerItems as OfferItem[])
+        }
+      } catch (err) {
+        console.error('Error:', err)
+      }
+    }
+
+    loadOfferItems()
+  }, [offer?.id])
+
   // Helper to add 30 days to a date
   const addDays = (dateStr: string, days: number) => {
     const date = new Date(dateStr)

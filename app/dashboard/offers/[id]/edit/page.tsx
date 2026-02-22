@@ -27,6 +27,13 @@ export default async function EditOfferPage({ params }: PageProps) {
     notFound()
   }
 
+  // Fetch the offer items
+  const { data: offerItems } = await supabase
+    .from('offer_items')
+    .select('*')
+    .eq('offer_id', id)
+    .order('id')
+
   // Get customers for the dropdown
   let customersQuery = supabase
     .from('customers')
