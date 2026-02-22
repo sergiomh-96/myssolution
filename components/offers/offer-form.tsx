@@ -151,12 +151,6 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
 
   const existingItems = offer?.items as OfferItem[] || []
 
-  // Helper to get date in YYYY-MM-DD format
-  const getTodayDate = () => {
-    const today = new Date()
-    return today.toISOString().split('T')[0]
-  }
-
   // Helper to add 30 days to a date
   const addDays = (dateStr: string, days: number) => {
     const date = new Date(dateStr)
@@ -171,8 +165,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
     contact_id: offer?.contact_id || '',
     tarifa_id: offer?.tarifa_id || null,
     status: (offer?.status || 'draft') as OfferStatus,
-    creation_date: offer?.created_at ? offer.created_at.split('T')[0] : getTodayDate(),
-    valid_until: offer?.valid_until ? offer.valid_until.split('T')[0] : addDays(getTodayDate(), 30),
+    valid_until: offer?.valid_until ? offer.valid_until.split('T')[0] : addDays(new Date().toISOString().split('T')[0], 30),
     notes: offer?.notes || '',
   })
 
@@ -458,33 +451,14 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
 
       {/* Form Fields */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-        {/* Row 1: Title (2 cols), Creation Date (1 col), Valid Until (1 col) */}
-        <div className="space-y-0.5 md:col-span-2">
+        {/* Row 1: Title (3 cols), Valid Until (1 col) */}
+        <div className="space-y-0.5 md:col-span-3">
           <Label htmlFor="title" className="text-xs">Título Oferta *</Label>
           <Input
             id="title"
             value={formData.title}
             onChange={(e) => setFormData({ ...formData, title: e.target.value })}
             required
-            disabled={loading}
-            className="h-9 text-sm"
-          />
-        </div>
-
-        <div className="space-y-0.5">
-          <Label htmlFor="creation_date" className="text-xs">Fecha Realización</Label>
-          <Input
-            id="creation_date"
-            type="date"
-            value={formData.creation_date}
-            onChange={(e) => {
-              const newDate = e.target.value
-              setFormData(prev => ({ 
-                ...prev, 
-                creation_date: newDate,
-                valid_until: addDays(newDate, 30)
-              }))
-            }}
             disabled={loading}
             className="h-9 text-sm"
           />
