@@ -184,54 +184,58 @@ export default async function OfferDetailPage({ params }: PageProps) {
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className="w-full border-collapse" style={{ tableLayout: 'fixed' }}>
                 <thead>
                   <tr className="border-b border-border">
-                    <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Producto</th>
-                    <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Descripción</th>
-                    <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Cantidad</th>
-                    <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">PVP</th>
-                    <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Dto 1</th>
-                    <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Dto 2</th>
-                    <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Total</th>
+                    <th className="text-left py-2 px-2 text-xs font-medium text-muted-foreground" style={{ width: '100px' }}>Producto</th>
+                    <th className="text-left py-2 px-2 text-xs font-medium text-muted-foreground" style={{ width: '200px' }}>Descripción</th>
+                    <th className="text-right py-2 px-1 text-xs font-medium text-muted-foreground" style={{ width: '60px' }}>Cantidad</th>
+                    <th className="text-right py-2 px-1 text-xs font-medium text-muted-foreground" style={{ width: '60px' }}>PVP</th>
+                    <th className="text-right py-2 px-1 text-xs font-medium text-muted-foreground" style={{ width: '50px' }}>Dto 1 %</th>
+                    <th className="text-right py-2 px-1 text-xs font-medium text-muted-foreground" style={{ width: '50px' }}>Dto 2 %</th>
+                    <th className="text-right py-2 px-1 text-xs font-medium text-muted-foreground" style={{ width: '70px' }}>Neto 1</th>
+                    <th className="text-right py-2 px-1 text-xs font-medium text-muted-foreground" style={{ width: '70px' }}>Neto 2</th>
                   </tr>
                 </thead>
                 <tbody>
                   {items.map((item) => (
-                    <tr key={item.id} className="border-b border-border last:border-0">
-                      <td className="py-3 px-4">
+                    <tr key={item.id} className="border-b border-border last:border-0 hover:bg-muted/30">
+                      <td className="py-2 px-2 text-xs">
                         <div>
-                          <p className="font-medium text-foreground">
+                          <p className="font-medium text-foreground truncate">
                             {item.product?.referencia || 'N/A'}
                           </p>
-                          <p className="text-sm text-muted-foreground">
+                          <p className="text-xs text-muted-foreground truncate">
                             {item.product?.modelo_nombre}
                           </p>
                         </div>
                       </td>
-                      <td className="py-3 px-4 text-sm text-foreground">
-                        {item.description || item.product?.descripcion}
+                      <td className="py-2 px-2 text-xs text-foreground break-words">
+                        {item.description || item.product?.descripcion || '-'}
                       </td>
-                      <td className="py-3 px-4 text-right text-foreground">{item.quantity}</td>
-                      <td className="py-3 px-4 text-right text-foreground">
+                      <td className="py-2 px-1 text-right text-xs font-medium text-foreground">{item.quantity}</td>
+                      <td className="py-2 px-1 text-right text-xs text-foreground">
                         €{item.pvp.toFixed(2)}
                       </td>
-                      <td className="py-3 px-4 text-right text-muted-foreground">
+                      <td className="py-2 px-1 text-right text-xs text-muted-foreground">
                         {item.discount1 ? `${item.discount1}%` : '-'}
                       </td>
-                      <td className="py-3 px-4 text-right text-muted-foreground">
+                      <td className="py-2 px-1 text-right text-xs text-muted-foreground">
                         {item.discount2 ? `${item.discount2}%` : '-'}
                       </td>
-                      <td className="py-3 px-4 text-right font-medium text-foreground">
+                      <td className="py-2 px-1 text-right text-xs text-foreground">
+                        €{item.neto_total1.toFixed(2)}
+                      </td>
+                      <td className="py-2 px-1 text-right text-xs font-medium text-foreground">
                         €{item.neto_total2.toFixed(2)}
                       </td>
                     </tr>
                   ))}
-                  <tr className="bg-muted/50">
-                    <td colSpan={6} className="py-3 px-4 text-right font-bold text-foreground">
+                  <tr className="bg-muted/50 border-t-2 border-border">
+                    <td colSpan={7} className="py-2 px-2 text-right text-xs font-bold text-foreground">
                       Total:
                     </td>
-                    <td className="py-3 px-4 text-right font-bold text-foreground">
+                    <td className="py-2 px-1 text-right text-xs font-bold text-foreground">
                       €{items.reduce((sum, item) => sum + Number(item.neto_total2), 0).toFixed(2)}
                     </td>
                   </tr>

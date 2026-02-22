@@ -143,7 +143,9 @@ export function OffersTable({ offers, userRole, userId }: OffersTableProps) {
                 {filteredOffers.map((offer) => (
                   <TableRow key={offer.id}>
                     <TableCell>
-                      <p className="font-medium text-foreground">{offer.title}</p>
+                      <span className="text-sm text-muted-foreground">
+                        {formattedDates[offer.id] || 'hace poco'}
+                      </span>
                     </TableCell>
                     <TableCell>
                       <span className="text-sm text-foreground">
