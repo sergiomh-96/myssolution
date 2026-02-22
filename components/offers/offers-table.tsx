@@ -19,6 +19,7 @@ import { Search } from 'lucide-react'
 import type { Offer, UserRole } from '@/lib/types/database'
 import { formatDistanceToNow } from 'date-fns'
 import { es } from 'date-fns/locale'
+import { formatOfferNumber } from '@/lib/utils/offer'
 
 interface OffersTableProps {
   offers: (Omit<Offer, 'total_amount' | 'currency'> & {
@@ -130,6 +131,7 @@ export function OffersTable({ offers, userRole, userId }: OffersTableProps) {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>Nº Oferta</TableHead>
                   <TableHead>Título</TableHead>
                   <TableHead>Cliente</TableHead>
                   <TableHead>Importe</TableHead>
@@ -142,6 +144,11 @@ export function OffersTable({ offers, userRole, userId }: OffersTableProps) {
               <TableBody>
                 {filteredOffers.map((offer) => (
                   <TableRow key={offer.id}>
+                    <TableCell>
+                      <span className="font-medium text-foreground">
+                        {formatOfferNumber(offer.offer_number, new Date(offer.created_at).getFullYear())}
+                      </span>
+                    </TableCell>
                     <TableCell>
                       <p className="font-medium text-foreground">{offer.title}</p>
                     </TableCell>
