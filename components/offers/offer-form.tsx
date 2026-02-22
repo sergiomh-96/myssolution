@@ -44,6 +44,19 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
 
   const existingItems = offer?.items as OfferItem[] || []
 
+  // Helper to get date in YYYY-MM-DD format
+  const getTodayDate = () => {
+    const today = new Date()
+    return today.toISOString().split('T')[0]
+  }
+
+  // Helper to add 30 days to a date
+  const addDays = (dateStr: string, days: number) => {
+    const date = new Date(dateStr)
+    date.setDate(date.getDate() + days)
+    return date.toISOString().split('T')[0]
+  }
+
   const [formData, setFormData] = useState({
     title: offer?.title || '',
     description: offer?.description || '',
@@ -51,7 +64,8 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
     contact_id: offer?.contact_id || '',
     tarifa_id: offer?.tarifa_id || null,
     status: (offer?.status || 'draft') as OfferStatus,
-    valid_until: offer?.valid_until ? offer.valid_until.split('T')[0] : '',
+    creation_date: offer?.created_at ? offer.created_at.split('T')[0] : getTodayDate(),
+    valid_until: offer?.valid_until ? offer.valid_until.split('T')[0] : addDays(getTodayDate(), 30),
     notes: offer?.notes || '',
   })
 
@@ -302,49 +316,17 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-3">
+    <form onSubmit={handleSubmit} className="space-y-4">
       {error && (
         <Alert variant="destructive">
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
-        <div className="space-y-0.5">
-          <Label htmlFor="title" className="text-xs">Título Oferta *</Label>
-          <Input
-            id="title"
-            value={formData.title}
-            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-            required
-            disabled={loading}
-            className="h-8 text-sm"
-          />
-        </div>
-
-        <div className="space-y-0.5">
-          <Label htmlFor="customer_id" className="text-xs">Cliente *</Label>
-          <Select
-            value={formData.customer_id?.toString() || ''}
-            onValueChange={(value) => {
-              setFormData(prev => ({ ...prev, customer_id: value }))
-            }}
-            disabled={loading}
-          >
-            <SelectTrigger id="customer_id" className="h-8 text-sm">
-              <SelectValue placeholder="Seleccionar cliente" />
-            </SelectTrigger>
-            <SelectContent>
-              {customers.map((customer) => (
-                <SelectItem key={customer.id} value={customer.id.toString()}>
-                  {customer.company_name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-0.5">
+      {/* Header with Tarifa */}
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-semibold text-foreground">Detalles de la Oferta</h3>
+        <div className="w-48">
           <Label htmlFor="tarifa_id" className="text-xs">Tarifa *</Label>
           <Select
             value={formData.tarifa_id?.toString() || ''}
@@ -365,6 +347,76 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
             </SelectContent>
           </Select>
         </div>
+      </div>
+
+      {/* Form Fields */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+        {/* Row 1: Title (2 cols), Creation Date (1 col), Valid Until (1 col) */}
+        <div className="space-y-0.5 md:col-span-2">
+          <Label htmlFor="title" className="text-xs">Título Oferta *</Label>
+          <Input
+            id="title"
+            value={formData.title}
+            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+            required
+            disabled={loading}
+            className="h-9 text-sm"
+          />
+        </div>
+
+        <div className="space-y-0.5">
+          <Label htmlFor="creation_date" className="text-xs">Fecha Realización</Label>
+          <Input
+            id="creation_date"
+            type="date"
+            value={formData.creation_date}
+            onChange={(e) => {
+              const newDate = e.target.value
+              setFormData(prev => ({ 
+                ...prev, 
+                creation_date: newDate,
+                valid_until: addDays(newDate, 30)
+              }))
+            }}
+            disabled={loading}
+            className="h-9 text-sm"
+          />
+        </div>
+
+        <div className="space-y-0.5">
+          <Label htmlFor="valid_until" className="text-xs">Fecha Validez (+30 días)</Label>
+          <Input
+            id="valid_until"
+            type="date"
+            value={formData.valid_until}
+            onChange={(e) => setFormData({ ...formData, valid_until: e.target.value })}
+            disabled={loading}
+            className="h-9 text-sm"
+          />
+        </div>
+
+        {/* Row 2: Client, Contact, Status, Notes */}
+        <div className="space-y-0.5">
+          <Label htmlFor="customer_id" className="text-xs">Cliente *</Label>
+          <Select
+            value={formData.customer_id?.toString() || ''}
+            onValueChange={(value) => {
+              setFormData(prev => ({ ...prev, customer_id: value }))
+            }}
+            disabled={loading}
+          >
+            <SelectTrigger id="customer_id" className="h-9 text-sm">
+              <SelectValue placeholder="Seleccionar cliente" />
+            </SelectTrigger>
+            <SelectContent>
+              {customers.map((customer) => (
+                <SelectItem key={customer.id} value={customer.id.toString()}>
+                  {customer.company_name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
         <div className="space-y-0.5">
           <Label htmlFor="contact_id" className="text-xs">Contacto</Label>
@@ -375,7 +427,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
             }}
             disabled={loading || !formData.customer_id || contacts.length === 0}
           >
-            <SelectTrigger id="contact_id" className="h-8 text-sm">
+            <SelectTrigger id="contact_id" className="h-9 text-sm">
               <SelectValue placeholder="Seleccionar contacto" />
             </SelectTrigger>
             <SelectContent>
@@ -395,7 +447,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
             onValueChange={(value) => setFormData({ ...formData, status: value as OfferStatus })}
             disabled={loading}
           >
-            <SelectTrigger id="status" className="h-8 text-sm">
+            <SelectTrigger id="status" className="h-9 text-sm">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -415,26 +467,26 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
         </div>
 
         <div className="space-y-0.5">
-          <Label htmlFor="valid_until" className="text-xs">Válida Hasta</Label>
+          <Label htmlFor="notes" className="text-xs">Notas</Label>
           <Input
-            id="valid_until"
-            type="date"
-            value={formData.valid_until}
-            onChange={(e) => setFormData({ ...formData, valid_until: e.target.value })}
+            id="notes"
+            value={formData.notes}
+            onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
             disabled={loading}
-            className="h-8 text-sm"
+            className="h-9 text-sm"
           />
         </div>
 
-        <div className="space-y-0.5 col-span-2">
+        {/* Row 3: Description (full width, double height) */}
+        <div className="space-y-0.5 md:col-span-4">
           <Label htmlFor="description" className="text-xs">Descripción</Label>
           <Textarea
             id="description"
             value={formData.description}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            rows={1}
+            rows={3}
             disabled={loading}
-            className="min-h-[32px] resize-none text-sm"
+            className="resize-none text-sm"
           />
         </div>
       </div>

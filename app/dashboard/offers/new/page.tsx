@@ -29,10 +29,7 @@ export default async function NewOfferPage() {
       </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle>Detalles de la Oferta</CardTitle>
-        </CardHeader>
-        <CardContent>
+        <CardContent className="p-6">
           <OfferForm
             currentUserId={profile.id}
             currentUserRole={profile.role}
