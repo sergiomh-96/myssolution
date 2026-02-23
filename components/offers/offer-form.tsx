@@ -1,6 +1,6 @@
 'use client'
 
-// Version: force-rebuild-contacts-fix
+// CACHE CLEAR: Complete rebuild - contacts renamed to contactList
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
@@ -221,7 +221,6 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
     tarifa_id: offer?.tarifa_id || null,
     status: (offer?.status || 'draft') as OfferStatus,
     valid_until: offer?.valid_until ? offer.valid_until.split('T')[0] : addDays(new Date().toISOString().split('T')[0], 30),
-    notes: offer?.notes || '',
   })
 
   // Load active products and tarifas
@@ -475,7 +474,6 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
         tarifa_id: formData.tarifa_id ? parseInt(String(formData.tarifa_id)) : null,
         status: formData.status,
         valid_until: formData.valid_until || null,
-        notes: formData.notes,
       }
 
       if (offer) {
@@ -740,13 +738,30 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
         </div>
 
         <div className="space-y-0.5">
-          <Label htmlFor="notes" className="text-xs">Notas</Label>
+          <Label className="text-xs">Fecha Creación</Label>
           <Input
-            id="notes"
-            value={formData.notes}
-            onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-            disabled={loading}
-            className="h-9 text-sm"
+            type="text"
+            value={offer?.created_at 
+              ? new Date(offer.created_at).toLocaleString('es-ES', {
+                  year: 'numeric',
+                  month: '2-digit',
+                  day: '2-digit',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  second: '2-digit'
+                })
+              : new Date().toLocaleString('es-ES', {
+                  year: 'numeric',
+                  month: '2-digit',
+                  day: '2-digit',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  second: '2-digit'
+                })
+            }
+            readOnly
+            disabled
+            className="h-9 text-sm bg-muted"
           />
         </div>
 
