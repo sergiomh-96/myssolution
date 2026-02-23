@@ -53,6 +53,7 @@ export interface Offer {
   id: number
   title: string
   description: string | null
+  notas_internas: string | null
   customer_id: number
   contact_id: number | null
   tarifa_id: number | null
