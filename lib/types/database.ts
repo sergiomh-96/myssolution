@@ -28,16 +28,25 @@ export interface Customer {
   contact_email: string
   contact_phone: string | null
   address: string | null
-  city: string | null
-  country: string | null
   website: string | null
   industry: string | null
   status: CustomerStatus
   assigned_to: string | null
-  notes: string | null
   created_by: string
   created_at: string
   updated_at: string
+  // Nuevos campos agregados
+  notas_cliente: string | null
+  descuento_sistemas: number | null
+  descuento_difusion: number | null
+  descuento_agfri: number | null
+  id_erp: number | null
+  nif: string | null
+  forma_pago: string | null
+  codigo_postal: string | null
+  provincia: string | null
+  ciudad: string | null
+  pais: string | null
 }
 
 export interface Offer {
