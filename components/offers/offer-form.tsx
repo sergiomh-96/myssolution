@@ -153,6 +153,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
   const [precios, setPrecios] = useState<any[]>([])
   const [defaultTarifa, setDefaultTarifa] = useState<number | null>(null)
   const [contactList, setContactList] = useState<any[]>([])
+  const [currentCustomer, setCurrentCustomer] = useState<any>(null)
 
   const existingItems: OfferItem[] = []
 
@@ -214,6 +215,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
   const [formData, setFormData] = useState({
     title: offer?.title || '',
     description: offer?.description || '',
+    notas_internas: (offer as any)?.notas_internas || '',
     customer_id: offer?.customer_id || null,
     contact_id: offer?.contact_id || null,
     tarifa_id: offer?.tarifa_id || null,
@@ -301,36 +303,53 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
     calculateNextOfferNumber()
   }, [currentUserId, offer])
 
-  // Load contacts when customer changes
+  // Load contacts and customer when customer changes
   useEffect(() => {
-    const loadContacts = async () => {
+    const loadCustomerData = async () => {
       if (!formData.customer_id) {
         setContactList([])
+        setCurrentCustomer(null)
         return
       }
 
       try {
         const supabase = createClient()
-        const { data, error } = await supabase
+        
+        // Load contacts
+        const { data: contacts, error: contactsError } = await supabase
           .from('clients_contacts')
           .select('*')
           .eq('customer_id', formData.customer_id)
           .order('nombre')
 
-        if (error) {
-          console.error('Error loading contacts:', error)
+        if (contactsError) {
+          console.error('Error loading contacts:', contactsError)
           setError('Error loading contacts')
           return
         }
 
-        setContactList(data || [])
+        setContactList(contacts || [])
+
+        // Load customer data
+        const { data: customerData, error: customerError } = await supabase
+          .from('customers')
+          .select('*')
+          .eq('id', formData.customer_id)
+          .single()
+
+        if (customerError) {
+          console.error('Error loading customer:', customerError)
+          return
+        }
+
+        setCurrentCustomer(customerData)
       } catch (err) {
         console.error('Error:', err)
-        setError('Error loading contacts')
+        setError('Error loading data')
       }
     }
 
-    loadContacts()
+    loadCustomerData()
   }, [formData.customer_id])
 
   // Load precios when tarifa changes
@@ -450,6 +469,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
       const offerData = {
         title: formData.title,
         description: formData.description,
+        notas_internas: formData.notas_internas,
         customer_id: formData.customer_id ? parseInt(String(formData.customer_id)) : null,
         contact_id: formData.contact_id ? parseInt(String(formData.contact_id)) : null,
         tarifa_id: formData.tarifa_id ? parseInt(String(formData.tarifa_id)) : null,
@@ -730,9 +750,20 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
           />
         </div>
 
-        {/* Row 3: Description (full width, double height) */}
-        <div className="space-y-0.5 md:col-span-4">
-          <Label htmlFor="description" className="text-xs">Descripción</Label>
+        {/* Row 3: Three description fields */}
+        <div className="space-y-0.5">
+          <Label className="text-xs">Notas Cliente</Label>
+          <Textarea
+            value={currentCustomer?.notas_cliente || ''}
+            readOnly
+            rows={3}
+            className="resize-none text-sm bg-muted"
+            placeholder="Notas del cliente (solo lectura)"
+          />
+        </div>
+
+        <div className="space-y-0.5">
+          <Label htmlFor="description" className="text-xs">Descripción (Visible en Oferta)</Label>
           <Textarea
             id="description"
             value={formData.description}
@@ -740,6 +771,20 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
             rows={3}
             disabled={loading}
             className="resize-none text-sm"
+            placeholder="Descripción visible en la oferta"
+          />
+        </div>
+
+        <div className="space-y-0.5">
+          <Label htmlFor="notas_internas" className="text-xs">Notas Internas (Invisibles)</Label>
+          <Textarea
+            id="notas_internas"
+            value={formData.notas_internas}
+            onChange={(e) => setFormData({ ...formData, notas_internas: e.target.value })}
+            rows={3}
+            disabled={loading}
+            className="resize-none text-sm"
+            placeholder="Notas internas que no se mostrarán en la oferta"
           />
         </div>
       </div>
