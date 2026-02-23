@@ -143,14 +143,16 @@ function ProductSearchInput({
 
 export function OfferForm({ offer, currentUserId, currentUserRole, customers }: OfferFormProps) {
   const router = useRouter()
+  
+  // State declarations - all in one place
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [products, setProducts] = useState<any[]>([])
   const [tarifas, setTarifas] = useState<any[]>([])
-  const [contacts, setContacts] = useState<any[]>([])
   const [nextOfferNumber, setNextOfferNumber] = useState<number | null>(null)
   const [precios, setPrecios] = useState<any[]>([])
   const [defaultTarifa, setDefaultTarifa] = useState<number | null>(null)
+  const [contactList, setContactList] = useState<any[]>([])
 
   const existingItems: OfferItem[] = []
 
@@ -303,7 +305,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
   useEffect(() => {
     const loadContacts = async () => {
       if (!formData.customer_id) {
-        setContacts([])
+        setContactList([])
         return
       }
 
@@ -321,7 +323,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
           return
         }
 
-        setContacts(data || [])
+        setContactList(data || [])
       } catch (err) {
         console.error('Error:', err)
         setError('Error loading contacts')
@@ -676,13 +678,13 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
             onValueChange={(value) => {
               setFormData(prev => ({ ...prev, contact_id: value ? parseInt(value) : null }))
             }}
-            disabled={loading || !formData.customer_id || contacts.length === 0}
+            disabled={loading || !formData.customer_id || contactList.length === 0}
           >
             <SelectTrigger id="contact_id" className="h-9 text-sm">
               <SelectValue placeholder="Seleccionar contacto" />
             </SelectTrigger>
             <SelectContent>
-              {contacts.map((contact) => (
+              {contactList.map((contact) => (
                 <SelectItem key={contact.id} value={contact.id.toString()}>
                   {contact.nombre} {contact.apellidos} - {contact.puesto}
                 </SelectItem>
