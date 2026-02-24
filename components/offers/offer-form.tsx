@@ -845,42 +845,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
           />
         </div>
 
-        {/* Row 2.5: User Assignments */}
-        <div className="space-y-0.5 md:col-span-4">
-          <Label htmlFor="assigned_users" className="text-xs">Asignar a Usuarios</Label>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 p-3 border border-input rounded-md bg-background max-h-48 overflow-y-auto">
-            {users.length > 0 ? (
-              users.map((user) => (
-                <label key={user.id} className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={assignedUserIds.includes(user.id)}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setAssignedUserIds([...assignedUserIds, user.id])
-                      } else {
-                        setAssignedUserIds(assignedUserIds.filter(id => id !== user.id))
-                      }
-                    }}
-                    disabled={loading}
-                    className="rounded"
-                  />
-                  <span className="text-xs truncate">
-                    <span className="font-medium">{user.full_name}</span>
-                    <span className="text-muted-foreground ml-1">({user.email})</span>
-                  </span>
-                </label>
-              ))
-            ) : (
-              <span className="text-xs text-muted-foreground">No hay usuarios disponibles</span>
-            )}
-          </div>
-          {assignedUserIds.length > 0 && (
-            <p className="text-xs text-muted-foreground">{assignedUserIds.length} usuario(s) asignado(s)</p>
-          )}
-        </div>
-
-        {/* Row 3: Three description fields */}
+        {/* Row 3: Three description fields + User Assignments */}
         <div className="space-y-0.5">
           <Label className="text-xs">Notas Cliente</Label>
           <Textarea
@@ -916,6 +881,42 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
             className="resize-none text-sm"
             placeholder="Notas internas que no se mostrarán en la oferta"
           />
+        </div>
+
+        {/* User Assignments - 4th Column */}
+        <div className="space-y-0.5">
+          <Label htmlFor="assigned_users" className="text-xs">Asignar a Usuarios</Label>
+          <div className="border border-input rounded-md bg-background p-2 max-h-48 overflow-y-auto">
+            <div className="grid grid-cols-1 gap-2">
+              {users.length > 0 ? (
+                users.map((user) => (
+                  <label key={user.id} className="flex items-center gap-2 cursor-pointer hover:bg-accent/50 p-1 rounded">
+                    <input
+                      type="checkbox"
+                      checked={assignedUserIds.includes(user.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setAssignedUserIds([...assignedUserIds, user.id])
+                        } else {
+                          setAssignedUserIds(assignedUserIds.filter(id => id !== user.id))
+                        }
+                      }}
+                      disabled={loading}
+                      className="rounded"
+                    />
+                    <span className="text-xs truncate">
+                      <span className="font-medium">{user.full_name}</span>
+                    </span>
+                  </label>
+                ))
+              ) : (
+                <span className="text-xs text-muted-foreground">No hay usuarios</span>
+              )}
+            </div>
+            {assignedUserIds.length > 0 && (
+              <p className="text-xs text-muted-foreground mt-2 border-t border-border pt-2">{assignedUserIds.length} asignado(s)</p>
+            )}
+          </div>
         </div>
       </div>
 
