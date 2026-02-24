@@ -681,19 +681,33 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
         </Alert>
       )}
 
-      {/* Header with Tarifa */}
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-foreground">Detalles de la Oferta</h3>
-        <div className="w-48">
+      {/* Detalles de la Oferta — 4 filas x 4 columnas */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+
+        {/* ── Fila 1: Nº Oferta | — | — | Tarifa ── */}
+        <div className="space-y-0.5">
+          <Label className="text-xs">Nº Oferta</Label>
+          <div className="h-9 px-3 py-2 bg-muted rounded-md border border-input flex items-center text-sm font-medium">
+            {offer
+              ? formatOfferNumber(offer.offer_number, new Date(offer.created_at).getFullYear())
+              : nextOfferNumber
+                ? formatOfferNumber(nextOfferNumber, new Date().getFullYear())
+                : 'Calculando...'}
+          </div>
+        </div>
+
+        {/* empty spacers to push Tarifa to col 4 */}
+        <div className="hidden md:block" />
+        <div className="hidden md:block" />
+
+        <div className="space-y-0.5">
           <Label htmlFor="tarifa_id" className="text-xs">Tarifa *</Label>
           <Select
             value={formData.tarifa_id?.toString() || ''}
-            onValueChange={(value) => {
-              setFormData(prev => ({ ...prev, tarifa_id: parseInt(value) }))
-            }}
+            onValueChange={(value) => setFormData(prev => ({ ...prev, tarifa_id: parseInt(value) }))}
             disabled={loading}
           >
-            <SelectTrigger id="tarifa_id" className="h-8 text-sm">
+            <SelectTrigger id="tarifa_id" className="h-9 text-sm">
               <SelectValue placeholder="Seleccionar tarifa" />
             </SelectTrigger>
             <SelectContent>
@@ -705,22 +719,8 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
             </SelectContent>
           </Select>
         </div>
-      </div>
 
-      {/* Form Fields */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-        {/* Row 1: Offer Number (1 col), Title (2 cols), Valid Until (1 col) */}
-        <div className="space-y-0.5">
-          <Label className="text-xs">Nº Oferta</Label>
-          <div className="h-9 px-3 py-2 bg-muted rounded-md border border-input flex items-center text-sm font-medium">
-            {offer 
-              ? formatOfferNumber(offer.offer_number, new Date(offer.created_at).getFullYear())
-              : nextOfferNumber 
-                ? formatOfferNumber(nextOfferNumber, new Date().getFullYear())
-                : 'Calculando...'}
-          </div>
-        </div>
-
+        {/* ── Fila 2: Título (2 cols) | — | Fecha Creación ── */}
         <div className="space-y-0.5 md:col-span-2">
           <Label htmlFor="title" className="text-xs">Título Oferta *</Label>
           <Input
@@ -733,26 +733,35 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
           />
         </div>
 
+        <div className="hidden md:block" />
+
         <div className="space-y-0.5">
-          <Label htmlFor="valid_until" className="text-xs">Fecha Validez (+30 días)</Label>
+          <Label className="text-xs">Fecha Creación</Label>
           <Input
-            id="valid_until"
-            type="date"
-            value={formData.valid_until}
-            onChange={(e) => setFormData({ ...formData, valid_until: e.target.value })}
-            disabled={loading}
-            className="h-9 text-sm"
+            type="text"
+            value={
+              offer?.created_at
+                ? new Date(offer.created_at).toLocaleString('es-ES', {
+                    year: 'numeric', month: '2-digit', day: '2-digit',
+                    hour: '2-digit', minute: '2-digit', second: '2-digit',
+                  })
+                : new Date().toLocaleString('es-ES', {
+                    year: 'numeric', month: '2-digit', day: '2-digit',
+                    hour: '2-digit', minute: '2-digit', second: '2-digit',
+                  })
+            }
+            readOnly
+            disabled
+            className="h-9 text-sm bg-muted"
           />
         </div>
 
-        {/* Row 2: Client, Contact, Status, Notes */}
+        {/* ── Fila 3: Cliente | Contacto | Estado | Fecha Validez ── */}
         <div className="space-y-0.5">
           <Label htmlFor="customer_id" className="text-xs">Cliente *</Label>
           <Select
             value={formData.customer_id?.toString() || ''}
-            onValueChange={(value) => {
-              setFormData(prev => ({ ...prev, customer_id: parseInt(value) }))
-            }}
+            onValueChange={(value) => setFormData(prev => ({ ...prev, customer_id: parseInt(value) }))}
             disabled={loading}
           >
             <SelectTrigger id="customer_id" className="h-9 text-sm">
@@ -772,9 +781,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
           <Label htmlFor="contact_id" className="text-xs">Contacto</Label>
           <Select
             value={formData.contact_id?.toString() || ''}
-            onValueChange={(value) => {
-              setFormData(prev => ({ ...prev, contact_id: value ? parseInt(value) : null }))
-            }}
+            onValueChange={(value) => setFormData(prev => ({ ...prev, contact_id: value ? parseInt(value) : null }))}
             disabled={loading || !formData.customer_id || contactList.length === 0}
           >
             <SelectTrigger id="contact_id" className="h-9 text-sm">
@@ -817,40 +824,24 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
         </div>
 
         <div className="space-y-0.5">
-          <Label className="text-xs">Fecha Creación</Label>
+          <Label htmlFor="valid_until" className="text-xs">Fecha Validez</Label>
           <Input
-            type="text"
-            value={offer?.created_at 
-              ? new Date(offer.created_at).toLocaleString('es-ES', {
-                  year: 'numeric',
-                  month: '2-digit',
-                  day: '2-digit',
-                  hour: '2-digit',
-                  minute: '2-digit',
-                  second: '2-digit'
-                })
-              : new Date().toLocaleString('es-ES', {
-                  year: 'numeric',
-                  month: '2-digit',
-                  day: '2-digit',
-                  hour: '2-digit',
-                  minute: '2-digit',
-                  second: '2-digit'
-                })
-            }
-            readOnly
-            disabled
-            className="h-9 text-sm bg-muted"
+            id="valid_until"
+            type="date"
+            value={formData.valid_until}
+            onChange={(e) => setFormData({ ...formData, valid_until: e.target.value })}
+            disabled={loading}
+            className="h-9 text-sm"
           />
         </div>
 
-        {/* Row 3: Three description fields + User Assignments */}
+        {/* ── Fila 4: Notas Cliente | Descripción | Notas Internas | Asignar Usuarios ── */}
         <div className="space-y-0.5">
           <Label className="text-xs">Notas Cliente</Label>
           <Textarea
             value={currentCustomer?.notas_cliente || ''}
             readOnly
-            rows={3}
+            rows={4}
             className="resize-none text-sm bg-muted"
             placeholder="Notas del cliente (solo lectura)"
           />
@@ -862,7 +853,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
             id="description"
             value={formData.description}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            rows={3}
+            rows={4}
             disabled={loading}
             className="resize-none text-sm"
             placeholder="Descripción visible en la oferta"
@@ -875,21 +866,20 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
             id="notas_internas"
             value={formData.notas_internas}
             onChange={(e) => setFormData({ ...formData, notas_internas: e.target.value })}
-            rows={3}
+            rows={4}
             disabled={loading}
             className="resize-none text-sm"
             placeholder="Notas internas que no se mostrarán en la oferta"
           />
         </div>
 
-        {/* User Assignments - 4th Column */}
         <div className="space-y-0.5">
-          <Label htmlFor="assigned_users" className="text-xs">Asignar a Usuarios</Label>
-          <div className="border border-input rounded-md bg-background p-2 max-h-48 overflow-y-auto">
-            <div className="grid grid-cols-1 gap-2">
+          <Label className="text-xs">Asignar a Usuarios</Label>
+          <div className="border border-input rounded-md bg-background p-2 overflow-y-auto" style={{ minHeight: '6.5rem' }}>
+            <div className="grid grid-cols-1 gap-1.5">
               {users.length > 0 ? (
                 users.map((user) => (
-                  <label key={user.id} className="flex items-center gap-2 cursor-pointer hover:bg-accent/50 p-1 rounded">
+                  <label key={user.id} className="flex items-center gap-2 cursor-pointer hover:bg-accent/50 px-1 py-0.5 rounded">
                     <input
                       type="checkbox"
                       checked={assignedUserIds.includes(user.id)}
@@ -903,9 +893,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
                       disabled={loading}
                       className="rounded"
                     />
-                    <span className="text-xs truncate">
-                      <span className="font-medium">{user.full_name}</span>
-                    </span>
+                    <span className="text-xs font-medium truncate">{user.full_name}</span>
                   </label>
                 ))
               ) : (
@@ -913,10 +901,13 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
               )}
             </div>
             {assignedUserIds.length > 0 && (
-              <p className="text-xs text-muted-foreground mt-2 border-t border-border pt-2">{assignedUserIds.length} asignado(s)</p>
+              <p className="text-xs text-muted-foreground mt-2 border-t border-border pt-1">
+                {assignedUserIds.length} asignado(s)
+              </p>
             )}
           </div>
         </div>
+
       </div>
 
       <div className="space-y-2">
