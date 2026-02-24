@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { requireProfile } from '@/lib/auth'
 import bcrypt from 'bcryptjs'
@@ -28,9 +28,9 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const supabase = await createClient()
+    const supabase = createAdminClient()
 
-    // Create user in Supabase Auth
+    // Create user in Supabase Auth using admin client
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
       email,
       password,
@@ -42,6 +42,7 @@ export async function POST(request: NextRequest) {
     })
 
     if (authError) {
+      console.error('[v0] Auth error:', authError)
       return NextResponse.json(
         { error: authError.message },
         { status: 400 }
@@ -63,6 +64,7 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (profileError) {
+      console.error('[v0] Profile error:', profileError)
       // Clean up auth user if profile creation fails
       await supabase.auth.admin.deleteUser(authData.user!.id)
       return NextResponse.json(
@@ -71,9 +73,10 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    console.log('[v0] User created successfully:', profileData)
     return NextResponse.json(profileData, { status: 201 })
   } catch (error) {
-    console.error('Error creating user:', error)
+    console.error('[v0] Error creating user:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

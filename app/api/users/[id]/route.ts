@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { requireProfile } from '@/lib/auth'
 
@@ -27,7 +27,7 @@ export async function PUT(
       )
     }
 
-    const supabase = await createClient()
+    const supabase = createAdminClient()
 
     // Update user metadata in auth
     await supabase.auth.admin.updateUserById(id, {
