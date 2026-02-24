@@ -13,8 +13,9 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import type { Profile } from '@/lib/types/database'
-import { ArrowLeft, Loader2 } from 'lucide-react'
+import { ArrowLeft, Loader2, Mail } from 'lucide-react'
 import Link from 'next/link'
 
 interface UserFormProps {
@@ -33,25 +34,25 @@ export function UserForm({ user }: UserFormProps) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState(false)
   const [formData, setFormData] = useState({
     full_name: user?.full_name || '',
     email: user?.email || '',
     phone: user?.phone || '',
     department: user?.department || '',
     role: user?.role || 'viewer',
-    password: '',
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError(null)
+    setSuccess(false)
 
     try {
       const endpoint = user ? `/api/users/${user.id}` : '/api/users'
       const method = user ? 'PUT' : 'POST'
 
-      console.log('[v0] Sending user data:', formData)
       const response = await fetch(endpoint, {
         method,
         headers: { 'Content-Type': 'application/json' },
@@ -59,20 +60,53 @@ export function UserForm({ user }: UserFormProps) {
       })
 
       const data = await response.json()
-      console.log('[v0] Response:', data)
 
       if (!response.ok) {
         throw new Error(data.error || 'Error al guardar usuario')
       }
 
-      router.push('/dashboard/users')
-      router.refresh()
+      if (user) {
+        router.push('/dashboard/users')
+        router.refresh()
+      } else {
+        // Show success message for new users (invite email sent)
+        setSuccess(true)
+      }
     } catch (err) {
-      console.error('[v0] Error:', err)
       setError(err instanceof Error ? err.message : 'Error desconocido')
     } finally {
       setLoading(false)
     }
+  }
+
+  if (success) {
+    return (
+      <div className="grid gap-6">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex flex-col items-center gap-4 py-8 text-center">
+              <div className="rounded-full bg-primary/10 p-4">
+                <Mail className="h-8 w-8 text-primary" />
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-lg font-semibold">Usuario creado correctamente</h3>
+                <p className="text-sm text-muted-foreground max-w-sm">
+                  Se ha enviado un email de invitación a <strong>{formData.email}</strong> para que establezca su contraseña.
+                </p>
+              </div>
+              <div className="flex gap-3 mt-2">
+                <Button variant="outline" onClick={() => setSuccess(false)}>
+                  Crear otro usuario
+                </Button>
+                <Button onClick={() => router.push('/dashboard/users')}>
+                  Volver a usuarios
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
   }
 
   return (
@@ -90,6 +124,15 @@ export function UserForm({ user }: UserFormProps) {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
+            {!user && (
+              <Alert>
+                <Mail className="h-4 w-4" />
+                <AlertDescription>
+                  Al crear el usuario, se enviará automáticamente un email de invitación para que establezca su contraseña.
+                </AlertDescription>
+              </Alert>
+            )}
+
             {error && (
               <div className="p-4 bg-destructive/10 text-destructive rounded-lg text-sm">
                 {error}
@@ -102,9 +145,7 @@ export function UserForm({ user }: UserFormProps) {
                 <Input
                   id="full_name"
                   value={formData.full_name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, full_name: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
                   required
                   disabled={loading}
                   placeholder="Juan García"
@@ -117,9 +158,7 @@ export function UserForm({ user }: UserFormProps) {
                   id="email"
                   type="email"
                   value={formData.email}
-                  onChange={(e) =>
-                    setFormData({ ...formData, email: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   required
                   disabled={loading || !!user}
                   placeholder="juan@example.com"
@@ -131,9 +170,7 @@ export function UserForm({ user }: UserFormProps) {
                 <Input
                   id="phone"
                   value={formData.phone}
-                  onChange={(e) =>
-                    setFormData({ ...formData, phone: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                   disabled={loading}
                   placeholder="+34 123 456 789"
                 />
@@ -144,21 +181,17 @@ export function UserForm({ user }: UserFormProps) {
                 <Input
                   id="department"
                   value={formData.department}
-                  onChange={(e) =>
-                    setFormData({ ...formData, department: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, department: e.target.value })}
                   disabled={loading}
                   placeholder="Ventas"
                 />
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-2 md:col-span-2">
                 <Label htmlFor="role">Rol *</Label>
                 <Select
                   value={formData.role}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, role: value })
-                  }
+                  onValueChange={(value) => setFormData({ ...formData, role: value })}
                   disabled={loading}
                 >
                   <SelectTrigger id="role">
@@ -173,36 +206,15 @@ export function UserForm({ user }: UserFormProps) {
                   </SelectContent>
                 </Select>
               </div>
-
-              {!user && (
-                <div className="space-y-2">
-                  <Label htmlFor="password">Contraseña *</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    value={formData.password}
-                    onChange={(e) =>
-                      setFormData({ ...formData, password: e.target.value })
-                    }
-                    required={!user}
-                    disabled={loading}
-                    placeholder="Contraseña segura"
-                  />
-                </div>
-              )}
             </div>
 
             <div className="flex gap-3 justify-end">
-              <Button
-                variant="outline"
-                onClick={() => router.back()}
-                disabled={loading}
-              >
+              <Button variant="outline" type="button" onClick={() => router.back()} disabled={loading}>
                 Cancelar
               </Button>
-              <Button disabled={loading}>
+              <Button type="submit" disabled={loading}>
                 {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                {user ? 'Actualizar' : 'Crear'} Usuario
+                {user ? 'Actualizar Usuario' : 'Crear y Enviar Invitación'}
               </Button>
             </div>
           </form>

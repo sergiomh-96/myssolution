@@ -1,73 +1,57 @@
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { requireProfile } from '@/lib/auth'
-import { v4 as uuidv4 } from 'uuid'
 
 export async function POST(request: NextRequest) {
   try {
     const profile = await requireProfile()
-    
-    // Only admins can create users
+
     if (profile.role !== 'admin') {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
     }
 
-    const body = await request.json()
-    console.log('[v0] Received body:', body)
-    
-    const { full_name, email, phone, department, role, password } = body
+    const { full_name, email, phone, department, role } = await request.json()
 
-    if (!full_name || !email || !password || !role) {
-      console.log('[v0] Missing fields - full_name:', full_name, 'email:', email, 'password:', password, 'role:', role)
+    if (!full_name || !email || !role) {
       return NextResponse.json(
-        { error: 'Missing required fields: full_name, email, password, role' },
+        { error: 'Campos requeridos: nombre, email y rol' },
         { status: 400 }
       )
     }
 
-    const supabase = await createClient()
+    const adminClient = createAdminClient()
 
-    // First, create a user in the profiles table directly
-    // Generate a temporary user ID
-    const userId = uuidv4()
-    
-    console.log('[v0] Creating profile with ID:', userId)
+    // Invite user by email - Supabase sends a confirmation email
+    // so the user can set their own password. The trigger handle_new_user
+    // will automatically create the profile row with full_name + role.
+    const { data: inviteData, error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(
+      email,
+      {
+        data: { full_name, role },
+        redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/confirm`,
+      }
+    )
 
-    // Create profile in database
-    const { data: profileData, error: profileError } = await supabase
+    if (inviteError) {
+      return NextResponse.json({ error: inviteError.message }, { status: 400 })
+    }
+
+    const userId = inviteData.user.id
+
+    // Update the auto-created profile with phone and department
+    await adminClient
       .from('profiles')
-      .insert({
-        id: userId,
-        full_name,
-        email,
+      .update({
         phone: phone || null,
         department: department || null,
-        role,
       })
-      .select()
-      .single()
+      .eq('id', userId)
 
-    if (profileError) {
-      console.error('[v0] Profile error:', profileError)
-      return NextResponse.json(
-        { error: profileError.message },
-        { status: 400 }
-      )
-    }
-
-    console.log('[v0] User profile created successfully:', profileData)
-    
-    // TODO: Consider setting up proper auth integration later
-    // For now, the user profile is created but auth needs to be set up separately
-    
-    return NextResponse.json(profileData, { status: 201 })
+    return NextResponse.json({ success: true, userId }, { status: 201 })
   } catch (error) {
-    console.error('[v0] Error creating user:', error)
+    console.error('Error creating user:', error)
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Internal server error' },
+      { error: error instanceof Error ? error.message : 'Error interno del servidor' },
       { status: 500 }
     )
   }
