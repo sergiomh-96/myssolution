@@ -1,4 +1,5 @@
-import { createServerClient, createServiceRoleClient } from '@supabase/ssr'
+import { createServerClient } from '@supabase/ssr'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 
 /**
@@ -35,9 +36,10 @@ export async function createClient() {
 
 /**
  * Admin client - use only in server-side code for admin operations
+ * Uses service role key for full admin access
  */
 export function createAdminClient() {
-  return createServiceRoleClient(
+  return createSupabaseClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
   )
