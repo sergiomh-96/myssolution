@@ -25,7 +25,7 @@ interface OffersTableProps {
   offers: (Omit<Offer, 'total_amount' | 'currency'> & {
     amount: number
     customer: { id: number; company_name: string } | null
-    created_by_profile: { full_name: string | null } | null
+    created_by_profile: { full_name: string | null; email: string | null } | null
     approved_by_profile: { full_name: string | null } | null
   })[]
   userRole: UserRole
@@ -169,9 +169,14 @@ export function OffersTable({ offers, userRole, userId }: OffersTableProps) {
                     </TableCell>
                     {userRole !== 'sales_rep' && (
                       <TableCell>
-                        <span className="text-sm text-muted-foreground">
-                          {offer.created_by_profile?.full_name || 'Desconocido'}
-                        </span>
+                        <div className="flex flex-col">
+                          <span className="text-sm font-medium text-foreground">
+                            {offer.created_by_profile?.full_name || 'Desconocido'}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            {offer.created_by_profile?.email || ''}
+                          </span>
+                        </div>
                       </TableCell>
                     )}
                     <TableCell>

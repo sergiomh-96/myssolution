@@ -14,7 +14,7 @@ export default async function OffersPage() {
     .select(`
       *,
       customer:customers!customer_id(id, company_name),
-      created_by_profile:profiles!created_by(full_name),
+      created_by_profile:profiles!created_by(full_name, email),
       approved_by_profile:profiles!approved_by(full_name)
     `)
     .order('created_at', { ascending: false })
