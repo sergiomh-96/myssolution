@@ -13,7 +13,8 @@ import {
   Settings, 
   Building2,
   BarChart3,
-  Package
+  Package,
+  UserCog
 } from 'lucide-react'
 import { canManageOffers, canManageRequests, canViewAnalytics, canManageUsers } from '@/lib/auth'
 
@@ -65,6 +66,12 @@ const navItems = [
     label: 'Analíticas',
     icon: BarChart3,
     allowedRoles: ['admin', 'manager', 'viewer']
+  },
+  {
+    href: '/dashboard/users',
+    label: 'Gestión de Usuarios',
+    icon: UserCog,
+    allowedRoles: ['admin']
   },
   {
     href: '/dashboard/settings',
