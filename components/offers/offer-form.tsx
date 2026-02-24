@@ -382,11 +382,10 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
           .order('full_name')
 
         if (error) {
-          console.error('[v0] Error loading users:', error)
+          console.error('Error loading users:', error)
           return
         }
 
-        console.log('[v0] Users loaded:', data)
         setUsers(data || [])
       } catch (err) {
         console.error('[v0] Error:', err)
