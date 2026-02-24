@@ -15,7 +15,8 @@ export default async function OffersPage() {
       *,
       customer:customers!customer_id(id, company_name),
       created_by_profile:profiles!created_by(full_name, email),
-      approved_by_profile:profiles!approved_by(full_name)
+      approved_by_profile:profiles!approved_by(full_name),
+      assignments:offer_assignments(assigned_to)
     `)
     .order('created_at', { ascending: false })
 
@@ -25,6 +26,13 @@ export default async function OffersPage() {
   }
 
   const { data: offers, error } = await query
+
+  // Filter offers: show created by user + assigned to user
+  const filteredOffers = offers?.filter(offer => {
+    const isCreatedByUser = offer.created_by === profile.id
+    const isAssignedToUser = (offer.assignments || []).some((a: any) => a.assigned_to === profile.id)
+    return isCreatedByUser || isAssignedToUser
+  }) || []
 
   return (
     <div className="space-y-6">
@@ -46,7 +54,7 @@ export default async function OffersPage() {
       {error ? (
         <div className="text-destructive">Error cargando ofertas: {error.message}</div>
       ) : (
-        <OffersTable offers={offers || []} userRole={profile.role} userId={profile.id} />
+        <OffersTable offers={filteredOffers} userRole={profile.role} userId={profile.id} />
       )}
     </div>
   )
