@@ -405,7 +405,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
         const supabase = createClient()
         const { data, error } = await supabase
           .from('offer_assignments')
-          .select('assigned_to')
+          .select('user_id')
           .eq('offer_id', offer.id)
 
         if (error) {
@@ -413,7 +413,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
           return
         }
 
-        const userIds = data?.map(a => a.assigned_to) || []
+        const userIds = data?.map(a => a.user_id) || []
         setAssignedUserIds(userIds)
       } catch (err) {
         console.error('Error:', err)
@@ -655,7 +655,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
         // Insert new assignments
         const assignmentsToInsert = assignedUserIds.map(userId => ({
           offer_id: offerId,
-          assigned_to: userId,
+          user_id: userId,
           assigned_by: currentUserId,
         }))
 
