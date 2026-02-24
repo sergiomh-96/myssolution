@@ -71,6 +71,14 @@ export interface Offer {
   updated_at: string
 }
 
+export interface OfferAssignment {
+  id: number
+  offer_id: number
+  assigned_to: string
+  assigned_by: string
+  created_at: string
+}
+
 export interface TechnicalRequest {
   id: number
   title: string

@@ -154,6 +154,8 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
   const [defaultTarifa, setDefaultTarifa] = useState<number | null>(null)
   const [contactList, setContactList] = useState<any[]>([])
   const [currentCustomer, setCurrentCustomer] = useState<any>(null)
+  const [users, setUsers] = useState<any[]>([])
+  const [assignedUserIds, setAssignedUserIds] = useState<string[]>([])
 
   const existingItems: OfferItem[] = []
 
@@ -368,6 +370,58 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
     }
     loadPrecios()
   }, [formData.tarifa_id])
+
+  // Load available users
+  useEffect(() => {
+    const loadUsers = async () => {
+      try {
+        const supabase = createClient()
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('id, full_name, email')
+          .eq('is_active', true)
+          .order('full_name')
+
+        if (error) {
+          console.error('Error loading users:', error)
+          return
+        }
+
+        setUsers(data || [])
+      } catch (err) {
+        console.error('Error:', err)
+      }
+    }
+
+    loadUsers()
+  }, [])
+
+  // Load offer assignments if editing
+  useEffect(() => {
+    const loadAssignments = async () => {
+      if (!offer?.id) return
+
+      try {
+        const supabase = createClient()
+        const { data, error } = await supabase
+          .from('offer_assignments')
+          .select('assigned_to')
+          .eq('offer_id', offer.id)
+
+        if (error) {
+          console.error('Error loading assignments:', error)
+          return
+        }
+
+        const userIds = data?.map(a => a.assigned_to) || []
+        setAssignedUserIds(userIds)
+      } catch (err) {
+        console.error('Error:', err)
+      }
+    }
+
+    loadAssignments()
+  }, [offer?.id])
 
   // Update prices of existing items when tarifa changes and precios are loaded
   useEffect(() => {
@@ -586,6 +640,32 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
         }
       }
 
+      // Handle user assignments
+      const offerId = offer?.id || (newOffer && newOffer.length > 0 ? newOffer[0].id : null)
+      
+      if (offerId && assignedUserIds.length > 0) {
+        // Delete existing assignments
+        const { error: deleteError } = await supabase
+          .from('offer_assignments')
+          .delete()
+          .eq('offer_id', offerId)
+
+        if (deleteError) throw deleteError
+
+        // Insert new assignments
+        const assignmentsToInsert = assignedUserIds.map(userId => ({
+          offer_id: offerId,
+          assigned_to: userId,
+          assigned_by: currentUserId,
+        }))
+
+        const { error: insertError } = await supabase
+          .from('offer_assignments')
+          .insert(assignmentsToInsert)
+
+        if (insertError) throw insertError
+      }
+
       router.push('/dashboard/offers')
       router.refresh()
     } catch (err: any) {
@@ -763,6 +843,41 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
             disabled
             className="h-9 text-sm bg-muted"
           />
+        </div>
+
+        {/* Row 2.5: User Assignments */}
+        <div className="space-y-0.5 md:col-span-4">
+          <Label htmlFor="assigned_users" className="text-xs">Asignar a Usuarios</Label>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 p-3 border border-input rounded-md bg-background max-h-48 overflow-y-auto">
+            {users.length > 0 ? (
+              users.map((user) => (
+                <label key={user.id} className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={assignedUserIds.includes(user.id)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setAssignedUserIds([...assignedUserIds, user.id])
+                      } else {
+                        setAssignedUserIds(assignedUserIds.filter(id => id !== user.id))
+                      }
+                    }}
+                    disabled={loading}
+                    className="rounded"
+                  />
+                  <span className="text-xs truncate">
+                    <span className="font-medium">{user.full_name}</span>
+                    <span className="text-muted-foreground ml-1">({user.email})</span>
+                  </span>
+                </label>
+              ))
+            ) : (
+              <span className="text-xs text-muted-foreground">No hay usuarios disponibles</span>
+            )}
+          </div>
+          {assignedUserIds.length > 0 && (
+            <p className="text-xs text-muted-foreground">{assignedUserIds.length} usuario(s) asignado(s)</p>
+          )}
         </div>
 
         {/* Row 3: Three description fields */}
