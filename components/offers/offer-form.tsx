@@ -814,8 +814,10 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
 
       router.push('/dashboard/offers')
       router.refresh()
-    } catch (err: any) {
-      setError(err.message || 'An error occurred')
+    } catch (err) {
+      console.error('Error saving offer:', err)
+      setError(err instanceof Error ? err.message : 'Error al guardar la oferta')
+    } finally {
       setLoading(false)
     }
   }
