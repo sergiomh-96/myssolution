@@ -656,7 +656,6 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
         const assignmentsToInsert = assignedUserIds.map(userId => ({
           offer_id: offerId,
           user_id: userId,
-          assigned_by: currentUserId,
         }))
 
         const { error: insertError } = await supabase
