@@ -27,7 +27,7 @@ interface OffersTableProps {
     customer: { id: number; company_name: string } | null
     created_by_profile: { full_name: string | null; email: string | null } | null
     approved_by_profile: { full_name: string | null } | null
-    assignments?: { assigned_to: string }[] | null
+    assignments?: { user_id: string }[] | null
   })[]
   userRole: UserRole
   userId: string
@@ -150,7 +150,7 @@ export function OffersTable({ offers, userRole, userId }: OffersTableProps) {
                         <span className="font-medium text-foreground">
                           {formatOfferNumber(offer.offer_number, new Date(offer.created_at).getFullYear())}
                         </span>
-                        {(offer.assignments || []).some((a: any) => a.assigned_to === userId) && (
+                        {(offer.assignments || []).some((a: any) => a.user_id === userId) && (
                           <Forward className="h-4 w-4 text-info" title="Oferta asignada a ti" />
                         )}
                       </div>

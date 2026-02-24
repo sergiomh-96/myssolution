@@ -16,7 +16,7 @@ export default async function OffersPage() {
       customer:customers!customer_id(id, company_name),
       created_by_profile:profiles!created_by(full_name, email),
       approved_by_profile:profiles!approved_by(full_name),
-      assignments:offer_assignments(assigned_to)
+      assignments:offer_assignments(user_id)
     `)
     .order('created_at', { ascending: false })
 
@@ -30,7 +30,7 @@ export default async function OffersPage() {
   // Filter offers: show created by user + assigned to user
   const filteredOffers = offers?.filter(offer => {
     const isCreatedByUser = offer.created_by === profile.id
-    const isAssignedToUser = (offer.assignments || []).some((a: any) => a.assigned_to === profile.id)
+    const isAssignedToUser = (offer.assignments || []).some((a: any) => a.user_id === profile.id)
     return isCreatedByUser || isAssignedToUser
   }) || []
 
