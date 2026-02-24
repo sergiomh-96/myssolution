@@ -51,6 +51,7 @@ export function UserForm({ user }: UserFormProps) {
       const endpoint = user ? `/api/users/${user.id}` : '/api/users'
       const method = user ? 'PUT' : 'POST'
 
+      console.log('[v0] Sending user data:', formData)
       const response = await fetch(endpoint, {
         method,
         headers: { 'Content-Type': 'application/json' },
@@ -58,6 +59,7 @@ export function UserForm({ user }: UserFormProps) {
       })
 
       const data = await response.json()
+      console.log('[v0] Response:', data)
 
       if (!response.ok) {
         throw new Error(data.error || 'Error al guardar usuario')
@@ -66,6 +68,7 @@ export function UserForm({ user }: UserFormProps) {
       router.push('/dashboard/users')
       router.refresh()
     } catch (err) {
+      console.error('[v0] Error:', err)
       setError(err instanceof Error ? err.message : 'Error desconocido')
     } finally {
       setLoading(false)

@@ -15,11 +15,15 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const { full_name, email, phone, department, role, password } = await request.json()
+    const body = await request.json()
+    console.log('[v0] Received body:', body)
+    
+    const { full_name, email, phone, department, role, password } = body
 
     if (!full_name || !email || !password || !role) {
+      console.log('[v0] Missing fields - full_name:', full_name, 'email:', email, 'password:', password, 'role:', role)
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        { error: 'Missing required fields: full_name, email, password, role' },
         { status: 400 }
       )
     }
