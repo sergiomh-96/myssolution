@@ -21,9 +21,15 @@ export async function POST(request: NextRequest) {
 
     const adminClient = createAdminClient()
 
-    // Invite user by email - Supabase sends a confirmation email
-    // so the user can set their own password. The trigger handle_new_user
-    // will automatically create the profile row with full_name + role.
+    // Delete any orphan profile with this email that has no matching auth user
+    // (e.g. profiles created directly in the DB without a real auth account)
+    await adminClient
+      .from('profiles')
+      .delete()
+      .eq('email', email)
+
+    // Invite user — Supabase sends a confirmation/set-password email.
+    // The trigger handle_new_user auto-creates the profile with full_name + role.
     const { data: inviteData, error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(
       email,
       {
@@ -39,13 +45,17 @@ export async function POST(request: NextRequest) {
     const userId = inviteData.user.id
 
     // Update the auto-created profile with phone and department
-    await adminClient
+    const { error: updateError } = await adminClient
       .from('profiles')
       .update({
         phone: phone || null,
         department: department || null,
       })
       .eq('id', userId)
+
+    if (updateError) {
+      console.error('Profile update error:', updateError)
+    }
 
     return NextResponse.json({ success: true, userId }, { status: 201 })
   } catch (error) {
