@@ -530,6 +530,153 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
         valid_until: formData.valid_until || null,
       }
 
+      let offerId: string
+
+      if (offer) {
+        // Update existing offer
+        const { error: updateError } = await supabase
+          .from('offers')
+          .update({
+            ...offerData,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', offer.id)
+
+        if (updateError) throw updateError
+
+        offerId = offer.id
+
+        // Update offer items if they exist
+        if (items.length > 0) {
+          // Delete existing items first
+          const { error: deleteError } = await supabase
+            .from('offer_items')
+            .delete()
+            .eq('offer_id', offer.id)
+
+          if (deleteError) throw deleteError
+
+          // Insert new items
+          const itemsToInsert = items
+            .filter(item => item.product_id) // Only save items with a product
+            .map(item => ({
+              offer_id: offer.id,
+              product_id: item.product_id,
+              description: item.description,
+              quantity: item.quantity,
+              pvp: item.pvp,
+              pvp_total: item.pvp_total,
+              discount1: item.discount1,
+              discount2: item.discount2,
+              neto_total1: item.neto_total1,
+              neto_total2: item.neto_total2,
+            }))
+
+          if (itemsToInsert.length > 0) {
+            const { error: insertError } = await supabase
+              .from('offer_items')
+              .insert(itemsToInsert)
+
+            if (insertError) throw insertError
+          }
+        }
+      } else {
+        // Create new offer - generate offer_number
+        const currentYear = new Date().getFullYear()
+        
+        // Get the next offer number for this user and year
+        const { data: existingOffers, error: countError } = await supabase
+          .from('offers')
+          .select('offer_number')
+          .eq('created_by', currentUserId)
+          .gte('created_at', `${currentYear}-01-01`)
+          .lte('created_at', `${currentYear}-12-31`)
+          .order('offer_number', { ascending: false })
+          .limit(1)
+
+        if (countError) throw countError
+
+        // Calculate next offer number (starts at 1)
+        const nextOfferNumber = (existingOffers && existingOffers.length > 0) 
+          ? (existingOffers[0].offer_number as number) + 1 
+          : 1
+
+        // Create new offer with auto-generated offer_number
+        const { data: newOfferData, error: insertError } = await supabase
+          .from('offers')
+          .insert({
+            ...offerData,
+            created_by: currentUserId,
+            amount: totalAmount,
+            offer_number: nextOfferNumber,
+          })
+          .select()
+
+        if (insertError) throw insertError
+        if (!newOfferData || newOfferData.length === 0) throw new Error('Failed to create offer')
+
+        offerId = newOfferData[0].id
+
+        // Insert offer items
+        if (items.length > 0) {
+          const itemsToInsert = items
+            .filter(item => item.product_id) // Only save items with a product
+            .map(item => ({
+              offer_id: offerId,
+              product_id: item.product_id,
+              description: item.description,
+              quantity: item.quantity,
+              pvp: item.pvp,
+              pvp_total: item.pvp_total,
+              discount1: item.discount1,
+              discount2: item.discount2,
+              neto_total1: item.neto_total1,
+              neto_total2: item.neto_total2,
+            }))
+
+          if (itemsToInsert.length > 0) {
+            const { error: insertItemsError } = await supabase
+              .from('offer_items')
+              .insert(itemsToInsert)
+
+            if (insertItemsError) throw insertItemsError
+          }
+        }
+      }
+
+      // Handle user assignments
+      if (offerId && assignedUserIds.length > 0) {
+        // Delete existing assignments
+        const { error: deleteError } = await supabase
+          .from('offer_assignments')
+          .delete()
+          .eq('offer_id', offerId)
+
+        if (deleteError) throw deleteError
+
+        // Insert new assignments
+        const assignmentsToInsert = assignedUserIds.map(userId => ({
+          offer_id: offerId,
+          user_id: userId,
+        }))
+
+        const { error: insertError } = await supabase
+          .from('offer_assignments')
+          .insert(assignmentsToInsert)
+
+        if (insertError) throw insertError
+      }
+
+      router.push('/dashboard/offers')
+      router.refresh()
+    } catch (err) {
+      console.error('Error saving offer:', err)
+      setError(err instanceof Error ? err.message : 'Error al guardar la oferta')
+    } finally {
+      setLoading(false)
+    }
+  }
+
       if (offer) {
         // Update existing offer
         const { error: updateError } = await supabase
