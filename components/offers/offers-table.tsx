@@ -55,8 +55,9 @@ const statusColors = {
   declined: 'bg-destructive/10 text-destructive border-destructive/20',
 }
 
-export function OffersTable({ offers, userRole, userId }: OffersTableProps) {
+export function OffersTable({ offers: initialOffers, userRole, userId }: OffersTableProps) {
   const router = useRouter()
+  const [offersList, setOffersList] = useState(initialOffers)
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [mounted, setMounted] = useState(false)
@@ -71,6 +72,8 @@ export function OffersTable({ offers, userRole, userId }: OffersTableProps) {
       const supabase = createClient()
       const { error } = await supabase.from('offers').delete().eq('id', deleteTarget.id)
       if (error) throw error
+      // Remove from local state immediately for instant UI feedback
+      setOffersList(prev => prev.filter(o => o.id !== deleteTarget.id))
       setDeleteTarget(null)
       router.refresh()
     } catch (err) {
@@ -85,7 +88,7 @@ export function OffersTable({ offers, userRole, userId }: OffersTableProps) {
     setMounted(true)
     const dates: Record<string | number, string> = {}
     
-    offers.forEach((offer) => {
+    offersList.forEach((offer) => {
       try {
         dates[offer.id] = formatDistanceToNow(new Date(offer.created_at), {
           addSuffix: true,
@@ -99,7 +102,7 @@ export function OffersTable({ offers, userRole, userId }: OffersTableProps) {
     setFormattedDates(dates)
   }, [offers])
 
-  const filteredOffers = offers.filter((offer) => {
+  const filteredOffers = offersList.filter((offer) => {
     const search = searchQuery.toLowerCase()
     const matchesSearch = 
       offer.title.toLowerCase().includes(search) ||
