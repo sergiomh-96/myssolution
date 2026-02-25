@@ -71,7 +71,7 @@ export async function GET(
       <div class="label">Cliente</div>
       <div class="value">${offer.customer?.company_name || '-'}</div>
       <div class="label">Contacto</div>
-      <div class="value">${offer.contact ? \`\${offer.contact.nombre} \${offer.contact.apellidos}\` : '-'}</div>
+      <div class="value">${offer.contact ? offer.contact.nombre + ' ' + offer.contact.apellidos : '-'}</div>
     </div>
     <div class="header-right">
       <div class="label">Fecha</div>
