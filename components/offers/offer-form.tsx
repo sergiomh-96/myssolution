@@ -280,7 +280,6 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
         const { data: existingOffers, error } = await supabase
           .from('offers')
           .select('offer_number')
-          .eq('created_by', currentUserId)
           .gte('created_at', `${currentYear}-01-01`)
           .lte('created_at', `${currentYear}-12-31`)
           .order('offer_number', { ascending: false })
@@ -291,8 +290,8 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
           return
         }
 
-        const nextNumber = (existingOffers && existingOffers.length > 0) 
-          ? (existingOffers[0].offer_number as number) + 1 
+        const nextNumber = (existingOffers && existingOffers.length > 0)
+          ? (existingOffers[0].offer_number as number) + 1
           : 1
         
         setNextOfferNumber(nextNumber)
@@ -577,14 +576,12 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
           }
         }
       } else {
-        // Create new offer - generate offer_number
+        // Create new offer - generate offer_number (global, correlative across all users)
         const currentYear = new Date().getFullYear()
-        
-        // Get the next offer number for this user and year
+
         const { data: existingOffers, error: countError } = await supabase
           .from('offers')
           .select('offer_number')
-          .eq('created_by', currentUserId)
           .gte('created_at', `${currentYear}-01-01`)
           .lte('created_at', `${currentYear}-12-31`)
           .order('offer_number', { ascending: false })
@@ -592,9 +589,9 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
 
         if (countError) throw countError
 
-        // Calculate next offer number (starts at 1)
-        const nextOfferNumber = (existingOffers && existingOffers.length > 0) 
-          ? (existingOffers[0].offer_number as number) + 1 
+        // Calculate next offer number (global, starts at 1 each year)
+        const nextOfferNumber = (existingOffers && existingOffers.length > 0)
+          ? (existingOffers[0].offer_number as number) + 1
           : 1
 
         // Create new offer with auto-generated offer_number
