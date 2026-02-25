@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Edit } from 'lucide-react'
 import Link from 'next/link'
-import { AddOfferItem } from '@/components/offers/add-offer-item'
+}
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -56,7 +56,8 @@ export default async function OfferDetailPage({ params }: PageProps) {
     .order('id')
 
   return (
-    <div className="space-y-6">
+    <main className="min-h-screen bg-background">
+      <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -255,18 +256,9 @@ export default async function OfferDetailPage({ params }: PageProps) {
           )}
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </main>
   )
-}
-
-const statusColors = {
-  draft: 'bg-muted text-muted-foreground border-border',
-  pending: 'bg-warning/10 text-warning-foreground border-warning/20',
-  approved: 'bg-success/10 text-success border-success/20',
-  rejected: 'bg-destructive/10 text-destructive border-destructive/20',
-  sent: 'bg-info/10 text-info border-info/20',
-  accepted: 'bg-success/10 text-success border-success/20',
-  declined: 'bg-destructive/10 text-destructive border-destructive/20',
 }
 
 export default async function OfferDetailPage({ params }: PageProps) {
