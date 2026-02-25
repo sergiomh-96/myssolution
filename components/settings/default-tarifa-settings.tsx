@@ -142,7 +142,6 @@ export function DefaultTarifaSettings() {
               <SelectValue placeholder={tarifas.length === 0 ? 'No hay tarifas disponibles' : 'Seleccionar tarifa'} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Sin tarifa predeterminada</SelectItem>
               {tarifas.map((tarifa) => (
                 <SelectItem key={tarifa.id_tarifa} value={tarifa.id_tarifa.toString()}>
                   {tarifa.nombre}
