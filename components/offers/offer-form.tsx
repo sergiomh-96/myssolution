@@ -250,9 +250,24 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
 
       if (tarifasData) {
         setTarifas(tarifasData)
-        // Find MYSAIR_2026 tarifa, fallback to first one
-        const mysairTarifa = tarifasData.find(t => t.nombre === 'Tarifa_MYSAIR_2026')
-        const defaultTarifaId = mysairTarifa ? mysairTarifa.id_tarifa : (tarifasData.length > 0 ? tarifasData[0].id_tarifa : null)
+
+        // Load default tarifa from app_settings
+        const { data: settingsData } = await supabase
+          .from('app_settings')
+          .select('default_tarifa_id')
+          .eq('id', 1)
+          .single()
+
+        let defaultTarifaId = null
+
+        if (settingsData?.default_tarifa_id) {
+          // Use tarifa from app_settings
+          defaultTarifaId = settingsData.default_tarifa_id
+        } else {
+          // Fallback: try to find MYSAIR_2026 tarifa, then first one
+          const mysairTarifa = tarifasData.find(t => t.nombre === 'Tarifa_MYSAIR_2026')
+          defaultTarifaId = mysairTarifa ? mysairTarifa.id_tarifa : (tarifasData.length > 0 ? tarifasData[0].id_tarifa : null)
+        }
 
         if (defaultTarifaId) {
           setDefaultTarifa(defaultTarifaId)

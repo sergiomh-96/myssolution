@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { requireRole } from '@/lib/auth'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { UserManagementTable } from '@/components/settings/user-management-table'
+import { DefaultTarifaSettings } from '@/components/settings/default-tarifa-settings'
 
 export default async function SettingsPage() {
   const profile = await requireRole(['admin'])
@@ -33,6 +34,8 @@ export default async function SettingsPage() {
           <UserManagementTable users={users || []} />
         </CardContent>
       </Card>
+
+      <DefaultTarifaSettings />
 
       <Card>
         <CardHeader>
