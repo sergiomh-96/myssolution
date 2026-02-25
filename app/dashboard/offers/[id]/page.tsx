@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Edit } from 'lucide-react'
 import Link from 'next/link'
+import { GeneratePdfButton } from '@/components/offers/generate-pdf-button'
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -52,16 +53,20 @@ export default async function OfferDetailPage({ params }: PageProps) {
             <h1 className="text-3xl font-bold text-foreground">Oferta #{offer.offer_number}</h1>
             <p className="text-muted-foreground mt-1">{offer.title}</p>
           </div>
-          <Button asChild>
-            <Link href={`/dashboard/offers/${offer.id}/edit`}>
-              <Edit className="h-4 w-4 mr-2" />
-              Editar
-            </Link>
-          </Button>
+          <div className="flex gap-2">
+            <GeneratePdfButton offerId={id} offerNumber={offer.offer_number} />
+            <Button asChild>
+              <Link href={`/dashboard/offers/${offer.id}/edit`}>
+                <Edit className="h-4 w-4 mr-2" />
+                Editar
+              </Link>
+            </Button>
+          </div>
         </div>
 
         {/* Professional Offer View */}
-        <Card className="border-2">
+        <div id="offer-print-content" className="print:bg-white">
+          <Card className="border-2">
           <CardContent className="p-8">
             {/* Header with Info */}
             <div className="grid grid-cols-2 gap-8 mb-8 pb-8 border-b">
@@ -164,6 +169,7 @@ export default async function OfferDetailPage({ params }: PageProps) {
             </div>
           </CardContent>
         </Card>
+        </div>
       </div>
     </main>
   )
