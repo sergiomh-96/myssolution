@@ -100,7 +100,7 @@ export function OffersTable({ offers: initialOffers, userRole, userId }: OffersT
     })
     
     setFormattedDates(dates)
-  }, [offers])
+  }, [offersList])
 
   const filteredOffers = offersList.filter((offer) => {
     const search = searchQuery.toLowerCase()
