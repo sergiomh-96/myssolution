@@ -15,11 +15,23 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Search, Edit, Forward } from 'lucide-react'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import { Search, Edit, Forward, Trash2 } from 'lucide-react'
 import type { Offer, UserRole } from '@/lib/types/database'
 import { formatDistanceToNow } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { formatOfferNumber } from '@/lib/utils/offer'
+import { createClient } from '@/lib/supabase/client'
+import { useRouter } from 'next/navigation'
 
 interface OffersTableProps {
   offers: (Omit<Offer, 'total_amount' | 'currency'> & {
@@ -44,10 +56,29 @@ const statusColors = {
 }
 
 export function OffersTable({ offers, userRole, userId }: OffersTableProps) {
+  const router = useRouter()
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [mounted, setMounted] = useState(false)
   const [formattedDates, setFormattedDates] = useState<Record<string | number, string>>({})
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string | number; title: string } | null>(null)
+  const [deleting, setDeleting] = useState(false)
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return
+    setDeleting(true)
+    try {
+      const supabase = createClient()
+      const { error } = await supabase.from('offers').delete().eq('id', deleteTarget.id)
+      if (error) throw error
+      setDeleteTarget(null)
+      router.refresh()
+    } catch (err) {
+      console.error('Error deleting offer:', err)
+    } finally {
+      setDeleting(false)
+    }
+  }
 
   // Format dates only on client side
   useEffect(() => {
@@ -200,6 +231,16 @@ export function OffersTable({ offers, userRole, userId }: OffersTableProps) {
                             <Edit className="h-4 w-4" />
                           </Link>
                         </Button>
+                        {(userRole === 'admin' || userRole === 'manager' || offer.created_by === userId) && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                            onClick={() => setDeleteTarget({ id: offer.id, title: offer.title })}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -209,6 +250,28 @@ export function OffersTable({ offers, userRole, userId }: OffersTableProps) {
           </div>
         )}
       </CardContent>
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null) }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar oferta?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Se eliminará permanentemente la oferta <strong>&ldquo;{deleteTarget?.title}&rdquo;</strong> y todas sus líneas. Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? 'Eliminando...' : 'Eliminar'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
     </Card>
   )
 }
