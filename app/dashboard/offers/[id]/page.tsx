@@ -179,7 +179,7 @@ export default async function OfferDetailPage({ params }: PageProps) {
 
         {/* Add Item Section */}
         <div>
-          <AddOfferItem offerId={id} onItemAdded={() => window.location.reload()} />
+          <AddOfferItem offerId={id} />
         </div>
 
         {/* Offer Details Card */}
