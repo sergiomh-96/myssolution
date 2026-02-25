@@ -18,9 +18,10 @@ export default async function OffersPage() {
       approved_by_profile:profiles!approved_by(full_name),
       assignments:offer_assignments(user_id)
     `)
+    .eq('visible', true)
     .order('created_at', { ascending: false })
 
-  // Admins see all offers, sales reps only see their own, others see their own + assigned
+  // Admins see all visible offers, sales reps only see their own visible, others see their own visible + assigned
   if (profile.role === 'sales_rep') {
     query = query.eq('created_by', profile.id)
   }

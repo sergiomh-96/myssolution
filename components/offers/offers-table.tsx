@@ -71,28 +71,20 @@ export function OffersTable({ offers: initialOffers, userRole, userId }: OffersT
     try {
       const supabase = createClient()
       
-      // Delete offer items first (though CASCADE will handle it)
-      const { error: itemsError } = await supabase
-        .from('offer_items')
-        .delete()
-        .eq('offer_id', deleteTarget.id)
-      
-      if (itemsError) throw itemsError
-      
-      // Delete the offer (will also cascade delete items if CASCADE is set)
-      const { error: offerError } = await supabase
+      // Mark offer as hidden (soft delete) instead of hard delete
+      const { error: updateError } = await supabase
         .from('offers')
-        .delete()
+        .update({ visible: false })
         .eq('id', deleteTarget.id)
       
-      if (offerError) throw offerError
+      if (updateError) throw updateError
       
       // Remove from local state immediately for instant UI feedback
       setOffersList(prev => prev.filter(o => o.id !== deleteTarget.id))
       setDeleteTarget(null)
       router.refresh()
     } catch (err) {
-      console.error('Error deleting offer:', err)
+      console.error('Error hiding offer:', err)
     } finally {
       setDeleting(false)
     }
