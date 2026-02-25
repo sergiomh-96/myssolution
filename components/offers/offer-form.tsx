@@ -575,12 +575,16 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
         }
       } else {
         // Generate offer_number atomically via DB sequence (global, race-condition safe)
+        console.log('[v0] Calling RPC next_offer_number...')
         const { data: seqData, error: seqError } = await supabase
           .rpc('next_offer_number')
 
+        console.log('[v0] RPC response:', { seqData, seqError })
+        
         if (seqError) throw seqError
 
         const nextOfferNumber = seqData as number
+        console.log('[v0] Next offer number:', nextOfferNumber)
 
         // Create new offer with auto-generated offer_number
         const { data: newOffer, error: insertError } = await supabase
