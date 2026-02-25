@@ -2,7 +2,21 @@ import { createClient } from '@/lib/supabase/server'
 import { requireRole } from '@/lib/auth'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { UserManagementTable } from '@/components/settings/user-management-table'
+import { Suspense } from 'react'
 import { DefaultTarifaSettings } from '@/components/settings/default-tarifa-settings'
+
+function LoadingCard() {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Tarifa Predeterminada</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="text-muted-foreground">Cargando...</div>
+      </CardContent>
+    </Card>
+  )
+}
 
 export default async function SettingsPage() {
   const profile = await requireRole(['admin'])
@@ -35,7 +49,9 @@ export default async function SettingsPage() {
         </CardContent>
       </Card>
 
-      <DefaultTarifaSettings />
+      <Suspense fallback={<LoadingCard />}>
+        <DefaultTarifaSettings />
+      </Suspense>
 
       <Card>
         <CardHeader>
