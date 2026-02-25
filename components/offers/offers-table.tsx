@@ -70,8 +70,23 @@ export function OffersTable({ offers: initialOffers, userRole, userId }: OffersT
     setDeleting(true)
     try {
       const supabase = createClient()
-      const { error } = await supabase.from('offers').delete().eq('id', deleteTarget.id)
-      if (error) throw error
+      
+      // Delete offer items first (though CASCADE will handle it)
+      const { error: itemsError } = await supabase
+        .from('offer_items')
+        .delete()
+        .eq('offer_id', deleteTarget.id)
+      
+      if (itemsError) throw itemsError
+      
+      // Delete the offer (will also cascade delete items if CASCADE is set)
+      const { error: offerError } = await supabase
+        .from('offers')
+        .delete()
+        .eq('id', deleteTarget.id)
+      
+      if (offerError) throw offerError
+      
       // Remove from local state immediately for instant UI feedback
       setOffersList(prev => prev.filter(o => o.id !== deleteTarget.id))
       setDeleteTarget(null)
