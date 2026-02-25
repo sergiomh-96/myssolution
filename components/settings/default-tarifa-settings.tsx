@@ -28,23 +28,33 @@ export function DefaultTarifaSettings() {
           .select('id_tarifa, nombre')
           .order('nombre')
 
-        if (tarifasError) throw tarifasError
+        if (tarifasError) {
+          console.error('Error loading tarifas:', tarifasError)
+          throw new Error('Error al cargar tarifas')
+        }
+        
         setTarifas(tarifasData || [])
 
-        // Load current default tarifa
-        const { data: settingsData, error: settingsError } = await supabase
-          .from('app_settings')
-          .select('default_tarifa_id')
-          .eq('id', 1)
-          .single()
+        // Load current default tarifa - handle all cases gracefully
+        try {
+          const { data: settingsData, error: settingsError } = await supabase
+            .from('app_settings')
+            .select('default_tarifa_id')
+            .eq('id', 1)
+            .single()
 
-        if (settingsError && settingsError.code !== 'PGRST116') throw settingsError
-        if (settingsData?.default_tarifa_id) {
-          setDefaultTarifaId(settingsData.default_tarifa_id.toString())
+          if (settingsData?.default_tarifa_id) {
+            setDefaultTarifaId(settingsData.default_tarifa_id.toString())
+          }
+        } catch (settingsErr) {
+          // Settings table might not be initialized yet, that's ok
+          console.log('Settings table not ready yet, will use defaults')
         }
+
+        setError(null)
       } catch (err) {
-        console.error('Error loading settings:', err)
-        setError(err instanceof Error ? err.message : 'Error loading settings')
+        console.error('Error loading data:', err)
+        setError('Error al cargar la configuración')
       } finally {
         setLoading(false)
       }
@@ -60,6 +70,7 @@ export function DefaultTarifaSettings() {
 
     try {
       const supabase = createClient()
+      
       const { error: updateError } = await supabase
         .from('app_settings')
         .update({
@@ -68,19 +79,32 @@ export function DefaultTarifaSettings() {
         })
         .eq('id', 1)
 
-      if (updateError) throw updateError
+      if (updateError) {
+        console.error('Update error:', updateError)
+        throw new Error('Error al guardar la configuración')
+      }
+      
       setSuccess(true)
       setTimeout(() => setSuccess(false), 3000)
     } catch (err) {
-      console.error('Error saving settings:', err)
-      setError(err instanceof Error ? err.message : 'Error saving settings')
+      console.error('Error saving:', err)
+      setError(err instanceof Error ? err.message : 'Error al guardar')
     } finally {
       setSaving(false)
     }
   }
 
   if (loading) {
-    return <div className="text-muted-foreground">Cargando configuración...</div>
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Tarifa Predeterminada</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-muted-foreground">Cargando configuración...</div>
+        </CardContent>
+      </Card>
+    )
   }
 
   return (
@@ -112,10 +136,10 @@ export function DefaultTarifaSettings() {
           <Select
             value={defaultTarifaId}
             onValueChange={setDefaultTarifaId}
-            disabled={saving}
+            disabled={saving || tarifas.length === 0}
           >
             <SelectTrigger id="default-tarifa">
-              <SelectValue placeholder="Seleccionar tarifa" />
+              <SelectValue placeholder={tarifas.length === 0 ? 'No hay tarifas disponibles' : 'Seleccionar tarifa'} />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="">Sin tarifa predeterminada</SelectItem>
@@ -128,7 +152,7 @@ export function DefaultTarifaSettings() {
           </Select>
         </div>
 
-        <Button onClick={handleSave} disabled={saving}>
+        <Button onClick={handleSave} disabled={saving || tarifas.length === 0}>
           {saving ? 'Guardando...' : 'Guardar Configuración'}
         </Button>
       </CardContent>
