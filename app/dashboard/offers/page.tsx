@@ -20,19 +20,21 @@ export default async function OffersPage() {
     `)
     .order('created_at', { ascending: false })
 
-  // Sales reps only see their own offers
+  // Admins see all offers, sales reps only see their own, others see their own + assigned
   if (profile.role === 'sales_rep') {
     query = query.eq('created_by', profile.id)
   }
 
   const { data: offers, error } = await query
 
-  // Filter offers: show created by user + assigned to user
-  const filteredOffers = offers?.filter(offer => {
-    const isCreatedByUser = offer.created_by === profile.id
-    const isAssignedToUser = (offer.assignments || []).some((a: any) => a.user_id === profile.id)
-    return isCreatedByUser || isAssignedToUser
-  }) || []
+  // Filter offers: admins see all, others see created by user + assigned to user
+  const filteredOffers = profile.role === 'admin' 
+    ? offers || []
+    : offers?.filter(offer => {
+        const isCreatedByUser = offer.created_by === profile.id
+        const isAssignedToUser = (offer.assignments || []).some((a: any) => a.user_id === profile.id)
+        return isCreatedByUser || isAssignedToUser
+      }) || []
 
   return (
     <div className="space-y-6">
