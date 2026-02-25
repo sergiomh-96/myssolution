@@ -15,28 +15,29 @@ export function GeneratePdfButton({ offerId, offerNumber }: GeneratePdfButtonPro
   const handleGeneratePdf = async () => {
     setIsGenerating(true)
     try {
-      // Get the printable element
-      const element = document.getElementById('offer-print-content')
-      if (!element) {
-        console.error('Elemento de impresión no encontrado')
+      // Open the print dialog with the PDF content
+      const response = await fetch(`/api/offers/${offerId}/pdf`)
+      if (!response.ok) {
+        console.error('Error generando PDF')
         return
       }
 
-      // Import html2pdf dynamically
-      const html2pdf = (await import('html2pdf.js')).default
-
-      // Configure PDF options for A4 format
-      const opt = {
-        margin: 10, // mm
-        filename: `Oferta-${offerNumber}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+      const html = await response.text()
+      
+      // Create a new window/tab with the HTML content
+      const newWindow = window.open('', '_blank')
+      if (!newWindow) {
+        console.error('No se pudo abrir ventana')
+        return
       }
 
-      // Generate and download PDF
-      html2pdf().set(opt).from(element).save()
+      newWindow.document.write(html)
+      newWindow.document.close()
+
+      // Trigger print dialog
+      setTimeout(() => {
+        newWindow.print()
+      }, 250)
     } catch (error) {
       console.error('Error generating PDF:', error)
     } finally {
