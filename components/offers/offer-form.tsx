@@ -275,13 +275,11 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
       
       try {
         const supabase = createClient()
-        const currentYear = new Date().getFullYear()
-        
+
+        // Preview only: read the current sequence value without consuming it
         const { data: existingOffers, error } = await supabase
           .from('offers')
           .select('offer_number')
-          .gte('created_at', `${currentYear}-01-01`)
-          .lte('created_at', `${currentYear}-12-31`)
           .order('offer_number', { ascending: false })
           .limit(1)
 
@@ -293,7 +291,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
         const nextNumber = (existingOffers && existingOffers.length > 0)
           ? (existingOffers[0].offer_number as number) + 1
           : 1
-        
+
         setNextOfferNumber(nextNumber)
       } catch (err) {
         console.error('Error:', err)
@@ -576,23 +574,13 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
           }
         }
       } else {
-        // Create new offer - generate offer_number (global, correlative across all users)
-        const currentYear = new Date().getFullYear()
+        // Generate offer_number atomically via DB sequence (global, race-condition safe)
+        const { data: seqData, error: seqError } = await supabase
+          .rpc('next_offer_number')
 
-        const { data: existingOffers, error: countError } = await supabase
-          .from('offers')
-          .select('offer_number')
-          .gte('created_at', `${currentYear}-01-01`)
-          .lte('created_at', `${currentYear}-12-31`)
-          .order('offer_number', { ascending: false })
-          .limit(1)
+        if (seqError) throw seqError
 
-        if (countError) throw countError
-
-        // Calculate next offer number (global, starts at 1 each year)
-        const nextOfferNumber = (existingOffers && existingOffers.length > 0)
-          ? (existingOffers[0].offer_number as number) + 1
-          : 1
+        const nextOfferNumber = seqData as number
 
         // Create new offer with auto-generated offer_number
         const { data: newOffer, error: insertError } = await supabase
