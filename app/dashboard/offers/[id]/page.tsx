@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Edit } from 'lucide-react'
 import Link from 'next/link'
 import { GeneratePdfButton } from '@/components/offers/generate-pdf-button'
+import { DuplicateOfferButton } from '@/components/offers/duplicate-offer-button'
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -55,6 +56,7 @@ export default async function OfferDetailPage({ params }: PageProps) {
           </div>
           <div className="flex gap-2">
             <GeneratePdfButton offerId={id} offerNumber={offer.offer_number} />
+            <DuplicateOfferButton offerId={id} />
             <Button asChild>
               <Link href={`/dashboard/offers/${offer.id}/edit`}>
                 <Edit className="h-4 w-4 mr-2" />
