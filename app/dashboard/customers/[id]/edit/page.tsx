@@ -27,7 +27,7 @@ export default async function EditCustomerPage({ params }: PageProps) {
   // Get assigned profiles
   const { data: assignedProfiles } = await supabase
     .from('customer_profile_assignments')
-    .select('profile_id, profiles(id, full_name, role)')
+    .select('profile_id, profile:profiles!customer_profile_assignments_profile_id_fkey(id, full_name, role)')
     .eq('customer_id', id)
 
   // Get list of all profiles for assignment

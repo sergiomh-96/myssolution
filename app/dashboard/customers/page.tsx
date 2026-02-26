@@ -16,7 +16,7 @@ export default async function CustomersPage() {
       assigned_user:profiles!customers_assigned_to_fkey(full_name),
       customer_profile_assignments(
         profile_id,
-        profiles(id, full_name, role)
+        profile:profiles!customer_profile_assignments_profile_id_fkey(id, full_name, role)
       )
     `)
     .order('created_at', { ascending: false })

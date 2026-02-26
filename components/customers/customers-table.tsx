@@ -19,7 +19,7 @@ import type { Customer, UserRole } from '@/lib/types/database'
 
 interface AssignedProfile {
   profile_id: string
-  profiles: { id: string; full_name: string | null; role: string } | null
+  profile: { id: string; full_name: string | null; role: string } | null
 }
 
 interface CustomersTableProps {
@@ -131,13 +131,13 @@ export function CustomersTable({ customers, userRole }: CustomersTableProps) {
                       <div className="flex flex-wrap gap-1">
                         {customer.customer_profile_assignments?.length ? (
                           customer.customer_profile_assignments.map((a) =>
-                            a.profiles ? (
+                            a.profile ? (
                               <Badge
                                 key={a.profile_id}
                                 variant="secondary"
                                 className="text-xs"
                               >
-                                {a.profiles.full_name || a.profile_id}
+                                {a.profile.full_name || a.profile_id}
                               </Badge>
                             ) : null
                           )
