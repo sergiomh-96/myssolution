@@ -852,7 +852,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
             value={currentCustomer?.notas_cliente || ''}
             readOnly
             rows={4}
-            className="resize-none text-sm bg-muted"
+            className="resize-none text-xs bg-muted"
             placeholder="Notas del cliente (solo lectura)"
           />
         </div>
@@ -865,7 +865,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
             rows={4}
             disabled={loading}
-            className="resize-none text-sm"
+            className="resize-none text-xs"
             placeholder="Descripción visible en la oferta"
           />
         </div>
@@ -878,7 +878,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
             onChange={(e) => setFormData({ ...formData, notas_internas: e.target.value })}
             rows={4}
             disabled={loading}
-            className="resize-none text-sm"
+            className="resize-none text-xs"
             placeholder="Notas internas que no se mostrarán en la oferta"
           />
         </div>
