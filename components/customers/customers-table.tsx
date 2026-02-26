@@ -81,7 +81,6 @@ export function CustomersTable({ customers, userRole }: CustomersTableProps) {
                   <TableHead>Contact</TableHead>
                   <TableHead>Industry</TableHead>
                   <TableHead>Status</TableHead>
-                  {userRole !== 'sales_rep' && <TableHead>Assigned To</TableHead>}
                   <TableHead>Creado Por</TableHead>
                   <TableHead>Perfiles</TableHead>
                   <TableHead>Created</TableHead>
@@ -123,13 +122,6 @@ export function CustomersTable({ customers, userRole }: CustomersTableProps) {
                         {customer.status}
                       </Badge>
                     </TableCell>
-                    {userRole !== 'sales_rep' && (
-                      <TableCell>
-                        <span className="text-sm text-muted-foreground">
-                          {customer.assigned_user?.full_name || 'Unassigned'}
-                        </span>
-                      </TableCell>
-                    )}
                     <TableCell>
                       <span className="text-sm text-muted-foreground">
                         {customer.created_by_user?.full_name || '-'}

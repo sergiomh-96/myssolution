@@ -26,6 +26,7 @@ interface CustomerFormProps {
   availableUsers: Profile[]
   assignedProfiles?: Array<{ profile_id: string; profiles?: Profile | null }>
   customerId?: string
+  createdByUser?: { full_name: string | null }
 }
 
 export function CustomerForm({
@@ -35,6 +36,7 @@ export function CustomerForm({
   availableUsers = [],
   assignedProfiles = [],
   customerId,
+  createdByUser,
 }: CustomerFormProps) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
@@ -169,6 +171,18 @@ export function CustomerForm({
             disabled={loading}
           />
         </div>
+
+        {customer && createdByUser && (
+          <div className="space-y-2">
+            <Label htmlFor="created_by">Creado Por</Label>
+            <Input
+              id="created_by"
+              value={createdByUser.full_name || '-'}
+              disabled
+              className="bg-muted"
+            />
+          </div>
+        )}
 
         <div className="space-y-2">
           <Label htmlFor="contact_name">Nombre de contacto *</Label>

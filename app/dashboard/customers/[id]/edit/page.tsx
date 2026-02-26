@@ -13,10 +13,10 @@ export default async function EditCustomerPage({ params }: PageProps) {
   const supabase = await createClient()
   const { id } = await params
 
-  // Get customer
+  // Get customer with created_by_user
   const { data: customer, error: customerError } = await supabase
     .from('customers')
-    .select('*')
+    .select('*, created_by_user:profiles!customers_created_by_fkey(full_name)')
     .eq('id', id)
     .single()
 
@@ -57,6 +57,7 @@ export default async function EditCustomerPage({ params }: PageProps) {
             availableUsers={users || []}
             assignedProfiles={assignedProfiles || []}
             customerId={id}
+            createdByUser={customer.created_by_user}
           />
         </CardContent>
       </Card>
