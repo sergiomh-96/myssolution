@@ -8,16 +8,34 @@ export default async function NewOfferPage() {
   const supabase = await createClient()
 
   // Get customers for the dropdown
-  let customersQuery = supabase
-    .from('customers')
-    .select('id, company_name, status')
-    .order('company_name')
+  let customers: { id: string; company_name: string; status: string }[] = []
 
   if (profile.role === 'sales_rep') {
-    customersQuery = customersQuery.eq('assigned_to', profile.id)
-  }
+    // Get customer IDs assigned directly or via customer_profile_assignments
+    const { data: assignedViaProfile } = await supabase
+      .from('customer_profile_assignments')
+      .select('customer_id')
+      .eq('profile_id', profile.id)
 
-  const { data: customers } = await customersQuery
+    const assignedCustomerIds = (assignedViaProfile || []).map(a => a.customer_id)
+
+    // Get customers assigned directly + via profile assignments
+    const { data: customersData } = await supabase
+      .from('customers')
+      .select('id, company_name, status')
+      .or(`assigned_to.eq.${profile.id},id.in.(${assignedCustomerIds.length > 0 ? assignedCustomerIds.join(',') : 'null'})`)
+      .order('company_name')
+
+    customers = customersData || []
+  } else {
+    // Admins and managers see all customers
+    const { data: customersData } = await supabase
+      .from('customers')
+      .select('id, company_name, status')
+      .order('company_name')
+
+    customers = customersData || []
+  }
 
   return (
     <div className="max-w-[1800px] mx-auto space-y-6 px-4">
@@ -33,7 +51,7 @@ export default async function NewOfferPage() {
           <OfferForm
             currentUserId={profile.id}
             currentUserRole={profile.role}
-            customers={customers || []}
+            customers={customers}
           />
         </CardContent>
       </Card>
