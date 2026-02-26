@@ -1,6 +1,7 @@
 import { requireProfile } from '@/lib/auth'
 import { createClient } from '@/lib/supabase/server'
 import { OfferForm } from '@/components/offers/offer-form'
+import { DuplicateOfferButton } from '@/components/offers/duplicate-offer-button'
 import { Card, CardContent } from '@/components/ui/card'
 import { notFound } from 'next/navigation'
 import { Button } from '@/components/ui/button'
@@ -59,6 +60,9 @@ export default async function EditOfferPage({ params }: PageProps) {
           <p className="text-muted-foreground mt-1">
             Modifica los detalles de la oferta comercial
           </p>
+        </div>
+        <div className="ml-auto">
+          <DuplicateOfferButton offerId={id} />
         </div>
       </div>
 

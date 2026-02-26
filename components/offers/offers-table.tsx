@@ -25,13 +25,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import { Search, Edit, Forward, Trash2 } from 'lucide-react'
+import { Search, Edit, Forward, Trash2, Copy } from 'lucide-react'
 import type { Offer, UserRole } from '@/lib/types/database'
 import { formatDistanceToNow } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { formatOfferNumber } from '@/lib/utils/offer'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import { DuplicateOfferButton } from './duplicate-offer-button'
 
 interface OffersTableProps {
   offers: (Omit<Offer, 'total_amount' | 'currency'> & {
@@ -241,6 +242,7 @@ export function OffersTable({ offers: initialOffers, userRole, userId }: OffersT
                             <Edit className="h-4 w-4" />
                           </Link>
                         </Button>
+                        <DuplicateOfferButton offerId={offer.id as string} size="sm" variant="ghost" />
                         {(userRole === 'admin' || userRole === 'manager' || offer.created_by === userId) && (
                           <Button
                             variant="ghost"

@@ -7,9 +7,12 @@ import { useRouter } from 'next/navigation'
 
 interface DuplicateOfferButtonProps {
   offerId: string
+  variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost'
+  size?: 'default' | 'sm' | 'lg' | 'icon'
+  showLabel?: boolean
 }
 
-export function DuplicateOfferButton({ offerId }: DuplicateOfferButtonProps) {
+export function DuplicateOfferButton({ offerId, variant = 'outline', size = 'default', showLabel = true }: DuplicateOfferButtonProps) {
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
 
@@ -42,17 +45,19 @@ export function DuplicateOfferButton({ offerId }: DuplicateOfferButtonProps) {
     <Button
       onClick={handleDuplicate}
       disabled={isLoading}
-      variant="outline"
+      variant={variant}
+      size={size}
+      title="Duplicar oferta"
     >
       {isLoading ? (
         <>
-          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-          Duplicando...
+          <Loader2 className="h-4 w-4 animate-spin" />
+          {showLabel && <span className="ml-2">Duplicando...</span>}
         </>
       ) : (
         <>
-          <Copy className="h-4 w-4 mr-2" />
-          Duplicar
+          <Copy className="h-4 w-4" />
+          {showLabel && <span className="ml-2">Duplicar</span>}
         </>
       )}
     </Button>
