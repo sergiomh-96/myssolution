@@ -93,7 +93,7 @@ export default async function OfferDetailPage({ params }: PageProps) {
               </div>
 
               {/* Right Column */}
-              <div className="space-y-4 text-right">
+              <div className="space-y-4">
                 <div>
                   <label className="text-xs font-semibold text-muted-foreground uppercase">Fecha</label>
                   <p className="text-lg font-bold text-foreground">
