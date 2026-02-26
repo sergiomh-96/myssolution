@@ -14,7 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Search, ExternalLink } from 'lucide-react'
+import { Search, ExternalLink, Edit } from 'lucide-react'
 import type { Customer, UserRole } from '@/lib/types/database'
 import { formatDistanceToNow } from 'date-fns'
 
@@ -126,7 +126,13 @@ export function CustomersTable({ customers, userRole }: CustomersTableProps) {
                         })}
                       </span>
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right flex gap-2 justify-end">
+                      <Button asChild variant="ghost" size="sm">
+                        <Link href={`/dashboard/customers/${customer.id}/edit`}>
+                          <Edit className="h-4 w-4 mr-2" />
+                          Edit
+                        </Link>
+                      </Button>
                       <Button asChild variant="ghost" size="sm">
                         <Link href={`/dashboard/customers/${customer.id}`}>View</Link>
                       </Button>
