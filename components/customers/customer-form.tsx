@@ -9,35 +9,41 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Loader2, X } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
+import { Loader2, X, Users } from 'lucide-react'
 import type { Customer, CustomerStatus, UserRole } from '@/lib/types/database'
-import { Card } from '@/components/ui/card'
+
+interface Profile {
+  id: string
+  full_name: string | null
+  role: string
+}
 
 interface CustomerFormProps {
   customer?: Customer
   currentUserId: string
   currentUserRole: UserRole
-  availableUsers: { id: string; full_name: string | null; role: string }[]
-  assignedProfiles?: Array<{ profile_id: string; profiles?: { id: string; full_name: string | null; role: string } }>
+  availableUsers: Profile[]
+  assignedProfiles?: Array<{ profile_id: string; profiles?: Profile | null }>
   customerId?: string
 }
 
-export function CustomerForm({ 
-  customer, 
-  currentUserId, 
-  currentUserRole, 
-  availableUsers,
+export function CustomerForm({
+  customer,
+  currentUserId,
+  currentUserRole,
+  availableUsers = [],
   assignedProfiles = [],
-  customerId 
+  customerId,
 }: CustomerFormProps) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [selectedProfiles, setSelectedProfiles] = useState<string[]>(
-    assignedProfiles?.map(ap => ap.profile_id) || []
+  const [selectedProfileIds, setSelectedProfileIds] = useState<string[]>(
+    assignedProfiles.map(ap => ap.profile_id)
   )
-  const [newProfileId, setNewProfileId] = useState<string>('')
-  
+  const [profileToAdd, setProfileToAdd] = useState<string>('')
+
   const [formData, setFormData] = useState({
     company_name: customer?.company_name || '',
     contact_name: customer?.contact_name || '',
@@ -53,15 +59,20 @@ export function CustomerForm({
     notes: customer?.notes || '',
   })
 
-  const handleAddProfile = () => {
-    if (newProfileId && !selectedProfiles.includes(newProfileId)) {
-      setSelectedProfiles([...selectedProfiles, newProfileId])
-      setNewProfileId('')
+  const addProfile = () => {
+    if (profileToAdd && !selectedProfileIds.includes(profileToAdd)) {
+      setSelectedProfileIds(prev => [...prev, profileToAdd])
+      setProfileToAdd('')
     }
   }
 
-  const handleRemoveProfile = (profileId: string) => {
-    setSelectedProfiles(selectedProfiles.filter(id => id !== profileId))
+  const removeProfile = (id: string) => {
+    setSelectedProfileIds(prev => prev.filter(p => p !== id))
+  }
+
+  const getProfileName = (id: string) => {
+    const found = availableUsers.find(u => u.id === id)
+    return found?.full_name || id
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -73,61 +84,35 @@ export function CustomerForm({
       const supabase = createClient()
 
       if (customer && customerId) {
-        // Update existing customer
         const { error: updateError } = await supabase
           .from('customers')
-          .update({
-            ...formData,
-            updated_at: new Date().toISOString(),
-          })
+          .update({ ...formData, updated_at: new Date().toISOString() })
           .eq('id', customer.id)
-
         if (updateError) throw updateError
 
-        // Update profile assignments
-        // Delete existing assignments
         await supabase
           .from('customer_profile_assignments')
           .delete()
           .eq('customer_id', customerId)
 
-        // Insert new assignments
-        if (selectedProfiles.length > 0) {
-          const assignments = selectedProfiles.map(profileId => ({
-            customer_id: customerId,
-            profile_id: profileId,
-          }))
-
+        if (selectedProfileIds.length > 0) {
           const { error: assignError } = await supabase
             .from('customer_profile_assignments')
-            .insert(assignments)
-
+            .insert(selectedProfileIds.map(profile_id => ({ customer_id: customerId, profile_id })))
           if (assignError) throw assignError
         }
       } else {
-        // Create new customer
         const { data: newCustomer, error: insertError } = await supabase
           .from('customers')
-          .insert({
-            ...formData,
-            created_by: currentUserId,
-          })
+          .insert({ ...formData, created_by: currentUserId })
           .select()
           .single()
-
         if (insertError) throw insertError
 
-        // Insert profile assignments if any
-        if (selectedProfiles.length > 0 && newCustomer) {
-          const assignments = selectedProfiles.map(profileId => ({
-            customer_id: newCustomer.id,
-            profile_id: profileId,
-          }))
-
+        if (selectedProfileIds.length > 0 && newCustomer) {
           const { error: assignError } = await supabase
             .from('customer_profile_assignments')
-            .insert(assignments)
-
+            .insert(selectedProfileIds.map(profile_id => ({ customer_id: newCustomer.id, profile_id })))
           if (assignError) throw assignError
         }
       }
@@ -140,7 +125,7 @@ export function CustomerForm({
     }
   }
 
-  const canChangeAssignment = currentUserRole === 'admin' || currentUserRole === 'manager'
+  const unassignedProfiles = availableUsers.filter(u => !selectedProfileIds.includes(u.id))
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -150,6 +135,7 @@ export function CustomerForm({
         </Alert>
       )}
 
+      {/* Customer fields */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-2">
           <Label htmlFor="company_name">Company Name *</Label>
@@ -210,7 +196,6 @@ export function CustomerForm({
           <Label htmlFor="website">Website</Label>
           <Input
             id="website"
-            type="url"
             placeholder="https://example.com"
             value={formData.website}
             onChange={(e) => setFormData({ ...formData, website: e.target.value })}
@@ -250,8 +235,8 @@ export function CustomerForm({
 
         <div className="space-y-2">
           <Label htmlFor="status">Status</Label>
-          <Select 
-            value={formData.status} 
+          <Select
+            value={formData.status}
             onValueChange={(value) => setFormData({ ...formData, status: value as CustomerStatus })}
             disabled={loading}
           >
@@ -267,89 +252,7 @@ export function CustomerForm({
             </SelectContent>
           </Select>
         </div>
-
-        {availableUsers.length > 0 && (
-          <div className="space-y-2">
-            <Label htmlFor="assigned_to">Assigned To (Primary)</Label>
-            <Select 
-              value={formData.assigned_to} 
-              onValueChange={(value) => setFormData({ ...formData, assigned_to: value })}
-              disabled={loading}
-            >
-              <SelectTrigger id="assigned_to">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {availableUsers.map((user) => (
-                  <SelectItem key={user.id} value={user.id}>
-                    {user.full_name || user.id} ({user.role})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        )}
       </div>
-
-      {availableUsers.length > 0 && (
-        <div className="space-y-3 border rounded-lg p-4 bg-muted/30">
-          <Label>Assign Additional Profiles</Label>
-          <div className="flex gap-2">
-            <Select 
-              value={newProfileId} 
-              onValueChange={setNewProfileId}
-              disabled={loading}
-            >
-              <SelectTrigger className="flex-1">
-                <SelectValue placeholder="Select profile to add..." />
-              </SelectTrigger>
-              <SelectContent>
-                {availableUsers
-                  .filter(user => !selectedProfiles.includes(user.id))
-                  .map((user) => (
-                    <SelectItem key={user.id} value={user.id}>
-                      {user.full_name || user.id} ({user.role})
-                    </SelectItem>
-                  ))}
-              </SelectContent>
-            </Select>
-            <Button
-              type="button"
-              onClick={handleAddProfile}
-              disabled={!newProfileId || loading}
-              variant="outline"
-            >
-              Add Profile
-            </Button>
-          </div>
-
-          {selectedProfiles.length > 0 && (
-            <div className="space-y-2">
-              <Label className="text-sm">Assigned Profiles:</Label>
-              <div className="flex flex-wrap gap-2">
-                {selectedProfiles.map((profileId) => {
-                  const profile = availableUsers.find(u => u.id === profileId)
-                  return (
-                    <Card key={profileId} className="px-3 py-2 bg-background flex items-center gap-2">
-                      <span className="text-sm">
-                        {profile?.full_name || profileId}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveProfile(profileId)}
-                        className="ml-1 hover:text-destructive"
-                        disabled={loading}
-                      >
-                        <X className="h-4 w-4" />
-                      </button>
-                    </Card>
-                  )
-                })}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
 
       <div className="space-y-2">
         <Label htmlFor="notes">Notes</Label>
@@ -357,28 +260,79 @@ export function CustomerForm({
           id="notes"
           value={formData.notes}
           onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-          rows={4}
+          rows={3}
           disabled={loading}
         />
       </div>
 
-      <div className="flex gap-4">
+      {/* Profile assignment - always visible */}
+      <div className="border rounded-lg p-4 space-y-4">
+        <div className="flex items-center gap-2">
+          <Users className="h-4 w-4 text-muted-foreground" />
+          <Label className="text-base font-semibold">Assigned Profiles</Label>
+        </div>
+
+        {/* Currently assigned */}
+        <div className="flex flex-wrap gap-2 min-h-[36px]">
+          {selectedProfileIds.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No profiles assigned yet.</p>
+          ) : (
+            selectedProfileIds.map(id => (
+              <Badge key={id} variant="secondary" className="flex items-center gap-1 pr-1 text-sm">
+                {getProfileName(id)}
+                <button
+                  type="button"
+                  onClick={() => removeProfile(id)}
+                  disabled={loading}
+                  className="ml-1 rounded-full hover:bg-muted p-0.5"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </Badge>
+            ))
+          )}
+        </div>
+
+        {/* Add profile dropdown */}
+        {availableUsers.length > 0 ? (
+          <div className="flex gap-2">
+            <Select value={profileToAdd} onValueChange={setProfileToAdd} disabled={loading}>
+              <SelectTrigger className="flex-1">
+                <SelectValue placeholder="Select a profile to assign..." />
+              </SelectTrigger>
+              <SelectContent>
+                {unassignedProfiles.map(user => (
+                  <SelectItem key={user.id} value={user.id}>
+                    {user.full_name || user.id}
+                    <span className="ml-2 text-xs text-muted-foreground capitalize">({user.role})</span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={addProfile}
+              disabled={!profileToAdd || loading}
+            >
+              Add
+            </Button>
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground">No profiles available to assign.</p>
+        )}
+      </div>
+
+      <div className="flex gap-3 pt-2">
         <Button type="submit" disabled={loading}>
           {loading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               Saving...
             </>
-          ) : (
-            customer ? 'Update Customer' : 'Create Customer'
-          )}
+          ) : customer ? 'Update Customer' : 'Create Customer'}
         </Button>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => router.back()}
-          disabled={loading}
-        >
+        <Button type="button" variant="outline" onClick={() => router.back()} disabled={loading}>
           Cancel
         </Button>
       </div>
