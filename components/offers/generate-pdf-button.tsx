@@ -15,31 +15,38 @@ export function GeneratePdfButton({ offerId, offerNumber }: GeneratePdfButtonPro
   const handleGeneratePdf = async () => {
     setIsLoading(true)
     try {
-      // Fetch PDF from API
+      // Fetch HTML from API
       const response = await fetch(`/api/offers/${offerId}/pdf`)
       
       if (!response.ok) {
         throw new Error('Error al generar el PDF')
       }
 
-      // Get the PDF blob
-      const blob = await response.blob()
+      // Get the HTML content
+      const htmlContent = await response.text()
+      
+      // Create a blob from HTML
+      const blob = new Blob([htmlContent], { type: 'text/html; charset=utf-8' })
       
       // Create object URL
       const url = URL.createObjectURL(blob)
       
-      // Create a temporary link and trigger download
-      const link = document.createElement('a')
-      link.href = url
-      link.download = `Oferta-${offerNumber}.pdf`
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
+      // Open in new window with print dialog
+      const printWindow = window.open(url, '_blank')
       
-      // Clean up
+      if (printWindow) {
+        printWindow.addEventListener('load', () => {
+          // Trigger print dialog automatically
+          setTimeout(() => {
+            printWindow.print()
+          }, 500)
+        })
+      }
+      
+      // Clean up after a delay
       setTimeout(() => {
         URL.revokeObjectURL(url)
-      }, 100)
+      }, 2000)
     } catch (error) {
       console.error('[v0] Error generating PDF:', error)
       alert('Error al generar el PDF. Por favor intenta de nuevo.')

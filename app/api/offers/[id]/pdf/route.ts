@@ -1,6 +1,5 @@
 import { requireProfile } from '@/lib/auth'
 import { createClient } from '@/lib/supabase/server'
-import PDFDocument from 'pdfkit'
 
 export async function GET(
   request: Request,
@@ -37,273 +36,293 @@ export async function GET(
       .eq('offer_id', id)
       .order('id')
 
-    // Create PDF document
-    const doc = new PDFDocument({
-      size: 'A4',
-      margin: 40,
-      bufferPages: true,
-    })
-
     // Generate offer number format
     const offerYear = new Date(offer.created_at).getFullYear()
     const offerNumberFormatted = `${offerYear}-${String(offer.offer_number).padStart(4, '0')}`
 
-    // Add logo image (placeholder - using text instead)
-    doc.fontSize(24)
-      .font('Helvetica-Bold')
-      .fillColor('#003D7A')
-      .text('MYS air', 50, 50)
-    
-    doc.fontSize(10)
-      .fillColor('#999999')
-      .text('sistema de zonas y difusión', 50, 75)
-
-    // Add header information in two columns
-    doc.fontSize(9)
-      .fillColor('#333333')
-
-    // Left column
-    const leftX = 50
-    const rightX = 310
-    let y = 120
-
-    // Left column - Nº Oferta
-    doc.font('Helvetica-Bold')
-      .fontSize(8)
-      .fillColor('#666666')
-      .text('Nº OFERTA', leftX, y)
-    doc.font('Helvetica-Bold')
-      .fontSize(12)
-      .fillColor('#333333')
-      .text(offerNumberFormatted, leftX, y + 15)
-    
-    y += 40
-
-    // Left column - Referencia
-    doc.font('Helvetica-Bold')
-      .fontSize(8)
-      .fillColor('#666666')
-      .text('REFERENCIA', leftX, y)
-    doc.font('Helvetica')
-      .fontSize(9)
-      .fillColor('#333333')
-      .text(offer.title || '-', leftX, y + 15)
-    
-    y += 35
-
-    // Left column - Cliente
-    doc.font('Helvetica-Bold')
-      .fontSize(8)
-      .fillColor('#666666')
-      .text('CLIENTE', leftX, y)
-    doc.font('Helvetica')
-      .fontSize(9)
-      .fillColor('#333333')
-      .text(offer.customer?.company_name || '-', leftX, y + 15)
-    
-    y += 35
-
-    // Left column - Contacto
-    doc.font('Helvetica-Bold')
-      .fontSize(8)
-      .fillColor('#666666')
-      .text('CONTACTO', leftX, y)
-    const contactName = offer.contact 
-      ? `${offer.contact.nombre} ${offer.contact.apellidos}`
-      : '-'
-    doc.font('Helvetica')
-      .fontSize(9)
-      .fillColor('#333333')
-      .text(contactName, leftX, y + 15)
-
-    // Right column
-    y = 120
-
-    // Right column - Fecha
-    doc.font('Helvetica-Bold')
-      .fontSize(8)
-      .fillColor('#666666')
-      .text('FECHA', rightX, y)
-    doc.font('Helvetica-Bold')
-      .fontSize(12)
-      .fillColor('#333333')
-      .text(new Date(offer.created_at).toLocaleDateString('es-ES', { 
-        day: '2-digit', 
-        month: '2-digit', 
-        year: 'numeric' 
-      }), rightX, y + 15)
-    
-    y += 40
-
-    // Right column - Realiza por
-    doc.font('Helvetica-Bold')
-      .fontSize(8)
-      .fillColor('#666666')
-      .text('REALIZA POR', rightX, y)
-    doc.font('Helvetica')
-      .fontSize(9)
-      .fillColor('#333333')
-      .text(offer.created_by_profile?.full_name || '-', rightX, y + 15)
-    
-    y += 35
-
-    // Right column - Plazo de Entrega
-    doc.font('Helvetica-Bold')
-      .fontSize(8)
-      .fillColor('#666666')
-      .text('PLAZO DE ENTREGA', rightX, y)
-    doc.font('Helvetica')
-      .fontSize(9)
-      .fillColor('#333333')
-      .text('A consultar', rightX, y + 15)
-    
-    y += 35
-
-    // Right column - Precio
-    doc.font('Helvetica-Bold')
-      .fontSize(8)
-      .fillColor('#666666')
-      .text('PRECIO', rightX, y)
-    doc.font('Helvetica-Bold')
-      .fontSize(12)
-      .fillColor('#333333')
-      .text('NETO', rightX, y + 15)
-
-    // Draw header border
-    doc.strokeColor('#CCCCCC')
-      .lineWidth(1)
-      .moveTo(50, 240)
-      .lineTo(550, 240)
-      .stroke()
-
-    // Add table header
-    const tableTop = 260
-    const colWidths = [80, 200, 60, 70, 80]
-    const headers = ['Referencia', 'Descripción', 'Cantidad', 'Neto', 'Neto Total']
-    
-    // Header background
-    doc.rect(50, tableTop, 500, 20)
-      .fillAndStroke('#B3D9FF', '#0066CC')
-
-    // Header text
-    doc.fillColor('#000000')
-      .font('Helvetica-Bold')
-      .fontSize(9)
-
-    let xPos = 50
-    headers.forEach((header, i) => {
-      const align = i > 1 ? 'right' : 'left'
-      const padding = align === 'right' ? 5 : 5
-      doc.text(header, xPos + padding, tableTop + 5, { 
-        width: colWidths[i] - 10, 
-        align 
-      })
-      xPos += colWidths[i]
-    })
-
-    // Add table rows
-    let tableY = tableTop + 25
-    const rowHeight = 20
-    let totalAmount = 0
-
-    if (items && items.length > 0) {
-      items.forEach((item, index) => {
-        const isEven = index % 2 === 0
-        
-        // Row background
-        if (isEven) {
-          doc.rect(50, tableY - 5, 500, rowHeight)
-            .fill('#F9F9F9')
-        }
-
-        // Row border
-        doc.strokeColor('#EEEEEE')
-          .lineWidth(0.5)
-          .moveTo(50, tableY + rowHeight - 5)
-          .lineTo(550, tableY + rowHeight - 5)
-          .stroke()
-
-        // Row data
-        doc.fillColor('#333333')
-          .font('Helvetica')
-          .fontSize(9)
-
-        const rowData = [
-          item.product?.referencia || '-',
-          item.description || item.product?.descripcion || '-',
-          String(item.quantity),
-          `€${(item.pvp || 0).toFixed(2)}`,
-          `€${(item.neto_total2 || 0).toFixed(2)}`
-        ]
-
-        xPos = 50
-        rowData.forEach((data, i) => {
-          const align = i > 1 ? 'right' : 'left'
-          const padding = align === 'right' ? 5 : 5
-          doc.text(data, xPos + padding, tableY, { 
-            width: colWidths[i] - 10, 
-            align 
-          })
-          xPos += colWidths[i]
-        })
-
-        totalAmount += Number(item.neto_total2 || 0)
-        tableY += rowHeight
-      })
-
-      // Total row
-      doc.rect(50, tableY - 5, 500, rowHeight)
-        .fillAndStroke('#E8E8E8', '#999999')
-
-      doc.fillColor('#000000')
-        .font('Helvetica-Bold')
-        .fontSize(9)
-
-      xPos = 50
-      const totalRowData = ['', '', '', 'TOTAL:', `€${totalAmount.toFixed(2)}`]
-      totalRowData.forEach((data, i) => {
-        const align = i > 1 ? 'right' : 'left'
-        const padding = align === 'right' ? 5 : 5
-        doc.text(data, xPos + padding, tableY, { 
-          width: colWidths[i] - 10, 
-          align 
-        })
-        xPos += colWidths[i]
-      })
+    // Generate HTML for printing/PDF
+    const html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Oferta ${offerNumberFormatted}</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
     }
-
-    // Add footer
-    doc.fontSize(9)
-      .fillColor('#999999')
-      .text('Página 1 de 1', 50, 750, { align: 'center' })
-
-    // Finalize PDF
-    const chunks: Buffer[] = []
     
-    return new Promise((resolve, reject) => {
-      doc.on('data', (chunk: Buffer) => {
-        chunks.push(chunk)
-      })
+    @media print {
+      body {
+        margin: 0;
+        padding: 20mm;
+      }
+      .no-print {
+        display: none;
+      }
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+      color: #333;
+      background: #f5f5f5;
+      padding: 20px;
+    }
+    
+    .container {
+      max-width: 210mm;
+      height: 297mm;
+      background: white;
+      margin: 20px auto;
+      padding: 20mm;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      position: relative;
+    }
+    
+    .logo {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      height: 60px;
+      width: auto;
+    }
+    
+    .header-info {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+      margin-top: 80px;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid #e0e0e0;
+    }
+    
+    .header-left {
+      border-right: 2px solid #e0e0e0;
+      padding-right: 16px;
+    }
+    
+    .header-right {
+      padding-left: 16px;
+    }
+    
+    .info-row {
+      margin-bottom: 4px;
+      padding-bottom: 4px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .info-row:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+    
+    .info-label {
+      font-size: 9px;
+      font-weight: 600;
+      color: #666;
+      text-transform: uppercase;
+      margin-bottom: 2px;
+      letter-spacing: 0.5px;
+    }
+    
+    .info-value {
+      font-size: 12px;
+      color: #333;
+      font-weight: 500;
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 16px;
+      margin-bottom: 16px;
+      font-size: 11px;
+    }
+    
+    thead {
+      background-color: #b3d9ff;
+      border-top: 2px solid #0066cc;
+      border-bottom: 2px solid #0066cc;
+    }
+    
+    th {
+      padding: 8px;
+      text-align: left;
+      font-weight: 600;
+      color: #003d99;
+      border: 1px solid #0066cc;
+      font-size: 10px;
+    }
+    
+    td {
+      padding: 8px;
+      border: 1px solid #ddd;
+      color: #333;
+    }
+    
+    tbody tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+    
+    tbody tr:nth-child(odd) {
+      background-color: white;
+    }
+    
+    .total-row {
+      background-color: #e8e8e8;
+      font-weight: 600;
+      border: 1px solid #999;
+    }
+    
+    .total-row td {
+      border: 1px solid #999;
+      color: #333;
+    }
+    
+    .text-center {
+      text-align: center;
+    }
+    
+    .text-right {
+      text-align: right;
+    }
+    
+    .footer {
+      text-align: center;
+      font-size: 9px;
+      color: #999;
+      margin-top: 16px;
+      padding-top: 8px;
+      border-top: 1px solid #ddd;
+    }
+    
+    .print-button {
+      background: #0066cc;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      margin-bottom: 20px;
+    }
+    
+    .print-button:hover {
+      background: #0052a3;
+    }
+  </style>
+</head>
+<body>
+  <button class="print-button no-print" onclick="window.print()">Guardar como PDF</button>
+  
+  <div class="container">
+    <div class="logo">
+      <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjUwIiB2aWV3Qm94PSIwIDAgMjQwIDgwIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjwvc3ZnPg==" alt="MYS air logo" style="width: 100%; height: auto;">
+    </div>
 
-      doc.on('end', () => {
-        const pdfBuffer = Buffer.concat(chunks)
-        resolve(new Response(pdfBuffer, {
-          headers: {
-            'Content-Type': 'application/pdf',
-            'Content-Disposition': `attachment; filename="Oferta-${offerNumberFormatted}.pdf"`,
-            'Content-Length': pdfBuffer.length.toString(),
-          },
-        }))
-      })
+    <div class="header-info">
+      <div class="header-left">
+        <div class="info-row">
+          <div class="info-label">Nº Oferta</div>
+          <div class="info-value">${offerNumberFormatted}</div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">Referencia</div>
+          <div class="info-value">${escapeHtml(offer.title || '-')}</div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">Cliente</div>
+          <div class="info-value">${escapeHtml(offer.customer?.company_name || '-')}</div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">Contacto</div>
+          <div class="info-value">${escapeHtml(offer.contact ? offer.contact.nombre + ' ' + offer.contact.apellidos : '-')}</div>
+        </div>
+      </div>
 
-      doc.on('error', (err) => {
-        reject(err)
-      })
+      <div class="header-right">
+        <div class="info-row">
+          <div class="info-label">Fecha</div>
+          <div class="info-value">${new Date(offer.created_at).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' })}</div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">Realiza por</div>
+          <div class="info-value">${escapeHtml(offer.created_by_profile?.full_name || '-')}</div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">Plazo de Entrega</div>
+          <div class="info-value">A consultar</div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">Precio</div>
+          <div class="info-value">NETO</div>
+        </div>
+      </div>
+    </div>
 
-      doc.end()
+    <table>
+      <thead>
+        <tr>
+          <th>Referencia</th>
+          <th>Descripción</th>
+          <th class="text-center" style="width: 60px;">Cantidad</th>
+          <th class="text-right" style="width: 70px;">Neto</th>
+          <th class="text-right" style="width: 80px;">Neto Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${items?.map(item => `
+          <tr>
+            <td>${escapeHtml(item.product?.referencia || '-')}</td>
+            <td>${escapeHtml(item.description || item.product?.descripcion || '-')}</td>
+            <td class="text-center">${item.quantity}</td>
+            <td class="text-right">€${(item.pvp || 0).toFixed(2)}</td>
+            <td class="text-right">€${(item.neto_total2 || 0).toFixed(2)}</td>
+          </tr>
+        `).join('')}
+        <tr class="total-row">
+          <td colspan="4" class="text-right">TOTAL:</td>
+          <td class="text-right">€${(items?.reduce((sum, item) => sum + Number(item.neto_total2 || 0), 0) || 0).toFixed(2)}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="footer">
+      <p>Página 1 de 1</p>
+    </div>
+  </div>
+
+  <script>
+    window.addEventListener('load', () => {
+      console.log('Documento cargado. Usa el botón para guardar como PDF o Ctrl+P');
+    });
+  </script>
+</body>
+</html>`
+
+    return new Response(html, {
+      headers: {
+        'Content-Type': 'text/html; charset=utf-8',
+        'Content-Disposition': 'inline',
+      },
     })
   } catch (error) {
-    console.error('[v0] Error generating PDF:', error)
-    return new Response('Error al generar el PDF', { status: 500 })
+    console.error('Error generating offer HTML:', error)
+    return new Response('Error al generar la oferta', { status: 500 })
   }
+}
+
+function escapeHtml(text: string): string {
+  const map: Record<string, string> = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;',
+  }
+  return text.replace(/[&<>"']/g, (m) => map[m])
 }
