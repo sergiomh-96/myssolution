@@ -10,7 +10,8 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Loader2, Plus, X, CheckCircle } from 'lucide-react'
+import { Loader2, Plus, X, CheckCircle, ChevronDown, Check } from 'lucide-react'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import type { Offer, OfferStatus, UserRole } from '@/lib/types/database'
 import { formatOfferNumber } from '@/lib/utils/offer'
 
@@ -884,37 +885,59 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
 
         <div className="space-y-0.5">
           <Label className="text-xs">Asignar a Usuarios</Label>
-          <div className="border border-input rounded-md bg-background p-2 overflow-y-auto" style={{ minHeight: '6.5rem' }}>
-            <div className="grid grid-cols-1 gap-1.5">
-              {users.length > 0 ? (
-                users.map((user) => (
-                  <label key={user.id} className="flex items-center gap-2 cursor-pointer hover:bg-accent/50 px-1 py-0.5 rounded">
-                    <input
-                      type="checkbox"
-                      checked={assignedUserIds.includes(user.id)}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setAssignedUserIds([...assignedUserIds, user.id])
-                        } else {
-                          setAssignedUserIds(assignedUserIds.filter(id => id !== user.id))
-                        }
-                      }}
-                      disabled={loading}
-                      className="rounded"
-                    />
-                    <span className="text-xs font-medium truncate">{user.full_name}</span>
-                  </label>
-                ))
-              ) : (
-                <span className="text-xs text-muted-foreground">No hay usuarios</span>
-              )}
-            </div>
-            {assignedUserIds.length > 0 && (
-              <p className="text-xs text-muted-foreground mt-2 border-t border-border pt-1">
-                {assignedUserIds.length} asignado(s)
-              </p>
-            )}
-          </div>
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                disabled={loading}
+                className="flex h-9 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <span className="text-sm text-muted-foreground truncate">
+                  {assignedUserIds.length === 0
+                    ? 'Seleccionar usuarios...'
+                    : assignedUserIds.length === 1
+                      ? users.find(u => u.id === assignedUserIds[0])?.full_name || '1 usuario'
+                      : `${assignedUserIds.length} usuarios seleccionados`}
+                </span>
+                <ChevronDown className="h-4 w-4 shrink-0 opacity-50 ml-2" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-64 p-1" align="start">
+              <div className="max-h-60 overflow-y-auto">
+                {users.length > 0 ? (
+                  users.map((user) => {
+                    const isChecked = assignedUserIds.includes(user.id)
+                    return (
+                      <label
+                        key={user.id}
+                        className="flex items-center gap-2 cursor-pointer hover:bg-accent/60 px-2 py-1.5 rounded select-none"
+                      >
+                        <div className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border ${isChecked ? 'bg-primary border-primary' : 'border-input'}`}>
+                          {isChecked && <Check className="h-3 w-3 text-primary-foreground" />}
+                        </div>
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setAssignedUserIds([...assignedUserIds, user.id])
+                            } else {
+                              setAssignedUserIds(assignedUserIds.filter(id => id !== user.id))
+                            }
+                          }}
+                          disabled={loading}
+                          className="sr-only"
+                        />
+                        <span className="text-sm truncate">{user.full_name || user.email}</span>
+                      </label>
+                    )
+                  })
+                ) : (
+                  <p className="text-xs text-muted-foreground px-2 py-1.5">No hay usuarios</p>
+                )}
+              </div>
+            </PopoverContent>
+          </Popover>
         </div>
 
       </div>
