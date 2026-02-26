@@ -2,15 +2,18 @@ import { requireProfile } from '@/lib/auth'
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
-interface RouteParams {
-  params: Promise<{ id: string }>
-}
-
-export async function POST(request: Request, { params }: RouteParams) {
+export async function POST(request: Request) {
   try {
     const profile = await requireProfile()
-    const { id } = await params
     const supabase = await createClient()
+
+    // Get id from query parameters
+    const url = new URL(request.url)
+    const id = url.searchParams.get('id')
+
+    if (!id) {
+      return NextResponse.json({ error: 'Offer ID is required' }, { status: 400 })
+    }
 
     // Get the offer to duplicate
     const { data: offer, error: offerError } = await supabase
@@ -59,6 +62,7 @@ export async function POST(request: Request, { params }: RouteParams) {
       .single()
 
     if (createError || !newOffer) {
+      console.error('[v0] Error creating new offer:', createError)
       return NextResponse.json({ error: 'Failed to create offer' }, { status: 500 })
     }
 
@@ -88,6 +92,7 @@ export async function POST(request: Request, { params }: RouteParams) {
         .insert(itemsToInsert)
 
       if (insertError) {
+        console.error('[v0] Error copying items:', insertError)
         return NextResponse.json({ error: 'Failed to copy items' }, { status: 500 })
       }
     }

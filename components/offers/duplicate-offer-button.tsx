@@ -16,7 +16,7 @@ export function DuplicateOfferButton({ offerId }: DuplicateOfferButtonProps) {
   const handleDuplicate = async () => {
     setIsLoading(true)
     try {
-      const response = await fetch(`/api/offers/${offerId}/duplicate`, {
+      const response = await fetch(`/api/offers/duplicate?id=${offerId}`, {
         method: 'POST',
       })
 
