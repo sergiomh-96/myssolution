@@ -7,15 +7,14 @@ export default async function NewCustomerPage() {
   const profile = await requireProfile()
   const supabase = await createClient()
 
-  // Get list of users for assignment (admins and managers can assign to others)
+  // Get list of users for profile assignment
+  // admins, managers, and sales_rep can assign users when creating a customer
   let users: { id: string; full_name: string | null; role: string }[] = []
   
-  if (profile.role === 'admin' || profile.role === 'manager') {
+  if (profile.role === 'admin' || profile.role === 'manager' || profile.role === 'sales_rep') {
     const { data } = await supabase
       .from('profiles')
       .select('id, full_name, role')
-      .in('role', ['admin', 'manager', 'sales_rep'])
-      .eq('is_active', true)
       .order('full_name')
     
     users = data || []

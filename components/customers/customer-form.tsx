@@ -136,7 +136,7 @@ export function CustomerForm({
     }
   }
 
-  const isAdmin = currentUserRole === 'admin'
+  const isAdmin = currentUserRole === 'admin' || currentUserRole === 'sales_rep'
   const unassignedProfiles = availableUsers.filter(u => !selectedProfileIds.includes(u.id))
 
   return (
