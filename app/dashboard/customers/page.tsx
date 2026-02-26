@@ -24,6 +24,7 @@ export default async function CustomersPage() {
     .select(`
       *,
       assigned_user:profiles!customers_assigned_to_fkey(full_name),
+      created_by_user:profiles!customers_created_by_fkey(full_name),
       customer_profile_assignments(
         profile_id,
         profile:profiles!customer_profile_assignments_profile_id_fkey(id, full_name, role)

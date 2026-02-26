@@ -26,6 +26,7 @@ interface AssignedProfile {
 interface CustomersTableProps {
   customers: (Customer & {
     assigned_user?: { full_name: string | null }
+    created_by_user?: { full_name: string | null }
     customer_profile_assignments?: AssignedProfile[]
   })[]
   userRole: UserRole
@@ -81,6 +82,7 @@ export function CustomersTable({ customers, userRole }: CustomersTableProps) {
                   <TableHead>Industry</TableHead>
                   <TableHead>Status</TableHead>
                   {userRole !== 'sales_rep' && <TableHead>Assigned To</TableHead>}
+                  <TableHead>Creado Por</TableHead>
                   <TableHead>Perfiles</TableHead>
                   <TableHead>Created</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
@@ -128,6 +130,11 @@ export function CustomersTable({ customers, userRole }: CustomersTableProps) {
                         </span>
                       </TableCell>
                     )}
+                    <TableCell>
+                      <span className="text-sm text-muted-foreground">
+                        {customer.created_by_user?.full_name || '-'}
+                      </span>
+                    </TableCell>
                     <TableCell>
                       <div className="flex flex-wrap gap-1">
                         {customer.customer_profile_assignments?.length ? (
