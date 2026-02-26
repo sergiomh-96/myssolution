@@ -163,19 +163,19 @@ export function OfferDetailView({ offer, items, onPrint, onDownload }: OfferView
             <tbody>
               {items.map((item, idx) => (
                 <tr key={item.id} className={idx % 2 === 0 ? 'bg-white' : 'bg-muted/30'}>
-                  <td className="py-2 px-3 text-xs text-foreground border border-border font-medium">
+                  <td className="py-2 px-3 text-[0.65rem] text-foreground border border-border font-medium">
                     {item.product?.referencia || '-'}
                   </td>
-                  <td className="py-2 px-3 text-xs text-foreground border border-border">
+                  <td className="py-2 px-3 text-[0.65rem] text-foreground border border-border">
                     {item.description || item.product?.descripcion || '-'}
                   </td>
-                  <td className="py-2 px-3 text-xs text-center text-foreground border border-border">
+                  <td className="py-2 px-3 text-[0.65rem] text-center text-foreground border border-border">
                     {item.quantity}
                   </td>
-                  <td className="py-2 px-3 text-xs text-right text-foreground border border-border">
+                  <td className="py-2 px-3 text-[0.65rem] text-right text-foreground border border-border">
                     {Number(item.pvp).toFixed(2)} €
                   </td>
-                  <td className="py-2 px-3 text-xs text-right font-semibold text-foreground border border-border">
+                  <td className="py-2 px-3 text-[0.65rem] text-right font-semibold text-foreground border border-border">
                     {Number(item.neto_total2).toFixed(2)} €
                   </td>
                 </tr>
@@ -193,9 +193,9 @@ export function OfferDetailView({ offer, items, onPrint, onDownload }: OfferView
         </div>
 
         {/* Conditions / Footer */}
-        <div className="border-t-2 border-border pt-6 text-xs text-muted-foreground space-y-2">
+        <div className="border-t-2 border-border pt-6 text-[0.65rem] text-muted-foreground space-y-2">
           <p><strong>Condiciones:</strong></p>
-          <ul className="list-disc list-inside space-y-1">
+          <ul className="list-disc list-inside space-y-0.5">
             <li>Esta oferta es válida por {validityDays} días a partir de la fecha indicada</li>
             <li>Los precios mostrados son en €, IVA no incluido</li>
             <li>Forma de pago: Según condiciones comerciales</li>
