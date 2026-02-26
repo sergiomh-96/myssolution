@@ -1,74 +1,64 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
-import { FileDown, Loader2 } from 'lucide-react'
+import { FileText, Loader2 } from 'lucide-react'
 import { useState } from 'react'
 
 interface GeneratePdfButtonProps {
   offerId: string
-  offerNumber: string
+  offerNumber: number
 }
 
 export function GeneratePdfButton({ offerId, offerNumber }: GeneratePdfButtonProps) {
-  const [isLoading, setIsLoading] = useState(false)
+  const [isGenerating, setIsGenerating] = useState(false)
 
   const handleGeneratePdf = async () => {
-    setIsLoading(true)
+    setIsGenerating(true)
     try {
-      // Fetch HTML from API
+      // Open the print dialog with the PDF content
       const response = await fetch(`/api/offers/${offerId}/pdf`)
-      
       if (!response.ok) {
-        throw new Error('Error al generar el PDF')
+        console.error('Error generando PDF')
+        return
       }
 
-      // Get the HTML content
-      const htmlContent = await response.text()
+      const html = await response.text()
       
-      // Create a blob from HTML
-      const blob = new Blob([htmlContent], { type: 'text/html; charset=utf-8' })
-      
-      // Create object URL
-      const url = URL.createObjectURL(blob)
-      
-      // Open in new window with print dialog
-      const printWindow = window.open(url, '_blank')
-      
-      if (printWindow) {
-        printWindow.addEventListener('load', () => {
-          // Trigger print dialog automatically
-          setTimeout(() => {
-            printWindow.print()
-          }, 500)
-        })
+      // Create a new window/tab with the HTML content
+      const newWindow = window.open('', '_blank')
+      if (!newWindow) {
+        console.error('No se pudo abrir ventana')
+        return
       }
-      
-      // Clean up after a delay
+
+      newWindow.document.write(html)
+      newWindow.document.close()
+
+      // Trigger print dialog
       setTimeout(() => {
-        URL.revokeObjectURL(url)
-      }, 2000)
+        newWindow.print()
+      }, 250)
     } catch (error) {
-      console.error('[v0] Error generating PDF:', error)
-      alert('Error al generar el PDF. Por favor intenta de nuevo.')
+      console.error('Error generating PDF:', error)
     } finally {
-      setIsLoading(false)
+      setIsGenerating(false)
     }
   }
 
   return (
     <Button 
       onClick={handleGeneratePdf} 
-      disabled={isLoading}
+      disabled={isGenerating}
       variant="outline"
     >
-      {isLoading ? (
+      {isGenerating ? (
         <>
           <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-          Generando...
+          Generando PDF...
         </>
       ) : (
         <>
-          <FileDown className="h-4 w-4 mr-2" />
+          <FileText className="h-4 w-4 mr-2" />
           Generar PDF
         </>
       )}
