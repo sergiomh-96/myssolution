@@ -16,10 +16,17 @@ import {
 } from '@/components/ui/table'
 import { Search, ExternalLink, Edit } from 'lucide-react'
 import type { Customer, UserRole } from '@/lib/types/database'
-import { formatDistanceToNow } from 'date-fns'
+
+interface AssignedProfile {
+  profile_id: string
+  profiles: { id: string; full_name: string | null; role: string } | null
+}
 
 interface CustomersTableProps {
-  customers: (Customer & { assigned_user?: { full_name: string | null } })[]
+  customers: (Customer & {
+    assigned_user?: { full_name: string | null }
+    customer_profile_assignments?: AssignedProfile[]
+  })[]
   userRole: UserRole
 }
 
@@ -73,6 +80,7 @@ export function CustomersTable({ customers, userRole }: CustomersTableProps) {
                   <TableHead>Industry</TableHead>
                   <TableHead>Status</TableHead>
                   {userRole !== 'sales_rep' && <TableHead>Assigned To</TableHead>}
+                  <TableHead>Perfiles</TableHead>
                   <TableHead>Created</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -119,6 +127,25 @@ export function CustomersTable({ customers, userRole }: CustomersTableProps) {
                         </span>
                       </TableCell>
                     )}
+                    <TableCell>
+                      <div className="flex flex-wrap gap-1">
+                        {customer.customer_profile_assignments?.length ? (
+                          customer.customer_profile_assignments.map((a) =>
+                            a.profiles ? (
+                              <Badge
+                                key={a.profile_id}
+                                variant="secondary"
+                                className="text-xs"
+                              >
+                                {a.profiles.full_name || a.profile_id}
+                              </Badge>
+                            ) : null
+                          )
+                        ) : (
+                          <span className="text-xs text-muted-foreground">-</span>
+                        )}
+                      </div>
+                    </TableCell>
                     <TableCell>
                       <span className="text-sm text-muted-foreground">
                         {formatDistanceToNow(new Date(customer.created_at), {
