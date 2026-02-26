@@ -21,9 +21,10 @@ export default async function OffersPage() {
     .eq('visible', true)
     .order('created_at', { ascending: false })
 
-  // Admins see all visible offers, sales reps only see their own visible, others see their own visible + assigned
+  // Admins see all visible offers, sales reps see created by user + assigned to user
   if (profile.role === 'sales_rep') {
-    query = query.eq('created_by', profile.id)
+    // Get offers created by this user OR assigned via offer_assignments
+    query = query.or(`created_by.eq.${profile.id},assignments.cs.[{"user_id":"${profile.id}"}]`)
   }
 
   const { data: offers, error } = await query

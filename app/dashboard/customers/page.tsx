@@ -21,9 +21,9 @@ export default async function CustomersPage() {
     `)
     .order('created_at', { ascending: false })
 
-  // Sales reps only see their assigned customers
+  // Sales reps see customers assigned directly OR via customer_profile_assignments
   if (profile.role === 'sales_rep') {
-    query = query.eq('assigned_to', profile.id)
+    query = query.or(`assigned_to.eq.${profile.id},customer_profile_assignments.cs.[{"profile_id":"${profile.id}"}]`)
   }
 
   const { data: customers, error } = await query
