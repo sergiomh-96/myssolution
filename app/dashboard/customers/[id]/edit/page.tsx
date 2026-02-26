@@ -30,11 +30,10 @@ export default async function EditCustomerPage({ params }: PageProps) {
     .select('profile_id, profiles(id, full_name, role)')
     .eq('customer_id', id)
 
-  // Get list of all active profiles for assignment
+  // Get list of all profiles for assignment
   const { data: users } = await supabase
     .from('profiles')
     .select('id, full_name, role')
-    .eq('is_active', true)
     .order('full_name')
 
   return (

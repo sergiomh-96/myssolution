@@ -56,7 +56,7 @@ export function CustomerForm({
     industry: customer?.industry || '',
     status: (customer?.status || 'lead') as CustomerStatus,
     assigned_to: customer?.assigned_to || currentUserId,
-    notes: customer?.notes || '',
+    notes: (customer as any)?.notas_cliente || '',
   })
 
   const addProfile = () => {
@@ -125,6 +125,7 @@ export function CustomerForm({
     }
   }
 
+  const isAdmin = currentUserRole === 'admin'
   const unassignedProfiles = availableUsers.filter(u => !selectedProfileIds.includes(u.id))
 
   return (
@@ -265,48 +266,58 @@ export function CustomerForm({
         />
       </div>
 
-      {/* Profile assignment - always visible */}
+      {/* Profile assignment section */}
       <div className="border rounded-lg p-4 space-y-4">
         <div className="flex items-center gap-2">
           <Users className="h-4 w-4 text-muted-foreground" />
-          <Label className="text-base font-semibold">Assigned Profiles</Label>
+          <Label className="text-base font-semibold">Perfiles Asignados</Label>
+          {!isAdmin && (
+            <span className="text-xs text-muted-foreground ml-1">(solo lectura)</span>
+          )}
         </div>
 
-        {/* Currently assigned */}
+        {/* Currently assigned badges */}
         <div className="flex flex-wrap gap-2 min-h-[36px]">
           {selectedProfileIds.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No profiles assigned yet.</p>
+            <p className="text-sm text-muted-foreground">No hay perfiles asignados.</p>
           ) : (
             selectedProfileIds.map(id => (
               <Badge key={id} variant="secondary" className="flex items-center gap-1 pr-1 text-sm">
                 {getProfileName(id)}
-                <button
-                  type="button"
-                  onClick={() => removeProfile(id)}
-                  disabled={loading}
-                  className="ml-1 rounded-full hover:bg-muted p-0.5"
-                >
-                  <X className="h-3 w-3" />
-                </button>
+                {isAdmin && (
+                  <button
+                    type="button"
+                    onClick={() => removeProfile(id)}
+                    disabled={loading}
+                    className="ml-1 rounded-full hover:bg-muted p-0.5"
+                    aria-label="Remove profile"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                )}
               </Badge>
             ))
           )}
         </div>
 
-        {/* Add profile dropdown */}
-        {availableUsers.length > 0 ? (
+        {/* Add profile dropdown - only for admin */}
+        {isAdmin && (
           <div className="flex gap-2">
             <Select value={profileToAdd} onValueChange={setProfileToAdd} disabled={loading}>
               <SelectTrigger className="flex-1">
-                <SelectValue placeholder="Select a profile to assign..." />
+                <SelectValue placeholder="Seleccionar perfil para asignar..." />
               </SelectTrigger>
               <SelectContent>
-                {unassignedProfiles.map(user => (
-                  <SelectItem key={user.id} value={user.id}>
-                    {user.full_name || user.id}
-                    <span className="ml-2 text-xs text-muted-foreground capitalize">({user.role})</span>
-                  </SelectItem>
-                ))}
+                {unassignedProfiles.length === 0 ? (
+                  <SelectItem value="_none" disabled>Todos los perfiles ya están asignados</SelectItem>
+                ) : (
+                  unassignedProfiles.map(user => (
+                    <SelectItem key={user.id} value={user.id}>
+                      {user.full_name || user.id}
+                      <span className="ml-2 text-xs text-muted-foreground capitalize">({user.role})</span>
+                    </SelectItem>
+                  ))
+                )}
               </SelectContent>
             </Select>
             <Button
@@ -315,11 +326,9 @@ export function CustomerForm({
               onClick={addProfile}
               disabled={!profileToAdd || loading}
             >
-              Add
+              Añadir
             </Button>
           </div>
-        ) : (
-          <p className="text-sm text-muted-foreground">No profiles available to assign.</p>
         )}
       </div>
 
