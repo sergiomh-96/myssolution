@@ -39,9 +39,6 @@ export async function GET(
       .order('id')
 
     // Generate HTML for PDF
-    const offerYear = new Date(offer.created_at).getFullYear()
-    const offerNumberFormatted = `${offerYear}-${String(offer.offer_number).padStart(4, '0')}`
-    
     const html = `
 <!DOCTYPE html>
 <html>
@@ -49,152 +46,42 @@ export async function GET(
   <meta charset="UTF-8">
   <style>
     * { margin: 0; padding: 0; }
-    body { 
-      font-family: Arial, sans-serif; 
-      padding: 40px; 
-      color: #333;
-      line-height: 1.4;
-    }
-    @page { 
-      size: A4; 
-      margin: 20mm;
-    }
-    .logo-container { 
-      position: absolute; 
-      top: 20px; 
-      left: 20px; 
-      width: 120px; 
-      height: auto; 
-    }
-    .logo-container img { 
-      width: 100%; 
-      height: auto; 
-    }
-    .header-info {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 0;
-      margin-top: 40px;
-      margin-bottom: 12px;
-      padding-bottom: 12px;
-      border-bottom: 2px solid #ddd;
-    }
-    .header-left {
-      border-right: 2px solid #ddd;
-      padding-right: 20px;
-    }
-    .header-right {
-      padding-left: 20px;
-    }
-    .info-row {
-      display: grid;
-      grid-template-columns: 1fr;
-      border-bottom: 1px solid #ddd;
-      padding-bottom: 4px;
-      margin-bottom: 4px;
-    }
-    .info-row:last-child {
-      border-bottom: none;
-      margin-bottom: 0;
-    }
-    .label { 
-      font-weight: bold; 
-      font-size: 9px; 
-      color: #666; 
-      text-transform: uppercase; 
-      margin-bottom: 2px;
-    }
-    .value { 
-      font-size: 11px; 
-      font-weight: 500;
-    }
-    table { 
-      width: 100%; 
-      border-collapse: collapse; 
-      margin-top: 12px;
-      margin-bottom: 20px; 
-    }
-    thead { 
-      background-color: #b3d9ff; 
-      border: 2px solid #0066cc;
-    }
-    th { 
-      padding: 8px; 
-      text-align: left; 
-      font-size: 11px; 
-      font-weight: bold; 
-      border: 1px solid #0066cc;
-    }
-    td { 
-      padding: 8px; 
-      font-size: 10px; 
-      border: 1px solid #ddd;
-    }
-    tbody tr:nth-child(even) { 
-      background-color: #f9f9f9; 
-    }
-    tbody tr:nth-child(odd) { 
-      background-color: #ffffff; 
-    }
-    .total-row { 
-      background-color: #e8e8e8; 
-      font-weight: bold;
-      border: 1px solid #999;
-    }
-    .total-row td {
-      border: 1px solid #999;
-    }
-    .footer { 
-      text-align: center; 
-      font-size: 9px; 
-      color: #999; 
-      margin-top: 16px; 
-      padding-top: 8px; 
-      border-top: 1px solid #ddd; 
-    }
+    body { font-family: Arial, sans-serif; padding: 20px; color: #333; }
+    .header { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 2px solid #ddd; }
+    .header-left, .header-right { font-size: 12px; }
+    .header-right { text-align: right; }
+    .label { font-weight: bold; font-size: 10px; color: #666; text-transform: uppercase; margin-bottom: 4px; }
+    .value { font-size: 14px; margin-bottom: 15px; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+    thead { background-color: #e8f1ff; }
+    th { padding: 10px; text-align: left; font-size: 12px; font-weight: bold; border-bottom: 2px solid #0066cc; }
+    td { padding: 10px; font-size: 11px; border-bottom: 1px solid #eee; }
+    tbody tr:nth-child(even) { background-color: #f9f9f9; }
+    .total-row { background-color: #e8e8e8; font-weight: bold; }
+    .footer { text-align: center; font-size: 10px; color: #999; margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd; }
   </style>
 </head>
 <body>
-  <div class="logo-container">
-    <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==" alt="MYS air logo" />
-  </div>
-
-  <div class="header-info">
+  <div class="header">
     <div class="header-left">
-      <div class="info-row">
-        <div class="label">Nº Oferta</div>
-        <div class="value">${offerNumberFormatted}</div>
-      </div>
-      <div class="info-row">
-        <div class="label">Referencia</div>
-        <div class="value">${offer.title || '-'}</div>
-      </div>
-      <div class="info-row">
-        <div class="label">Cliente</div>
-        <div class="value">${offer.customer?.company_name || '-'}</div>
-      </div>
-      <div class="info-row">
-        <div class="label">Contacto</div>
-        <div class="value">${offer.contact ? offer.contact.nombre + ' ' + offer.contact.apellidos : '-'}</div>
-      </div>
+      <div class="label">Nº Oferta</div>
+      <div class="value">${offer.offer_number}</div>
+      <div class="label">Referencia</div>
+      <div class="value">${offer.title || '-'}</div>
+      <div class="label">Cliente</div>
+      <div class="value">${offer.customer?.company_name || '-'}</div>
+      <div class="label">Contacto</div>
+      <div class="value">${offer.contact ? offer.contact.nombre + ' ' + offer.contact.apellidos : '-'}</div>
     </div>
     <div class="header-right">
-      <div class="info-row">
-        <div class="label">Fecha</div>
-        <div class="value">${new Date(offer.created_at).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' })}</div>
-      </div>
-      <div class="info-row">
-        <div class="label">Realiza por</div>
-        <div class="value">${offer.created_by_profile?.full_name || '-'}</div>
-      </div>
-      <div class="info-row">
-        <div class="label">Plazo de Entrega</div>
-        <div class="value">A consultar</div>
-      </div>
-      <div class="info-row">
-        <div class="label">Precio</div>
-        <div class="value">NETO</div>
-      </div>
+      <div class="label">Fecha</div>
+      <div class="value">${new Date(offer.created_at).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' })}</div>
+      <div class="label">Realiza por</div>
+      <div class="value">${offer.created_by_profile?.full_name || '-'}</div>
+      <div class="label">Plazo de Entrega</div>
+      <div class="value">A consultar</div>
+      <div class="label">Precio</div>
+      <div class="value">NETO</div>
     </div>
   </div>
 
