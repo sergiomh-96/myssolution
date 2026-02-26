@@ -9,6 +9,16 @@ export default async function CustomersPage() {
   const profile = await requireProfile()
   const supabase = await createClient()
 
+  // For sales_rep: get IDs of customers assigned via customer_profile_assignments
+  let assignedCustomerIds: string[] = []
+  if (profile.role === 'sales_rep') {
+    const { data: assigned } = await supabase
+      .from('customer_profile_assignments')
+      .select('customer_id')
+      .eq('profile_id', profile.id)
+    assignedCustomerIds = (assigned || []).map((a) => a.customer_id)
+  }
+
   let query = supabase
     .from('customers')
     .select(`
@@ -23,7 +33,12 @@ export default async function CustomersPage() {
 
   // Sales reps see customers assigned directly OR via customer_profile_assignments
   if (profile.role === 'sales_rep') {
-    query = query.or(`assigned_to.eq.${profile.id},customer_profile_assignments.cs.[{"profile_id":"${profile.id}"}]`)
+    const customerIdsToShow = [...new Set([...assignedCustomerIds])]
+    if (customerIdsToShow.length > 0) {
+      query = query.or(`assigned_to.eq.${profile.id},id.in.(${customerIdsToShow.join(',')})`)
+    } else {
+      query = query.eq('assigned_to', profile.id)
+    }
   }
 
   const { data: customers, error } = await query
