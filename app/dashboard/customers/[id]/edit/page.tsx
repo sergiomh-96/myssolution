@@ -55,7 +55,7 @@ export default async function EditCustomerPage({ params }: PageProps) {
             customer={customer}
             currentUserId={profile.id}
             currentUserRole={profile.role}
-            availableUsers={users}
+            availableUsers={users || []}
             assignedProfiles={assignedProfiles || []}
             customerId={id}
           />
