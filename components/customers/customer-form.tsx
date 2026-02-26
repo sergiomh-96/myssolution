@@ -268,7 +268,7 @@ export function CustomerForm({
           </Select>
         </div>
 
-        {canChangeAssignment && availableUsers.length > 0 && (
+        {availableUsers.length > 0 && (
           <div className="space-y-2">
             <Label htmlFor="assigned_to">Assigned To (Primary)</Label>
             <Select 
@@ -291,7 +291,7 @@ export function CustomerForm({
         )}
       </div>
 
-      {canChangeAssignment && availableUsers.length > 0 && (
+      {availableUsers.length > 0 && (
         <div className="space-y-3 border rounded-lg p-4 bg-muted/30">
           <Label>Assign Additional Profiles</Label>
           <div className="flex gap-2">

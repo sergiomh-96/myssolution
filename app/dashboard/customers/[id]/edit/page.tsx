@@ -30,19 +30,12 @@ export default async function EditCustomerPage({ params }: PageProps) {
     .select('profile_id, profiles(id, full_name, role)')
     .eq('customer_id', id)
 
-  // Get list of users for assignment
-  let users: { id: string; full_name: string | null; role: string }[] = []
-  
-  if (profile.role === 'admin' || profile.role === 'manager') {
-    const { data } = await supabase
-      .from('profiles')
-      .select('id, full_name, role')
-      .in('role', ['admin', 'manager', 'sales_rep'])
-      .eq('is_active', true)
-      .order('full_name')
-    
-    users = data || []
-  }
+  // Get list of all active profiles for assignment
+  const { data: users } = await supabase
+    .from('profiles')
+    .select('id, full_name, role')
+    .eq('is_active', true)
+    .order('full_name')
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
