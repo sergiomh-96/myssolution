@@ -69,48 +69,48 @@ export default async function OfferDetailPage({ params }: PageProps) {
           <Card className="border-2">
           <CardContent className="p-8">
           {/* Header with Info */}
-          <div className="grid grid-cols-2 gap-0 mb-8 pb-8 border-b">
+          <div className="grid grid-cols-2 gap-0 mb-3 pb-3 border-b">
             {/* Left Column */}
-            <div className="border-r pr-8 space-y-4">
-              <div className="border-b pb-4">
+            <div className="border-r pr-8 space-y-1">
+              <div className="border-b pb-1">
                 <label className="text-xs font-semibold text-muted-foreground uppercase">Nº Oferta</label>
-                <p className="text-lg font-bold text-foreground">{offer.offer_number}</p>
+                <p className="text-base font-bold text-foreground">{offer.offer_number}</p>
               </div>
-              <div className="border-b pb-4">
+              <div className="border-b pb-1">
                 <label className="text-xs font-semibold text-muted-foreground uppercase">Referencia</label>
-                <p className="text-sm text-foreground">{offer.title || '-'}</p>
+                <p className="text-xs text-foreground">{offer.title || '-'}</p>
               </div>
-              <div className="border-b pb-4">
+              <div className="border-b pb-1">
                 <label className="text-xs font-semibold text-muted-foreground uppercase">Cliente</label>
-                <p className="text-sm text-foreground">{offer.customer?.company_name || '-'}</p>
+                <p className="text-xs text-foreground">{offer.customer?.company_name || '-'}</p>
               </div>
               <div>
                 <label className="text-xs font-semibold text-muted-foreground uppercase">Contacto</label>
-                <p className="text-sm text-foreground">
+                <p className="text-xs text-foreground">
                   {offer.contact ? `${offer.contact.nombre} ${offer.contact.apellidos}` : '-'}
                 </p>
               </div>
             </div>
 
             {/* Right Column */}
-            <div className="pl-8 space-y-4">
-              <div className="border-b pb-4">
+            <div className="pl-8 space-y-1">
+              <div className="border-b pb-1">
                 <label className="text-xs font-semibold text-muted-foreground uppercase">Fecha</label>
-                <p className="text-lg font-bold text-foreground">
+                <p className="text-base font-bold text-foreground">
                   {new Date(offer.created_at).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' })}
                 </p>
               </div>
-              <div className="border-b pb-4">
+              <div className="border-b pb-1">
                 <label className="text-xs font-semibold text-muted-foreground uppercase">Realiza por</label>
-                <p className="text-sm text-foreground">{offer.created_by_profile?.full_name || '-'}</p>
+                <p className="text-xs text-foreground">{offer.created_by_profile?.full_name || '-'}</p>
               </div>
-              <div className="border-b pb-4">
+              <div className="border-b pb-1">
                 <label className="text-xs font-semibold text-muted-foreground uppercase">Plazo de Entrega</label>
-                <p className="text-sm text-foreground">A consultar</p>
+                <p className="text-xs text-foreground">A consultar</p>
               </div>
               <div>
                 <label className="text-xs font-semibold text-muted-foreground uppercase">Precio</label>
-                <p className="text-lg font-bold text-foreground">NETO</p>
+                <p className="text-base font-bold text-foreground">NETO</p>
               </div>
             </div>
           </div>
