@@ -74,7 +74,9 @@ export default async function OfferDetailPage({ params }: PageProps) {
             <div className="border-r pr-8 space-y-1">
               <div className="border-b pb-1">
                 <label className="text-xs font-semibold text-muted-foreground uppercase">Nº Oferta</label>
-                <p className="text-base font-bold text-foreground">{offer.offer_number}</p>
+                <p className="text-base font-bold text-foreground">
+                  {new Date(offer.created_at).getFullYear()}-{String(offer.offer_number).padStart(4, '0')}
+                </p>
               </div>
               <div className="border-b pb-1">
                 <label className="text-xs font-semibold text-muted-foreground uppercase">Referencia</label>
