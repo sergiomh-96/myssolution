@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Loader2, X, Users } from 'lucide-react'
-import type { Customer, CustomerStatus, UserRole } from '@/lib/types/database'
+import type { CustomerStatus, UserRole } from '@/lib/types/database'
 
 interface Profile {
   id: string
@@ -20,7 +20,7 @@ interface Profile {
 }
 
 interface CustomerFormProps {
-  customer?: Customer
+  customer?: any
   currentUserId: string
   currentUserRole: UserRole
   availableUsers: Profile[]
@@ -44,19 +44,23 @@ export function CustomerForm({
   )
   const [profileToAdd, setProfileToAdd] = useState<string>('')
 
+  // Use exact DB column names
   const [formData, setFormData] = useState({
     company_name: customer?.company_name || '',
     contact_name: customer?.contact_name || '',
     contact_email: customer?.contact_email || '',
     contact_phone: customer?.contact_phone || '',
     address: customer?.address || '',
-    city: customer?.city || '',
-    country: customer?.country || '',
+    ciudad: customer?.ciudad || '',
+    pais: customer?.pais || '',
+    provincia: customer?.provincia || '',
+    codigo_postal: customer?.codigo_postal || '',
     website: customer?.website || '',
     industry: customer?.industry || '',
+    nif: customer?.nif || '',
     status: (customer?.status || 'lead') as CustomerStatus,
     assigned_to: customer?.assigned_to || currentUserId,
-    notes: (customer as any)?.notas_cliente || '',
+    notas_cliente: customer?.notas_cliente || '',
   })
 
   const addProfile = () => {
@@ -90,6 +94,7 @@ export function CustomerForm({
           .eq('id', customer.id)
         if (updateError) throw updateError
 
+        // Update profile assignments
         await supabase
           .from('customer_profile_assignments')
           .delete()
@@ -98,7 +103,10 @@ export function CustomerForm({
         if (selectedProfileIds.length > 0) {
           const { error: assignError } = await supabase
             .from('customer_profile_assignments')
-            .insert(selectedProfileIds.map(profile_id => ({ customer_id: customerId, profile_id })))
+            .insert(selectedProfileIds.map(profile_id => ({
+              customer_id: Number(customerId),
+              profile_id,
+            })))
           if (assignError) throw assignError
         }
       } else {
@@ -112,7 +120,10 @@ export function CustomerForm({
         if (selectedProfileIds.length > 0 && newCustomer) {
           const { error: assignError } = await supabase
             .from('customer_profile_assignments')
-            .insert(selectedProfileIds.map(profile_id => ({ customer_id: newCustomer.id, profile_id })))
+            .insert(selectedProfileIds.map(profile_id => ({
+              customer_id: newCustomer.id,
+              profile_id,
+            })))
           if (assignError) throw assignError
         }
       }
@@ -120,7 +131,7 @@ export function CustomerForm({
       router.push('/dashboard/customers')
       router.refresh()
     } catch (err: any) {
-      setError(err.message || 'An error occurred')
+      setError(err.message || 'Ha ocurrido un error')
       setLoading(false)
     }
   }
@@ -139,7 +150,7 @@ export function CustomerForm({
       {/* Customer fields */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-2">
-          <Label htmlFor="company_name">Company Name *</Label>
+          <Label htmlFor="company_name">Nombre de empresa *</Label>
           <Input
             id="company_name"
             value={formData.company_name}
@@ -150,17 +161,17 @@ export function CustomerForm({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="industry">Industry</Label>
+          <Label htmlFor="nif">NIF / CIF</Label>
           <Input
-            id="industry"
-            value={formData.industry}
-            onChange={(e) => setFormData({ ...formData, industry: e.target.value })}
+            id="nif"
+            value={formData.nif}
+            onChange={(e) => setFormData({ ...formData, nif: e.target.value })}
             disabled={loading}
           />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="contact_name">Contact Name *</Label>
+          <Label htmlFor="contact_name">Nombre de contacto *</Label>
           <Input
             id="contact_name"
             value={formData.contact_name}
@@ -171,7 +182,7 @@ export function CustomerForm({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="contact_email">Contact Email *</Label>
+          <Label htmlFor="contact_email">Email de contacto *</Label>
           <Input
             id="contact_email"
             type="email"
@@ -183,7 +194,7 @@ export function CustomerForm({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="contact_phone">Contact Phone</Label>
+          <Label htmlFor="contact_phone">Teléfono</Label>
           <Input
             id="contact_phone"
             type="tel"
@@ -194,7 +205,7 @@ export function CustomerForm({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="website">Website</Label>
+          <Label htmlFor="website">Web</Label>
           <Input
             id="website"
             placeholder="https://example.com"
@@ -205,37 +216,17 @@ export function CustomerForm({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="address">Address</Label>
+          <Label htmlFor="industry">Sector</Label>
           <Input
-            id="address"
-            value={formData.address}
-            onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+            id="industry"
+            value={formData.industry}
+            onChange={(e) => setFormData({ ...formData, industry: e.target.value })}
             disabled={loading}
           />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="city">City</Label>
-          <Input
-            id="city"
-            value={formData.city}
-            onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-            disabled={loading}
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="country">Country</Label>
-          <Input
-            id="country"
-            value={formData.country}
-            onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-            disabled={loading}
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="status">Status</Label>
+          <Label htmlFor="status">Estado</Label>
           <Select
             value={formData.status}
             onValueChange={(value) => setFormData({ ...formData, status: value as CustomerStatus })}
@@ -253,14 +244,64 @@ export function CustomerForm({
             </SelectContent>
           </Select>
         </div>
+
+        <div className="space-y-2 md:col-span-2">
+          <Label htmlFor="address">Dirección</Label>
+          <Input
+            id="address"
+            value={formData.address}
+            onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+            disabled={loading}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="ciudad">Ciudad</Label>
+          <Input
+            id="ciudad"
+            value={formData.ciudad}
+            onChange={(e) => setFormData({ ...formData, ciudad: e.target.value })}
+            disabled={loading}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="provincia">Provincia</Label>
+          <Input
+            id="provincia"
+            value={formData.provincia}
+            onChange={(e) => setFormData({ ...formData, provincia: e.target.value })}
+            disabled={loading}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="codigo_postal">Código Postal</Label>
+          <Input
+            id="codigo_postal"
+            value={formData.codigo_postal}
+            onChange={(e) => setFormData({ ...formData, codigo_postal: e.target.value })}
+            disabled={loading}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="pais">País</Label>
+          <Input
+            id="pais"
+            value={formData.pais}
+            onChange={(e) => setFormData({ ...formData, pais: e.target.value })}
+            disabled={loading}
+          />
+        </div>
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="notes">Notes</Label>
+        <Label htmlFor="notas_cliente">Notas</Label>
         <Textarea
-          id="notes"
-          value={formData.notes}
-          onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+          id="notas_cliente"
+          value={formData.notas_cliente}
+          onChange={(e) => setFormData({ ...formData, notas_cliente: e.target.value })}
           rows={3}
           disabled={loading}
         />
@@ -282,7 +323,7 @@ export function CustomerForm({
             <p className="text-sm text-muted-foreground">No hay perfiles asignados.</p>
           ) : (
             selectedProfileIds.map(id => (
-              <Badge key={id} variant="secondary" className="flex items-center gap-1 pr-1 text-sm">
+              <Badge key={id} variant="secondary" className="flex items-center gap-1 pr-1 text-sm py-1">
                 {getProfileName(id)}
                 {isAdmin && (
                   <button
@@ -290,7 +331,7 @@ export function CustomerForm({
                     onClick={() => removeProfile(id)}
                     disabled={loading}
                     className="ml-1 rounded-full hover:bg-muted p-0.5"
-                    aria-label="Remove profile"
+                    aria-label="Eliminar perfil"
                   >
                     <X className="h-3 w-3" />
                   </button>
@@ -309,12 +350,15 @@ export function CustomerForm({
               </SelectTrigger>
               <SelectContent>
                 {unassignedProfiles.length === 0 ? (
-                  <SelectItem value="_none" disabled>Todos los perfiles ya están asignados</SelectItem>
+                  <SelectItem value="_none" disabled>
+                    Todos los perfiles ya están asignados
+                  </SelectItem>
                 ) : (
                   unassignedProfiles.map(user => (
                     <SelectItem key={user.id} value={user.id}>
                       {user.full_name || user.id}
-                      <span className="ml-2 text-xs text-muted-foreground capitalize">({user.role})</span>
+                      {' '}
+                      <span className="text-xs text-muted-foreground capitalize">({user.role})</span>
                     </SelectItem>
                   ))
                 )}
@@ -324,7 +368,7 @@ export function CustomerForm({
               type="button"
               variant="outline"
               onClick={addProfile}
-              disabled={!profileToAdd || loading}
+              disabled={!profileToAdd || profileToAdd === '_none' || loading}
             >
               Añadir
             </Button>
@@ -337,12 +381,12 @@ export function CustomerForm({
           {loading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Saving...
+              Guardando...
             </>
-          ) : customer ? 'Update Customer' : 'Create Customer'}
+          ) : customer ? 'Actualizar Cliente' : 'Crear Cliente'}
         </Button>
         <Button type="button" variant="outline" onClick={() => router.back()} disabled={loading}>
-          Cancel
+          Cancelar
         </Button>
       </div>
     </form>
