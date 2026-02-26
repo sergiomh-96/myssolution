@@ -67,7 +67,18 @@ export default async function OfferDetailPage({ params }: PageProps) {
         {/* Professional Offer View */}
         <div id="offer-print-content" className="print:bg-white">
           <Card className="border-2">
-          <CardContent className="p-8">
+          <CardContent className="p-8 relative">
+            {/* Logo - Fixed position for all pages */}
+            <div className="absolute top-4 left-4 print:fixed print:top-4 print:left-4 z-50">
+              <img 
+                src="/mysair-logo.png" 
+                alt="MYS air logo" 
+                className="h-16 w-auto"
+              />
+            </div>
+
+            {/* Add top margin to accommodate logo */}
+            <div className="mt-12">
           {/* Header with Info */}
           <div className="grid grid-cols-2 gap-0 mb-3 pb-3 border-b">
             {/* Left Column */}
@@ -168,6 +179,7 @@ export default async function OfferDetailPage({ params }: PageProps) {
             {/* Footer */}
             <div className="mt-8 pt-8 border-t text-xs text-muted-foreground text-center">
               <p>Página 1 de 1</p>
+            </div>
             </div>
           </CardContent>
         </Card>
