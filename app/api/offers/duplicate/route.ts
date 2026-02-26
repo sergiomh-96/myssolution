@@ -26,38 +26,41 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Offer not found' }, { status: 404 })
     }
 
-    // Get the highest offer number for this year to generate a new one
-    const year = new Date(offer.created_at).getFullYear()
+    // Get the highest offer number globally to generate a new sequential one
     const { data: maxOfferData } = await supabase
       .from('offers')
       .select('offer_number')
-      .gte('created_at', `${year}-01-01`)
-      .lt('created_at', `${year + 1}-01-01`)
       .order('offer_number', { ascending: false })
       .limit(1)
 
     const newOfferNumber = maxOfferData && maxOfferData.length > 0 
-      ? maxOfferData[0].offer_number + 1 
+      ? (maxOfferData[0].offer_number ?? 0) + 1 
       : 1
 
+    console.log('[v0] Duplicating offer', id, '-> new number:', newOfferNumber, '| createError will show below')
+
     // Create new offer with copied data
+    const insertData: Record<string, unknown> = {
+      customer_id: offer.customer_id,
+      title: `${offer.title} (COPIA)`,
+      description: offer.description,
+      notas_internas: offer.notas_internas,
+      notes: offer.notes,
+      tarifa_id: offer.tarifa_id,
+      offer_number: newOfferNumber,
+      currency: offer.currency || 'EUR',
+      visible: true,
+      status: 'draft',
+      created_by: profile.id,
+    }
+
+    // Only include optional FK fields if they have values
+    if (offer.contact_id) insertData.contact_id = offer.contact_id
+    if (offer.assigned_to) insertData.assigned_to = offer.assigned_to
+
     const { data: newOffer, error: createError } = await supabase
       .from('offers')
-      .insert({
-        customer_id: offer.customer_id,
-        contact_id: offer.contact_id,
-        title: `${offer.title} (COPIA)`,
-        description: offer.description,
-        notas_internas: offer.notas_internas,
-        notes: offer.notes,
-        tarifa_id: offer.tarifa_id,
-        offer_number: newOfferNumber,
-        currency: offer.currency,
-        visible: true,
-        status: 'draft',
-        created_by: profile.id,
-        assigned_to: offer.assigned_to,
-      })
+      .insert(insertData)
       .select()
       .single()
 
