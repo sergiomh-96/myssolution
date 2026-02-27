@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Loader2, Plus, X, CheckCircle, ChevronDown, Check } from 'lucide-react'
+import { Loader2, Plus, X, CheckCircle, ChevronDown, Check, Search } from 'lucide-react'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import type { Offer, OfferStatus, UserRole } from '@/lib/types/database'
 import { formatOfferNumber } from '@/lib/utils/offer'
@@ -134,6 +134,115 @@ function ProductSearchInput({
                   </button>
                 ))}
               </div>
+            </>
+          )}
+        </>
+      )}
+    </div>
+  )
+}
+
+// Customer Search Input Component
+function CustomerSearchInput({
+  value,
+  customers,
+  onSelect,
+  disabled,
+}: {
+  value: string | number | null
+  customers: Array<{ id: string | number; company_name: string }>
+  onSelect: (customerId: string | number) => void
+  disabled?: boolean
+}) {
+  const [searchTerm, setSearchTerm] = useState('')
+  const [isOpen, setIsOpen] = useState(false)
+  const [selectedCustomer, setSelectedCustomer] = useState<typeof customers[0] | null>(null)
+
+  // Update selected customer when value changes
+  useEffect(() => {
+    const customer = customers.find(c => String(c.id) === String(value))
+    setSelectedCustomer(customer || null)
+    if (customer) {
+      setSearchTerm('')
+    }
+  }, [value, customers])
+
+  // Filter customers by search term
+  const filteredCustomers = searchTerm.trim()
+    ? customers.filter(c => 
+        c.company_name.toLowerCase().includes(searchTerm.toLowerCase())
+      ).slice(0, 10)
+    : []
+
+  const handleCustomerSelect = (customer: typeof customers[0]) => {
+    onSelect(customer.id)
+    setSelectedCustomer(customer)
+    setSearchTerm('')
+    setIsOpen(false)
+  }
+
+  const handleClear = () => {
+    onSelect('')
+    setSelectedCustomer(null)
+    setSearchTerm('')
+  }
+
+  return (
+    <div className="relative">
+      {selectedCustomer ? (
+        <div className="flex items-center gap-1">
+          <div className="flex-1 h-9 px-2 py-2 border border-input rounded-md bg-background text-sm truncate">
+            {selectedCustomer.company_name}
+          </div>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="h-9 w-9 p-0"
+            onClick={handleClear}
+            disabled={disabled}
+          >
+            <X className="w-4 h-4" />
+          </Button>
+        </div>
+      ) : (
+        <>
+          <div className="relative">
+            <Search className="absolute left-2.5 top-2.5 w-4 h-4 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder="Buscar cliente..."
+              value={searchTerm}
+              onChange={(e) => {
+                setSearchTerm(e.target.value)
+                setIsOpen(true)
+              }}
+              onFocus={() => setIsOpen(true)}
+              className="pl-8 h-9 text-sm"
+              disabled={disabled}
+            />
+          </div>
+          {isOpen && searchTerm.trim() && (
+            <>
+              {filteredCustomers.length > 0 && (
+                <div className="absolute top-full left-0 right-0 mt-1 border border-input rounded-md bg-background shadow-lg z-10">
+                  {filteredCustomers.map((customer) => (
+                    <button
+                      key={customer.id}
+                      type="button"
+                      onClick={() => handleCustomerSelect(customer)}
+                      className="w-full text-left px-3 py-2 hover:bg-accent text-sm"
+                    >
+                      {customer.company_name}
+                    </button>
+                  ))}
+                </div>
+              )}
+              {filteredCustomers.length === 0 && (
+                <div className="absolute top-full left-0 right-0 mt-1 border border-input rounded-md bg-background px-3 py-2 text-xs text-muted-foreground">
+                  No se encontraron clientes
+                </div>
+              )}
             </>
           )}
         </>
@@ -769,22 +878,12 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
         {/* ── Fila 3: Cliente | Contacto | Estado | Fecha Validez ── */}
         <div className="space-y-0.5">
           <Label htmlFor="customer_id" className="text-xs">Cliente *</Label>
-          <Select
-            value={formData.customer_id?.toString() || ''}
-            onValueChange={(value) => setFormData(prev => ({ ...prev, customer_id: parseInt(value) }))}
+          <CustomerSearchInput
+            value={formData.customer_id}
+            customers={customers}
+            onSelect={(customerId) => setFormData(prev => ({ ...prev, customer_id: parseInt(String(customerId)) }))}
             disabled={loading}
-          >
-            <SelectTrigger id="customer_id" className="h-9 text-sm">
-              <SelectValue placeholder="Seleccionar cliente" />
-            </SelectTrigger>
-            <SelectContent>
-              {customers.map((customer) => (
-                <SelectItem key={customer.id} value={customer.id.toString()}>
-                  {customer.company_name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          />
         </div>
 
         <div className="space-y-0.5">
