@@ -29,26 +29,25 @@ export default async function CustomersPage() {
     )
   `
 
-  const buildFilter = (q: ReturnType<typeof supabase.from<'customers'>['select']>) => {
-    if (profile.role === 'sales_rep') {
-      if (assignedCustomerIds.length > 0) {
-        return q.or(`assigned_to.eq.${profile.id},id.in.(${assignedCustomerIds.join(',')})`)
-      } else {
-        return q.eq('assigned_to', profile.id)
-      }
-    }
-    return q
-  }
-
   // Fetch up to 5000 customers in 5 parallel batches of 1000
   const batches = await Promise.all(
-    [0, 1, 2, 3, 4].map((i) => {
-      const q = supabase
+    [0, 1, 2, 3, 4].map(async (i) => {
+      let q = supabase
         .from('customers')
         .select(selectQuery)
         .order('company_name', { ascending: true })
         .range(i * 1000, i * 1000 + 999)
-      return buildFilter(q)
+
+      // Apply role-based filter
+      if (profile.role === 'sales_rep') {
+        if (assignedCustomerIds.length > 0) {
+          q = q.or(`assigned_to.eq.${profile.id},id.in.(${assignedCustomerIds.join(',')})`)
+        } else {
+          q = q.eq('assigned_to', profile.id)
+        }
+      }
+
+      return q
     })
   )
 
