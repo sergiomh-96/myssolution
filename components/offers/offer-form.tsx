@@ -297,6 +297,9 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
       maximumFractionDigits: decimals,
     }).format(value)
   }
+
+  // Load offer items when offer is provided
+  const loadOfferItems = async () => {
     if (!offer?.id) return
 
     try {
@@ -319,6 +322,10 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
       console.error('Error:', err)
     }
   }
+
+  useEffect(() => {
+    loadOfferItems()
+  }, [offer?.id])
 
   useEffect(() => {
     loadOfferItems()
