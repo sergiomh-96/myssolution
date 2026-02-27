@@ -318,7 +318,15 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
       }
 
       if (offerItems && offerItems.length > 0) {
-        setItems(offerItems as OfferItem[])
+        // Load items and ensure at least 15 rows (fill with empty articles if needed)
+        const loadedItems = offerItems as OfferItem[]
+        const itemsToSet = loadedItems.length >= 15 
+          ? loadedItems 
+          : [
+              ...loadedItems,
+              ...Array.from({ length: 15 - loadedItems.length }, () => createEmptyItem('article'))
+            ]
+        setItems(itemsToSet)
       }
     } catch (err) {
       console.error('Error:', err)
