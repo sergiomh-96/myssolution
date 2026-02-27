@@ -53,6 +53,13 @@ export function CustomersTable({ customers, userRole }: CustomersTableProps) {
     )
   })
 
+  // Sort alphabetically by company_name
+  const sortedCustomers = [...filteredCustomers].sort((a, b) => {
+    const nameA = (a.company_name || '').toLowerCase()
+    const nameB = (b.company_name || '').toLowerCase()
+    return nameA.localeCompare(nameB)
+  })
+
   return (
     <Card>
       <CardContent className="p-6">
@@ -77,6 +84,7 @@ export function CustomersTable({ customers, userRole }: CustomersTableProps) {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-12">#</TableHead>
                   <TableHead>Company</TableHead>
                   <TableHead>Contact</TableHead>
                   <TableHead>Provincia</TableHead>
@@ -89,8 +97,11 @@ export function CustomersTable({ customers, userRole }: CustomersTableProps) {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredCustomers.map((customer) => (
+                {sortedCustomers.map((customer, index) => (
                   <TableRow key={customer.id}>
+                    <TableCell className="text-muted-foreground font-medium w-12">
+                      {index + 1}
+                    </TableCell>
                     <TableCell>
                       <div>
                         <p className="font-medium text-foreground">{customer.company_name}</p>
