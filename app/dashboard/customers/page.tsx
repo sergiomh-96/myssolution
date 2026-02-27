@@ -34,13 +34,15 @@ export default async function CustomersPage() {
 
   // Sales reps see customers assigned directly OR via customer_profile_assignments
   if (profile.role === 'sales_rep') {
-    const customerIdsToShow = [...new Set([...assignedCustomerIds])]
-    if (customerIdsToShow.length > 0) {
-      query = query.or(`assigned_to.eq.${profile.id},id.in.(${customerIdsToShow.join(',')})`)
+    if (assignedCustomerIds.length > 0) {
+      // Include both: directly assigned + assigned via profile assignments
+      query = query.or(`assigned_to.eq.${profile.id},id.in.(${assignedCustomerIds.join(',')})`)
     } else {
+      // Only directly assigned
       query = query.eq('assigned_to', profile.id)
     }
   }
+  // admins and managers see all customers — no filter applied
 
   const { data: customers, error } = await query
 

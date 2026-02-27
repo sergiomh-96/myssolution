@@ -79,6 +79,7 @@ export function CustomersTable({ customers, userRole }: CustomersTableProps) {
                 <TableRow>
                   <TableHead>Company</TableHead>
                   <TableHead>Contact</TableHead>
+                  <TableHead>Provincia</TableHead>
                   <TableHead>Industry</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Creado Por</TableHead>
@@ -111,6 +112,11 @@ export function CustomersTable({ customers, userRole }: CustomersTableProps) {
                         <p className="text-sm text-foreground">{customer.contact_name}</p>
                         <p className="text-xs text-muted-foreground">{customer.contact_email}</p>
                       </div>
+                    </TableCell>
+                    <TableCell>
+                      <span className="text-sm text-muted-foreground">
+                        {customer.provincia || '-'}
+                      </span>
                     </TableCell>
                     <TableCell>
                       <span className="text-sm text-muted-foreground">
