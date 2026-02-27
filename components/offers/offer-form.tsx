@@ -633,6 +633,8 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
   }
 
   const totalAmount = items.reduce((sum, item) => sum + (item.neto_total2 || 0), 0)
+  const totalPVP = items.reduce((sum, item) => sum + (item.pvp_total || 0), 0)
+  const totalNeto = items.reduce((sum, item) => sum + (item.neto_total2 || 0), 0)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -1167,11 +1169,20 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
             </tbody>
             <tfoot className="border-t-2 border-border bg-muted/30">
               <tr>
-                <td colSpan={8} className="px-2 py-1.5 text-right font-semibold text-xs">
-                  Total Oferta:
+                <td colSpan={7} className="px-2 py-1.5 text-right font-semibold text-xs">
+                  Total PVP:
+                </td>
+                <td className="px-2 py-1.5 text-right font-bold text-sm">
+                  EUR {totalPVP.toFixed(2)}
+                </td>
+                <td></td>
+              </tr>
+              <tr>
+                <td colSpan={7} className="px-2 py-1.5 text-right font-semibold text-xs">
+                  Total NETO:
                 </td>
                 <td className="px-2 py-1.5 text-right font-bold text-sm text-primary">
-                  EUR {totalAmount.toFixed(2)}
+                  EUR {totalNeto.toFixed(2)}
                 </td>
                 <td></td>
               </tr>
