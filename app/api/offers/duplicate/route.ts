@@ -15,8 +15,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Offer ID is required' }, { status: 400 })
     }
 
-    console.log('[v0] Starting duplicate for offer:', id)
-
     // Get the offer to duplicate
     const { data: offer, error: offerError } = await supabase
       .from('offers')
@@ -25,11 +23,8 @@ export async function POST(request: Request) {
       .single()
 
     if (offerError || !offer) {
-      console.error('[v0] Error fetching offer:', offerError)
       return NextResponse.json({ error: 'Offer not found' }, { status: 404 })
     }
-
-    console.log('[v0] Found offer:', offer.id, 'title:', offer.title)
 
     // Get the highest offer number globally to generate a new sequential one
     const { data: maxOfferData, error: maxError } = await supabase
@@ -44,9 +39,7 @@ export async function POST(request: Request) {
       ? (maxOfferData[0].offer_number ?? 0) + 1 
       : 1
 
-    console.log('[v0] New offer number will be:', newOfferNumber)
-
-    // Create new offer with copied data - ONLY required fields
+    // Create new offer
     const { data: newOffer, error: createError } = await supabase
       .from('offers')
       .insert({
@@ -58,6 +51,7 @@ export async function POST(request: Request) {
         tarifa_id: offer.tarifa_id,
         offer_number: newOfferNumber,
         currency: offer.currency || 'EUR',
+        amount: offer.amount ?? 0,
         visible: true,
         status: 'draft',
         created_by: profile.id,
@@ -68,24 +62,18 @@ export async function POST(request: Request) {
       .single()
 
     if (createError || !newOffer) {
-      console.error('[v0] Error creating new offer:', createError)
       return NextResponse.json({ error: `Failed to create offer: ${createError?.message}` }, { status: 500 })
     }
 
-    console.log('[v0] Created new offer:', newOffer.id)
-
-    // Get offer items from original offer
+    // Get offer items
     const { data: items, error: itemsError } = await supabase
       .from('offer_items')
       .select('*')
       .eq('offer_id', id)
 
     if (itemsError) {
-      console.error('[v0] Error fetching offer items:', itemsError)
+      // non-fatal, continue
     } else if (items && items.length > 0) {
-      console.log('[v0] Found', items.length, 'items to copy')
-
-      // Copy items to new offer
       const itemsToInsert = items.map((item: any) => ({
         offer_id: newOffer.id,
         product_id: item.product_id,
@@ -104,10 +92,7 @@ export async function POST(request: Request) {
         .insert(itemsToInsert)
 
       if (insertError) {
-        console.error('[v0] Error copying items:', insertError)
-        // Don't fail the whole operation, items copy is secondary
-      } else {
-        console.log('[v0] Successfully copied', items.length, 'items')
+        // non-fatal, items copy failed but offer was created
       }
     }
 
@@ -118,10 +103,8 @@ export async function POST(request: Request) {
       .eq('offer_id', id)
 
     if (assignmentsError) {
-      console.error('[v0] Error fetching offer assignments:', assignmentsError)
+      // non-fatal
     } else if (assignments && assignments.length > 0) {
-      console.log('[v0] Found', assignments.length, 'assignments to copy')
-
       const assignmentsToInsert = assignments.map((assignment: any) => ({
         offer_id: newOffer.id,
         user_id: assignment.user_id,
@@ -132,13 +115,9 @@ export async function POST(request: Request) {
         .insert(assignmentsToInsert)
 
       if (assignInsertError) {
-        console.error('[v0] Error copying assignments:', assignInsertError)
-      } else {
-        console.log('[v0] Successfully copied', assignments.length, 'assignments')
+        // non-fatal
       }
     }
-
-    console.log('[v0] Duplicate complete for offer:', newOffer.id)
 
     return NextResponse.json({ 
       success: true, 
