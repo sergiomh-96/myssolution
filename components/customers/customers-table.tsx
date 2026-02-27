@@ -46,9 +46,9 @@ export function CustomersTable({ customers, userRole }: CustomersTableProps) {
   const filteredCustomers = customers.filter((customer) => {
     const search = searchQuery.toLowerCase()
     return (
-      customer.company_name.toLowerCase().includes(search) ||
-      customer.contact_name.toLowerCase().includes(search) ||
-      customer.contact_email.toLowerCase().includes(search) ||
+      customer.company_name?.toLowerCase().includes(search) ||
+      customer.contact_name?.toLowerCase().includes(search) ||
+      customer.contact_email?.toLowerCase().includes(search) ||
       customer.industry?.toLowerCase().includes(search)
     )
   })
