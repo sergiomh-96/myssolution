@@ -25,6 +25,7 @@ interface OfferFormProps {
 
 interface OfferItem {
   id: string
+  type: 'article' | 'section_header' | 'note'
   product_id: string | null
   description: string
   quantity: number
@@ -271,11 +272,12 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
 
   const existingItems: OfferItem[] = []
 
-  const createEmptyItem = (): OfferItem => ({
+  const createEmptyItem = (type: 'article' | 'section_header' | 'note' = 'article'): OfferItem => ({
     id: crypto.randomUUID(),
+    type,
     product_id: null,
     description: '',
-    quantity: 1,
+    quantity: type === 'article' ? 1 : 0,
     pvp: 0,
     pvp_total: 0,
     discount1: 0,
@@ -635,7 +637,15 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
   }
 
   const addItem = () => {
-    setItems([...items, createEmptyItem()])
+    setItems([...items, createEmptyItem('article')])
+  }
+
+  const addSectionHeader = () => {
+    setItems([...items, createEmptyItem('section_header')])
+  }
+
+  const addNote = () => {
+    setItems([...items, createEmptyItem('note')])
   }
 
   const removeItem = (index: number) => {
@@ -694,9 +704,10 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
 
           // Insert new items
           const itemsToInsert = items
-            .filter(item => item.product_id) // Only save items with a product
+            .filter(item => item.type === 'section_header' || item.type === 'note' || item.description)
             .map(item => ({
               offer_id: offer.id,
+              type: item.type,
               product_id: item.product_id,
               description: item.description,
               quantity: item.quantity,
@@ -735,9 +746,10 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
         // Insert offer items
         if (items.length > 0) {
           const itemsToInsert = items
-            .filter(item => item.product_id) // Only save items with a product
+            .filter(item => item.type === 'section_header' || item.type === 'note' || item.description)
             .map(item => ({
               offer_id: offerId,
+              type: item.type,
               product_id: item.product_id,
               description: item.description,
               quantity: item.quantity,
@@ -1067,6 +1079,14 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
               <Plus className="w-3 h-3 mr-1" />
               Añadir Artículo
             </Button>
+            <Button type="button" variant="outline" size="sm" onClick={addSectionHeader} disabled={loading} className="h-7 text-xs">
+              <Plus className="w-3 h-3 mr-1" />
+              Añadir Título
+            </Button>
+            <Button type="button" variant="outline" size="sm" onClick={addNote} disabled={loading} className="h-7 text-xs">
+              <Plus className="w-3 h-3 mr-1" />
+              Añadir Anotación
+            </Button>
           </div>
         </div>
 
@@ -1087,97 +1107,159 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
               </tr>
             </thead>
             <tbody>
-              {items.map((item, index) => (
-                <tr key={item.id} className="border-t border-border hover:bg-muted/20">
-                  <td className="px-2 py-1">
-                    <ProductSearchInput
-                      value={item.product_id || ''}
-                      products={products}
-                      onSelect={(productId) => handleProductSelect(index, productId)}
-                      disabled={loading}
-                    />
-                  </td>
-                  <td className="px-2 py-1">
-                    <Input
-                      value={item.description}
-                      onChange={(e) => handleItemChange(index, 'description', e.target.value)}
-                      placeholder="Descripción"
-                      className="h-7 text-xs"
-                      disabled={loading}
-                    />
-                  </td>
-                  <td className="px-2 py-1">
-                    <Input
-                      type="number"
-                      min="0"
-                      step="1"
-                      value={item.quantity || ''}
-                      onChange={(e) => handleItemChange(index, 'quantity', Number(e.target.value))}
-                      className="h-7 text-xs text-right"
-                      disabled={loading}
-                    />
-                  </td>
-                  <td className="px-2 py-1">
-                    <Input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={item.pvp || ''}
-                      onChange={(e) => handleItemChange(index, 'pvp', Number(e.target.value))}
-                      className="h-7 text-xs text-right"
-                      disabled={loading}
-                      placeholder="-"
-                    />
-                  </td>
-                  <td className="px-2 py-1 text-right font-medium text-xs">
-                    {item.pvp > 0 ? formatNumber(item.pvp_total) : '-'}
-                  </td>
-                  <td className="px-2 py-1">
-                    <Input
-                      type="number"
-                      min="0"
-                      max="100"
-                      step="0.01"
-                      value={item.discount1 || ''}
-                      onChange={(e) => handleItemChange(index, 'discount1', Number(e.target.value))}
-                      className="h-7 text-xs text-right"
-                      disabled={loading}
-                    />
-                  </td>
-                  <td className="px-2 py-1">
-                    <Input
-                      type="number"
-                      min="0"
-                      max="100"
-                      step="0.01"
-                      value={item.discount2 || ''}
-                      onChange={(e) => handleItemChange(index, 'discount2', Number(e.target.value))}
-                      className="h-7 text-xs text-right"
-                      disabled={loading}
-                    />
-                  </td>
-                  <td className="px-2 py-1 text-right font-medium text-xs">
-                    {item.pvp > 0 ? formatNumber(item.neto_total1) : '-'}
-                  </td>
-                  <td className="px-2 py-1 text-right font-medium text-primary text-xs">
-                    {item.pvp > 0 ? formatNumber(item.neto_total2) : '-'}
-                  </td>
-                  <td className="px-2 py-1 text-center">
-                    {items.length > 1 && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeItem(index)}
+              {items.map((item, index) => {
+                // Section Header Row
+                if (item.type === 'section_header') {
+                  return (
+                    <tr key={item.id} className="border-t border-border bg-muted/50">
+                      <td colSpan={9} className="px-2 py-2">
+                        <Input
+                          value={item.description}
+                          onChange={(e) => handleItemChange(index, 'description', e.target.value)}
+                          placeholder="Título de sección"
+                          className="h-7 text-xs font-semibold"
+                          disabled={loading}
+                        />
+                      </td>
+                      <td className="px-2 py-1 text-center">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeItem(index)}
+                          disabled={loading}
+                          className="h-6 w-6 p-0"
+                        >
+                          <X className="w-3 h-3" />
+                        </Button>
+                      </td>
+                    </tr>
+                  )
+                }
+
+                // Note Row
+                if (item.type === 'note') {
+                  return (
+                    <tr key={item.id} className="border-t border-border bg-yellow-50/30">
+                      <td colSpan={9} className="px-2 py-2">
+                        <Input
+                          value={item.description}
+                          onChange={(e) => handleItemChange(index, 'description', e.target.value)}
+                          placeholder="Anotación"
+                          className="h-7 text-xs italic"
+                          disabled={loading}
+                        />
+                      </td>
+                      <td className="px-2 py-1 text-center">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeItem(index)}
+                          disabled={loading}
+                          className="h-6 w-6 p-0"
+                        >
+                          <X className="w-3 h-3" />
+                        </Button>
+                      </td>
+                    </tr>
+                  )
+                }
+
+                // Article Row (regular)
+                return (
+                  <tr key={item.id} className="border-t border-border hover:bg-muted/20">
+                    <td className="px-2 py-1">
+                      <ProductSearchInput
+                        value={item.product_id || ''}
+                        products={products}
+                        onSelect={(productId) => handleProductSelect(index, productId)}
                         disabled={loading}
-                        className="h-6 w-6 p-0"
-                      >
-                        <X className="w-3 h-3" />
-                      </Button>
-                    )}
-                  </td>
-                </tr>
-              ))}
+                      />
+                    </td>
+                    <td className="px-2 py-1">
+                      <Input
+                        value={item.description}
+                        onChange={(e) => handleItemChange(index, 'description', e.target.value)}
+                        placeholder="Descripción"
+                        className="h-7 text-xs"
+                        disabled={loading}
+                      />
+                    </td>
+                    <td className="px-2 py-1">
+                      <Input
+                        type="number"
+                        min="0"
+                        step="1"
+                        value={item.quantity || ''}
+                        onChange={(e) => handleItemChange(index, 'quantity', Number(e.target.value))}
+                        className="h-7 text-xs text-right"
+                        disabled={loading}
+                      />
+                    </td>
+                    <td className="px-2 py-1">
+                      <Input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={item.pvp || ''}
+                        onChange={(e) => handleItemChange(index, 'pvp', Number(e.target.value))}
+                        className="h-7 text-xs text-right"
+                        disabled={loading}
+                        placeholder="-"
+                      />
+                    </td>
+                    <td className="px-2 py-1 text-right font-medium text-xs">
+                      {item.pvp > 0 ? formatNumber(item.pvp_total) : '-'}
+                    </td>
+                    <td className="px-2 py-1">
+                      <Input
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="0.01"
+                        value={item.discount1 || ''}
+                        onChange={(e) => handleItemChange(index, 'discount1', Number(e.target.value))}
+                        className="h-7 text-xs text-right"
+                        disabled={loading}
+                      />
+                    </td>
+                    <td className="px-2 py-1">
+                      <Input
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="0.01"
+                        value={item.discount2 || ''}
+                        onChange={(e) => handleItemChange(index, 'discount2', Number(e.target.value))}
+                        className="h-7 text-xs text-right"
+                        disabled={loading}
+                      />
+                    </td>
+                    <td className="px-2 py-1 text-right font-medium text-xs">
+                      {item.pvp > 0 ? formatNumber(item.neto_total1) : '-'}
+                    </td>
+                    <td className="px-2 py-1 text-right font-medium text-primary text-xs">
+                      {item.pvp > 0 ? formatNumber(item.neto_total2) : '-'}
+                    </td>
+                    <td className="px-2 py-1 text-center">
+                      {items.length > 1 && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeItem(index)}
+                          disabled={loading}
+                          className="h-6 w-6 p-0"
+                        >
+                          <X className="w-3 h-3" />
+                        </Button>
+                      )}
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
             </tbody>
             <tfoot className="border-t-2 border-border bg-muted/30">
               <tr>
