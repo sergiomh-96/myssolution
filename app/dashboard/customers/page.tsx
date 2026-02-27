@@ -19,33 +19,41 @@ export default async function CustomersPage() {
     assignedCustomerIds = (assigned || []).map((a) => a.customer_id)
   }
 
-  let query = supabase
-    .from('customers')
-    .select(`
-      *,
-      assigned_user:profiles!customers_assigned_to_fkey(full_name),
-      created_by_user:profiles!customers_created_by_fkey(full_name),
-      customer_profile_assignments(
-        profile_id,
-        profile:profiles!customer_profile_assignments_profile_id_fkey(id, full_name, role)
-      )
-    `)
-    .order('created_at', { ascending: false })
-    .range(0, 2999)
+  const selectQuery = `
+    *,
+    assigned_user:profiles!customers_assigned_to_fkey(full_name),
+    created_by_user:profiles!customers_created_by_fkey(full_name),
+    customer_profile_assignments(
+      profile_id,
+      profile:profiles!customer_profile_assignments_profile_id_fkey(id, full_name, role)
+    )
+  `
 
-  // Sales reps see customers assigned directly OR via customer_profile_assignments
-  if (profile.role === 'sales_rep') {
-    if (assignedCustomerIds.length > 0) {
-      // Include both: directly assigned + assigned via profile assignments
-      query = query.or(`assigned_to.eq.${profile.id},id.in.(${assignedCustomerIds.join(',')})`)
-    } else {
-      // Only directly assigned
-      query = query.eq('assigned_to', profile.id)
+  const buildFilter = (q: ReturnType<typeof supabase.from<'customers'>['select']>) => {
+    if (profile.role === 'sales_rep') {
+      if (assignedCustomerIds.length > 0) {
+        return q.or(`assigned_to.eq.${profile.id},id.in.(${assignedCustomerIds.join(',')})`)
+      } else {
+        return q.eq('assigned_to', profile.id)
+      }
     }
+    return q
   }
-  // admins and managers see all customers — no filter applied
 
-  const { data: customers, error } = await query
+  // Fetch up to 5000 customers in 5 parallel batches of 1000
+  const batches = await Promise.all(
+    [0, 1, 2, 3, 4].map((i) => {
+      const q = supabase
+        .from('customers')
+        .select(selectQuery)
+        .order('company_name', { ascending: true })
+        .range(i * 1000, i * 1000 + 999)
+      return buildFilter(q)
+    })
+  )
+
+  const customers = batches.flatMap((b) => b.data || [])
+  const error = batches.find((b) => b.error)?.error || null
 
   return (
     <div className="space-y-6">
