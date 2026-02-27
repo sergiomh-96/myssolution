@@ -1268,9 +1268,6 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
       </div>
 
       <div className="flex gap-1 justify-start py-3 border-b border-border">
-        {offer?.id && (
-          <ImportItemsDialog offerId={offer.id} onSuccess={() => loadOfferItems()} />
-        )}
         <Button type="button" variant="outline" size="sm" onClick={addItem} disabled={loading} className="h-7 text-xs">
           <Plus className="w-3 h-3 mr-1" />
           Añadir Artículo
@@ -1283,6 +1280,9 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
           <Plus className="w-3 h-3 mr-1" />
           Añadir Anotación
         </Button>
+        {offer?.id && (
+          <ImportItemsDialog offerId={offer.id} onSuccess={() => loadOfferItems()} />
+        )}
       </div>
 
       <div className="flex justify-between gap-2">
