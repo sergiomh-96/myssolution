@@ -16,10 +16,18 @@ export default async function ProductsPage() {
     redirect('/auth/login')
   }
 
-  const { data: products } = await supabase
-    .from('products')
-    .select('*')
-    .order('created_at', { ascending: false })
+  // Fetch up to 5000 products in 5 parallel batches of 1000
+  const batches = await Promise.all(
+    [0, 1, 2, 3, 4].map(async (i) => {
+      return supabase
+        .from('products')
+        .select('*')
+        .order('referencia', { ascending: true })
+        .range(i * 1000, i * 1000 + 999)
+    })
+  )
+
+  const products = batches.flatMap((b) => b.data || [])
 
   return (
     <div className="space-y-6">
