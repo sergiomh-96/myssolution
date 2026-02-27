@@ -772,11 +772,10 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
       setSuccess(true)
       setError(null)
       
-      // Redirect after 1.5 seconds
+      // Reset success message after 2 seconds
       setTimeout(() => {
-        router.push('/dashboard/offers')
-        router.refresh()
-      }, 1500)
+        setSuccess(false)
+      }, 2000)
     } catch (err) {
       setSuccess(false)
       setError(err instanceof Error ? err.message : 'Error al guardar la oferta')
