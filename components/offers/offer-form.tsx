@@ -10,7 +10,8 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Loader2, Plus, X, CheckCircle, ChevronDown, Check, Search, Eye, FileText } from 'lucide-react'
+import { Copy } from 'lucide-react'
+import { DuplicateOfferButton } from './duplicate-offer-button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { ImportItemsDialog } from './import-items'
 import type { Offer, OfferStatus, UserRole } from '@/lib/types/database'
@@ -1287,6 +1288,12 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
         <div className="flex gap-2">
           {offer?.id && (
             <>
+              <DuplicateOfferButton 
+                offerId={offer.id} 
+                variant="outline" 
+                size="sm" 
+                showLabel={true}
+              />
               <Button 
                 type="button" 
                 variant="outline" 
@@ -1308,6 +1315,18 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
                 Generar PDF
               </Button>
             </>
+          )}
+          {!offer?.id && (
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => router.push('/dashboard/offers/new')} 
+              disabled={loading} 
+              className="h-8 text-xs"
+            >
+              <Plus className="mr-2 h-3 w-3" />
+              Crear Nueva Oferta
+            </Button>
           )}
         </div>
         <div className="flex gap-2">
