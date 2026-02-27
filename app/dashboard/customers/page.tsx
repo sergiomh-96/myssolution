@@ -31,6 +31,7 @@ export default async function CustomersPage() {
       )
     `)
     .order('created_at', { ascending: false })
+    .limit(3000)
 
   // Sales reps see customers assigned directly OR via customer_profile_assignments
   if (profile.role === 'sales_rep') {
