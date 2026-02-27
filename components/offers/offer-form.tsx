@@ -1260,7 +1260,6 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
                 )
               })}
             </tbody>
-            </tbody>
             <tfoot className="border-t-2 border-border bg-muted/30">
               <tr>
                 <td colSpan={7}></td>
