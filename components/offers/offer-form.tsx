@@ -290,8 +290,13 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
       : Array.from({ length: 15 }, () => createEmptyItem())
   )
 
-  // Load offer items when offer is provided
-  const loadOfferItems = async () => {
+  // Format number to Spanish locale (1.000,50)
+  const formatNumber = (value: number, decimals = 2) => {
+    return new Intl.NumberFormat('es-ES', {
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals,
+    }).format(value)
+  }
     if (!offer?.id) return
 
     try {
@@ -1118,7 +1123,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
                     />
                   </td>
                   <td className="px-2 py-1 text-right font-medium text-xs">
-                    {item.pvp > 0 ? item.pvp_total.toFixed(2) : '-'}
+                    {item.pvp > 0 ? formatNumber(item.pvp_total) : '-'}
                   </td>
                   <td className="px-2 py-1">
                     <Input
@@ -1145,10 +1150,10 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
                     />
                   </td>
                   <td className="px-2 py-1 text-right font-medium text-xs">
-                    {item.pvp > 0 ? item.neto_total1.toFixed(2) : '-'}
+                    {item.pvp > 0 ? formatNumber(item.neto_total1) : '-'}
                   </td>
                   <td className="px-2 py-1 text-right font-medium text-primary text-xs">
-                    {item.pvp > 0 ? item.neto_total2.toFixed(2) : '-'}
+                    {item.pvp > 0 ? formatNumber(item.neto_total2) : '-'}
                   </td>
                   <td className="px-2 py-1 text-center">
                     {items.length > 1 && (
@@ -1171,10 +1176,10 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
               <tr>
                 <td colSpan={7}></td>
                 <td className="px-2 py-1 text-right font-semibold text-xs">
-                  Total PVP: <span className="font-bold text-sm">EUR {totalPVP.toFixed(2)}</span>
+                  Total PVP: <span className="font-bold text-sm">EUR {formatNumber(totalPVP)}</span>
                 </td>
                 <td className="px-2 py-1 text-right font-semibold text-xs">
-                  Total NETO: <span className="font-bold text-sm text-primary">EUR {totalNeto.toFixed(2)}</span>
+                  Total NETO: <span className="font-bold text-sm text-primary">EUR {formatNumber(totalNeto)}</span>
                 </td>
               </tr>
             </tfoot>
