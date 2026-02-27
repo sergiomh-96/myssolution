@@ -291,31 +291,31 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
   )
 
   // Load offer items when offer is provided
-  useEffect(() => {
-    const loadOfferItems = async () => {
-      if (!offer?.id) return
+  const loadOfferItems = async () => {
+    if (!offer?.id) return
 
-      try {
-        const supabase = createClient()
-        const { data: offerItems, error } = await supabase
-          .from('offer_items')
-          .select('*')
-          .eq('offer_id', offer.id)
-          .order('id')
+    try {
+      const supabase = createClient()
+      const { data: offerItems, error } = await supabase
+        .from('offer_items')
+        .select('*')
+        .eq('offer_id', offer.id)
+        .order('id')
 
-        if (error) {
-          console.error('Error loading offer items:', error)
-          return
-        }
-
-        if (offerItems && offerItems.length > 0) {
-          setItems(offerItems as OfferItem[])
-        }
-      } catch (err) {
-        console.error('Error:', err)
+      if (error) {
+        console.error('Error loading offer items:', error)
+        return
       }
-    }
 
+      if (offerItems && offerItems.length > 0) {
+        setItems(offerItems as OfferItem[])
+      }
+    } catch (err) {
+      console.error('Error:', err)
+    }
+  }
+
+  useEffect(() => {
     loadOfferItems()
   }, [offer?.id])
 
