@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Loader2, Plus, X, CheckCircle, ChevronDown, Check, Search } from 'lucide-react'
+import { Loader2, Plus, X, CheckCircle, ChevronDown, Check, Search, Eye, FileText } from 'lucide-react'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { ImportItemsDialog } from './import-items'
 import type { Offer, OfferStatus, UserRole } from '@/lib/types/database'
@@ -1275,14 +1275,42 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
         </div>
       </div>
 
-      <div className="flex justify-end gap-2">
-        <Button type="button" variant="outline" onClick={() => router.push('/dashboard/offers')} disabled={loading} className="h-8 text-xs">
-          Cancelar
-        </Button>
-        <Button type="submit" disabled={loading} className="h-8 text-xs">
-          {loading && <Loader2 className="mr-2 h-3 w-3 animate-spin" />}
-          {offer ? 'Actualizar Oferta' : 'Crear Oferta'}
-        </Button>
+      <div className="flex justify-between gap-2">
+        <div className="flex gap-2">
+          {offer?.id && (
+            <>
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => router.push(`/dashboard/offers/${offer.id}`)} 
+                disabled={loading} 
+                className="h-8 text-xs"
+              >
+                <Eye className="mr-2 h-3 w-3" />
+                Ver
+              </Button>
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => window.open(`/api/offers/${offer.id}/pdf`, '_blank')} 
+                disabled={loading} 
+                className="h-8 text-xs"
+              >
+                <FileText className="mr-2 h-3 w-3" />
+                Generar PDF
+              </Button>
+            </>
+          )}
+        </div>
+        <div className="flex gap-2">
+          <Button type="button" variant="outline" onClick={() => router.push('/dashboard/offers')} disabled={loading} className="h-8 text-xs">
+            Cancelar
+          </Button>
+          <Button type="submit" disabled={loading} className="h-8 text-xs">
+            {loading && <Loader2 className="mr-2 h-3 w-3 animate-spin" />}
+            {offer ? 'Actualizar Oferta' : 'Crear Oferta'}
+          </Button>
+        </div>
       </div>
     </form>
   )
