@@ -1195,7 +1195,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
       </div>
 
       <div className="flex justify-end gap-2">
-        <Button type="button" variant="outline" onClick={() => router.back()} disabled={loading} className="h-8 text-xs">
+        <Button type="button" variant="outline" onClick={() => router.push('/dashboard/offers')} disabled={loading} className="h-8 text-xs">
           Cancelar
         </Button>
         <Button type="submit" disabled={loading} className="h-8 text-xs">
