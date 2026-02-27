@@ -771,6 +771,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
       // Show success message
       setSuccess(true)
       setError(null)
+      setLoading(false)
       
       // Reset success message after 2 seconds
       setTimeout(() => {
