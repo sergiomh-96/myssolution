@@ -1180,19 +1180,6 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
         </div>
       </div>
 
-      <div className="space-y-1">
-        <Label htmlFor="notes" className="text-xs">Notas Internas</Label>
-        <Textarea
-          id="notes"
-          value={formData.notes}
-          onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-          rows={2}
-          disabled={loading}
-          placeholder="Notas internas visibles solo para el equipo de ventas"
-          className="text-sm"
-        />
-      </div>
-
       <div className="flex justify-end gap-2">
         <Button type="button" variant="outline" onClick={() => router.back()} disabled={loading} className="h-8 text-xs">
           Cancelar
@@ -1200,27 +1187,6 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
         <Button type="submit" disabled={loading} className="h-8 text-xs">
           {loading && <Loader2 className="mr-2 h-3 w-3 animate-spin" />}
           {offer ? 'Actualizar Oferta' : 'Crear Oferta'}
-        </Button>
-      </div>
-
-      <div className="flex gap-4">
-        <Button type="submit" disabled={loading}>
-          {loading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Saving...
-            </>
-          ) : (
-            offer ? 'Update Offer' : 'Create Offer'
-          )}
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => router.back()}
-          disabled={loading}
-        >
-          Cancel
         </Button>
       </div>
     </form>
