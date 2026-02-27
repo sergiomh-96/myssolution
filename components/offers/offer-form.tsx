@@ -289,7 +289,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
   const [items, setItems] = useState<OfferItem[]>(
     existingItems.length > 0
       ? existingItems
-      : Array.from({ length: 15 }, () => createEmptyItem())
+      : Array.from({ length: 5 }, () => createEmptyItem())
   )
 
   // Format number to Spanish locale (1.000,50)
@@ -318,7 +318,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
       }
 
       if (offerItems && offerItems.length > 0) {
-        // Load items and ensure at least 15 rows (fill with empty articles if needed)
+        // Load items and ensure at least 15 rows when editing (fill with empty articles if needed)
         const loadedItems = offerItems as OfferItem[]
         const itemsToSet = loadedItems.length >= 15 
           ? loadedItems 
