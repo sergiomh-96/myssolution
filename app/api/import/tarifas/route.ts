@@ -107,22 +107,45 @@ export async function POST(request: Request) {
       }, { status: 400 })
     }
 
-    // 4. Upsert prices (by id_tarifa + id_producto)
-    const { data: inserted, error: preciosError } = await supabase
-      .from('precios_producto')
-      .upsert(precios, { onConflict: 'id_tarifa,id_producto', ignoreDuplicates: false })
-      .select('id_precio')
+    // Process each price individually: check if exists by tarifa+producto, then update or insert
+    let inserted = 0
+    let updated = 0
+    const priceErrors: string[] = []
 
-    if (preciosError) {
-      console.error('[v0] Tarifas import error:', preciosError)
-      return NextResponse.json({ error: `Error guardando precios: ${preciosError.message}` }, { status: 500 })
+    for (const precio of precios) {
+      const { data: existing } = await supabase
+        .from('precios_producto')
+        .select('id_precio')
+        .eq('id_tarifa', precio.id_tarifa)
+        .eq('id_producto', precio.id_producto)
+        .limit(1)
+        .single()
+
+      if (existing) {
+        // Update existing
+        const { error } = await supabase
+          .from('precios_producto')
+          .update({ precio })
+          .eq('id_precio', existing.id_precio)
+        if (error) priceErrors.push(`Error actualizando precio: ${error.message}`)
+        else updated++
+      } else {
+        // Insert new
+        const { error } = await supabase
+          .from('precios_producto')
+          .insert(precio)
+        if (error) priceErrors.push(`Error insertando precio: ${error.message}`)
+        else inserted++
+      }
     }
 
     return NextResponse.json({
       success: true,
       tarifaId,
-      inserted: inserted?.length ?? 0,
+      inserted,
+      updated,
       notFound: notFound.slice(0, 20),
+      errors: priceErrors,
     })
   } catch (err) {
     console.error('[v0] Tarifas import unexpected error:', err)

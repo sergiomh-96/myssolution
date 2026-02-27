@@ -43,18 +43,38 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Ninguna fila tiene referencia válida' }, { status: 400 })
     }
 
-    // Upsert by referencia
-    const { data, error } = await supabase
-      .from('products')
-      .upsert(products, { onConflict: 'referencia', ignoreDuplicates: false })
-      .select('id')
+    let inserted = 0
+    let updated = 0
+    const errors: string[] = []
 
-    if (error) {
-      console.error('[v0] Products import error:', error)
-      return NextResponse.json({ error: `Error en base de datos: ${error.message}` }, { status: 500 })
+    // Process each product individually: check if exists by referencia, then update or insert
+    for (const product of products) {
+      const { data: existing } = await supabase
+        .from('products')
+        .select('id')
+        .eq('referencia', product.referencia)
+        .limit(1)
+        .single()
+
+      if (existing) {
+        // Update existing
+        const { error } = await supabase
+          .from('products')
+          .update(product)
+          .eq('id', existing.id)
+        if (error) errors.push(`Error actualizando "${product.referencia}": ${error.message}`)
+        else updated++
+      } else {
+        // Insert new
+        const { error } = await supabase
+          .from('products')
+          .insert(product)
+        if (error) errors.push(`Error insertando "${product.referencia}": ${error.message}`)
+        else inserted++
+      }
     }
 
-    return NextResponse.json({ success: true, inserted: data?.length ?? 0 })
+    return NextResponse.json({ success: true, inserted, updated, errors })
   } catch (err) {
     console.error('[v0] Products import unexpected error:', err)
     return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
