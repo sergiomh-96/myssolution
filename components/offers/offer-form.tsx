@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Loader2, Plus, X, CheckCircle, ChevronDown, Check, Search } from 'lucide-react'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { ImportItemsDialog } from './import-items'
 import type { Offer, OfferStatus, UserRole } from '@/lib/types/database'
 import { formatOfferNumber } from '@/lib/utils/offer'
 
@@ -1044,10 +1045,15 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <Label className="text-xs">Artículos de la Oferta</Label>
-          <Button type="button" variant="outline" size="sm" onClick={addItem} disabled={loading} className="h-7 text-xs">
-            <Plus className="w-3 h-3 mr-1" />
-            Añadir Artículo
-          </Button>
+          <div className="flex gap-1">
+            {offer?.id && (
+              <ImportItemsDialog offerId={offer.id} onSuccess={() => loadOfferItems()} />
+            )}
+            <Button type="button" variant="outline" size="sm" onClick={addItem} disabled={loading} className="h-7 text-xs">
+              <Plus className="w-3 h-3 mr-1" />
+              Añadir Artículo
+            </Button>
+          </div>
         </div>
 
         <div className="border border-border rounded-lg overflow-x-auto">
