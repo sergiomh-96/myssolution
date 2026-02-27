@@ -1288,6 +1288,16 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
         <div className="flex gap-2">
           {offer?.id && (
             <>
+              <Button 
+                type="button" 
+                variant="default"
+                onClick={() => router.push('/dashboard/offers/new')} 
+                disabled={loading} 
+                className="h-8 text-xs"
+              >
+                <Plus className="mr-2 h-3 w-3" />
+                Crear Oferta
+              </Button>
               <DuplicateOfferButton 
                 offerId={offer.id} 
                 variant="outline" 
