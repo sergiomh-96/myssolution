@@ -14,7 +14,8 @@ import {
   Building2,
   BarChart3,
   Package,
-  UserCog
+  UserCog,
+  Upload
 } from 'lucide-react'
 import { canManageOffers, canManageRequests, canViewAnalytics, canManageUsers } from '@/lib/auth'
 
@@ -71,6 +72,12 @@ const navItems = [
     href: '/dashboard/users',
     label: 'Gestión de Usuarios',
     icon: UserCog,
+    allowedRoles: ['admin']
+  },
+  {
+    href: '/dashboard/import',
+    label: 'Importación Masiva',
+    icon: Upload,
     allowedRoles: ['admin']
   },
   {
