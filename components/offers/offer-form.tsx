@@ -1169,15 +1169,12 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
             </tbody>
             <tfoot className="border-t-2 border-border bg-muted/30">
               <tr>
-                <td colSpan={8}></td>
+                <td colSpan={7}></td>
                 <td className="px-2 py-1 text-right font-semibold text-xs">
-                  Total PVP: <span className="font-bold text-sm block">EUR {totalPVP.toFixed(2)}</span>
+                  Total PVP: <span className="font-bold text-sm">EUR {totalPVP.toFixed(2)}</span>
                 </td>
-              </tr>
-              <tr>
-                <td colSpan={8}></td>
                 <td className="px-2 py-1 text-right font-semibold text-xs">
-                  Total NETO: <span className="font-bold text-sm text-primary block">EUR {totalNeto.toFixed(2)}</span>
+                  Total NETO: <span className="font-bold text-sm text-primary">EUR {totalNeto.toFixed(2)}</span>
                 </td>
               </tr>
             </tfoot>
