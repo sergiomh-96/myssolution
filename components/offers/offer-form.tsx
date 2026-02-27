@@ -1267,7 +1267,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
         </div>
       </div>
 
-      <div className="flex gap-1 justify-center py-3 border-t border-border">
+      <div className="flex gap-1 justify-start py-3 border-b border-border">
         {offer?.id && (
           <ImportItemsDialog offerId={offer.id} onSuccess={() => loadOfferItems()} />
         )}
