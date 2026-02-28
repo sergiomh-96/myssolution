@@ -304,33 +304,37 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
   }
 
   const loadAdjacentOffers = async () => {
-    if (!offer?.id || !offer?.offer_number) return
+    if (!offer?.id || offer?.offer_number == null) return
 
     try {
       const supabase = createClient()
-      
-      // Get previous offer
-      const { data: prevOffers } = await supabase
+      const offerNum = Number(offer.offer_number)
+
+      console.log('[v0] loadAdjacentOffers - offer_number:', offerNum)
+
+      // Get previous offer (highest offer_number below current)
+      const { data: prevOffers, error: prevError } = await supabase
         .from('offers')
-        .select('id')
-        .eq('user_id', currentUserId)
-        .lt('offer_number', offer.offer_number)
+        .select('id, offer_number')
+        .lt('offer_number', offerNum)
         .order('offer_number', { ascending: false })
         .limit(1)
-      
-      // Get next offer
-      const { data: nextOffers } = await supabase
+
+      // Get next offer (lowest offer_number above current)
+      const { data: nextOffers, error: nextError } = await supabase
         .from('offers')
-        .select('id')
-        .eq('user_id', currentUserId)
-        .gt('offer_number', offer.offer_number)
+        .select('id, offer_number')
+        .gt('offer_number', offerNum)
         .order('offer_number', { ascending: true })
         .limit(1)
-      
-      setPreviousOfferId(prevOffers?.[0]?.id || null)
-      setNextOfferId(nextOffers?.[0]?.id || null)
+
+      console.log('[v0] prevOffers:', prevOffers, prevError)
+      console.log('[v0] nextOffers:', nextOffers, nextError)
+
+      setPreviousOfferId(prevOffers?.[0]?.id ?? null)
+      setNextOfferId(nextOffers?.[0]?.id ?? null)
     } catch (err) {
-      console.error('Error loading adjacent offers:', err)
+      console.error('[v0] Error loading adjacent offers:', err)
     }
   }
 
@@ -369,10 +373,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
 
   useEffect(() => {
     loadOfferItems()
-  }, [offer?.id])
-
-  useEffect(() => {
-    loadOfferItems()
+    loadAdjacentOffers()
   }, [offer?.id])
 
   // Helper to add 30 days to a date
