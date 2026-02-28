@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Copy, Loader2, Plus, X, CheckCircle, ChevronDown, Check, Search, Eye, FileText, AlertCircle } from 'lucide-react'
+import { Copy, Loader2, Plus, X, CheckCircle, ChevronDown, Check, Search, Eye, FileText, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react'
 import { DuplicateOfferButton } from './duplicate-offer-button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { ImportItemsDialog } from './import-items'
@@ -292,6 +292,8 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
       ? existingItems
       : Array.from({ length: 5 }, () => createEmptyItem())
   )
+  const [previousOfferId, setPreviousOfferId] = useState<string | null>(null)
+  const [nextOfferId, setNextOfferId] = useState<string | null>(null)
 
   // Format number to Spanish locale (1.000,50)
   const formatNumber = (value: number, decimals = 2) => {
@@ -299,6 +301,39 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
       minimumFractionDigits: decimals,
       maximumFractionDigits: decimals,
     }).format(value)
+  }
+
+  const loadAdjacentOffers = async () => {
+    if (!offer?.id || !offer?.offer_number) return
+
+    try {
+      const supabase = createClient()
+      
+      // Get previous offer
+      const { data: prevOffer } = await supabase
+        .from('offers')
+        .select('id')
+        .eq('user_id', currentUserId)
+        .lt('offer_number', offer.offer_number)
+        .order('offer_number', { ascending: false })
+        .limit(1)
+        .single()
+      
+      // Get next offer
+      const { data: nextOffer } = await supabase
+        .from('offers')
+        .select('id')
+        .eq('user_id', currentUserId)
+        .gt('offer_number', offer.offer_number)
+        .order('offer_number', { ascending: true })
+        .limit(1)
+        .single()
+      
+      setPreviousOfferId(prevOffer?.id || null)
+      setNextOfferId(nextOffer?.id || null)
+    } catch (err) {
+      console.error('Error loading adjacent offers:', err)
+    }
   }
 
   // Load offer items when offer is provided
@@ -842,12 +877,34 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
         {/* ── Fila 1: Nº Oferta | — | — | Tarifa ── */}
         <div className="space-y-0.5">
           <Label className="text-xs">Nº Oferta</Label>
-          <div className="h-9 px-3 py-2 bg-muted rounded-md border border-input flex items-center text-sm font-medium">
-            {offer
-              ? formatOfferNumber(offer.offer_number, new Date(offer.created_at).getFullYear())
-              : nextOfferNumber
-                ? formatOfferNumber(nextOfferNumber, new Date().getFullYear())
-                : 'Calculando...'}
+          <div className="flex items-center gap-1">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => previousOfferId && router.push(`/dashboard/offers/${previousOfferId}/edit`)}
+              disabled={!previousOfferId || loading}
+              className="h-9 w-9 p-0"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
+            <div className="flex-1 h-9 px-3 py-2 bg-muted rounded-md border border-input flex items-center text-sm font-medium justify-center">
+              {offer
+                ? formatOfferNumber(offer.offer_number, new Date(offer.created_at).getFullYear())
+                : nextOfferNumber
+                  ? formatOfferNumber(nextOfferNumber, new Date().getFullYear())
+                  : 'Calculando...'}
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => nextOfferId && router.push(`/dashboard/offers/${nextOfferId}/edit`)}
+              disabled={!nextOfferId || loading}
+              className="h-9 w-9 p-0"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </Button>
           </div>
         </div>
 
