@@ -310,27 +310,25 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
       const supabase = createClient()
       
       // Get previous offer
-      const { data: prevOffer } = await supabase
+      const { data: prevOffers } = await supabase
         .from('offers')
         .select('id')
         .eq('user_id', currentUserId)
         .lt('offer_number', offer.offer_number)
         .order('offer_number', { ascending: false })
         .limit(1)
-        .single()
       
       // Get next offer
-      const { data: nextOffer } = await supabase
+      const { data: nextOffers } = await supabase
         .from('offers')
         .select('id')
         .eq('user_id', currentUserId)
         .gt('offer_number', offer.offer_number)
         .order('offer_number', { ascending: true })
         .limit(1)
-        .single()
       
-      setPreviousOfferId(prevOffer?.id || null)
-      setNextOfferId(nextOffer?.id || null)
+      setPreviousOfferId(prevOffers?.[0]?.id || null)
+      setNextOfferId(nextOffers?.[0]?.id || null)
     } catch (err) {
       console.error('Error loading adjacent offers:', err)
     }
@@ -878,16 +876,6 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
         <div className="space-y-0.5">
           <Label className="text-xs">Nº Oferta</Label>
           <div className="flex items-center gap-1">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => previousOfferId && router.push(`/dashboard/offers/${previousOfferId}/edit`)}
-              disabled={!previousOfferId || loading}
-              className="h-9 w-9 p-0"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </Button>
             <div className="flex-1 h-9 px-3 py-2 bg-muted rounded-md border border-input flex items-center text-sm font-medium justify-center">
               {offer
                 ? formatOfferNumber(offer.offer_number, new Date(offer.created_at).getFullYear())
@@ -899,9 +887,21 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
               type="button"
               variant="outline"
               size="sm"
+              onClick={() => previousOfferId && router.push(`/dashboard/offers/${previousOfferId}/edit`)}
+              disabled={!previousOfferId || loading}
+              className="h-9 w-9 p-0"
+              title="Oferta anterior"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
               onClick={() => nextOfferId && router.push(`/dashboard/offers/${nextOfferId}/edit`)}
               disabled={!nextOfferId || loading}
               className="h-9 w-9 p-0"
+              title="Oferta siguiente"
             >
               <ChevronRight className="w-4 h-4" />
             </Button>
