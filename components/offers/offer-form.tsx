@@ -26,7 +26,7 @@ interface OfferFormProps {
 
 interface OfferItem {
   id: string
-  type: 'article' | 'section_header' | 'note'
+  type: 'article' | 'section_header' | 'note' | 'summary'
   product_id: string | null
   description: string
   quantity: number
@@ -691,15 +691,52 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
     setItems([...items, createEmptyItem('note')])
   }
 
+  const addSummary = () => {
+    // Find articles since the last section_header
+    let lastHeaderIndex = -1
+    for (let i = items.length - 1; i >= 0; i--) {
+      if (items[i].type === 'section_header') {
+        lastHeaderIndex = i
+        break
+      }
+    }
+
+    // Sum up articles between last header and current position (excluding summaries and notes)
+    const articlesSinceHeader = items.slice(lastHeaderIndex + 1).filter(
+      item => item.type === 'article'
+    )
+
+    const summaryPVP = articlesSinceHeader.reduce((sum, item) => sum + (item.pvp_total || 0), 0)
+    const summaryNeto1 = articlesSinceHeader.reduce((sum, item) => sum + (item.neto_total1 || 0), 0)
+    const summaryNeto2 = articlesSinceHeader.reduce((sum, item) => sum + (item.neto_total2 || 0), 0)
+
+    const summaryItem: OfferItem = {
+      id: crypto.randomUUID(),
+      type: 'summary',
+      product_id: null,
+      description: 'Resumen',
+      quantity: 0,
+      pvp: 0,
+      pvp_total: summaryPVP,
+      discount1: 0,
+      discount2: 0,
+      neto_total1: summaryNeto1,
+      neto_total2: summaryNeto2,
+    }
+
+    setItems([...items, summaryItem])
+  }
+
   const removeItem = (index: number) => {
     if (items.length > 1) {
       setItems(items.filter((_, i) => i !== index))
     }
   }
 
-  const totalAmount = items.reduce((sum, item) => sum + (item.neto_total2 || 0), 0)
-  const totalPVP = items.reduce((sum, item) => sum + (item.pvp_total || 0), 0)
-  const totalNeto = items.reduce((sum, item) => sum + (item.neto_total2 || 0), 0)
+  // Totals: exclude summary rows from global totals
+  const totalAmount = items.reduce((sum, item) => item.type !== 'summary' ? sum + (item.neto_total2 || 0) : sum, 0)
+  const totalPVP = items.reduce((sum, item) => item.type !== 'summary' ? sum + (item.pvp_total || 0) : sum, 0)
+  const totalNeto = items.reduce((sum, item) => item.type !== 'summary' ? sum + (item.neto_total2 || 0) : sum, 0)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -747,7 +784,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
 
           // Insert new items
           const itemsToInsert = items
-            .filter(item => item.type === 'section_header' || item.type === 'note' || item.description)
+            .filter(item => item.type === 'section_header' || item.type === 'note' || item.type === 'summary' || item.description)
             .map(item => ({
               offer_id: offer.id,
               type: item.type,
@@ -789,7 +826,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
         // Insert offer items
         if (items.length > 0) {
           const itemsToInsert = items
-            .filter(item => item.type === 'section_header' || item.type === 'note' || item.description)
+            .filter(item => item.type === 'section_header' || item.type === 'note' || item.type === 'summary' || item.description)
             .map(item => ({
               offer_id: offerId,
               type: item.type,
@@ -1216,6 +1253,39 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
                   )
                 }
 
+                // Summary Row
+                if (item.type === 'summary') {
+                  return (
+                    <tr key={item.id} className="border-t-2 border-border bg-blue-50/40 font-semibold">
+                      <td colSpan={4} className="px-2 py-1.5 text-xs text-muted-foreground italic">
+                        {item.description || 'Resumen'}
+                      </td>
+                      <td className="px-2 py-1.5 text-right text-xs">
+                        {formatNumber(item.pvp_total)}
+                      </td>
+                      <td colSpan={2} className="px-2 py-1.5"></td>
+                      <td className="px-2 py-1.5 text-right text-xs">
+                        {formatNumber(item.neto_total1)}
+                      </td>
+                      <td className="px-2 py-1.5 text-right text-xs text-primary">
+                        {formatNumber(item.neto_total2)}
+                      </td>
+                      <td className="px-2 py-1 text-center">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeItem(index)}
+                          disabled={loading}
+                          className="h-6 w-6 p-0"
+                        >
+                          <X className="w-3 h-3" />
+                        </Button>
+                      </td>
+                    </tr>
+                  )
+                }
+
                 // Article Row (regular)
                 return (
                   <tr key={item.id} className="border-t border-border hover:bg-muted/20">
@@ -1337,6 +1407,10 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
         <Button type="button" variant="outline" size="sm" onClick={addNote} disabled={loading} className="h-7 text-xs">
           <Plus className="w-3 h-3 mr-1" />
           Añadir Anotación
+        </Button>
+        <Button type="button" variant="outline" size="sm" onClick={addSummary} disabled={loading} className="h-7 text-xs">
+          <Plus className="w-3 h-3 mr-1" />
+          Añadir Resumen
         </Button>
         {offer?.id && (
           <ImportItemsDialog offerId={offer.id} onSuccess={() => loadOfferItems()} />
