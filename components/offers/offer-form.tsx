@@ -667,6 +667,33 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
     setItems(newItems)
   }
 
+  const recalculateSummaries = (currentItems: OfferItem[]): OfferItem[] => {
+    return currentItems.map((item, index) => {
+      if (item.type !== 'summary') return item
+
+      // Find the previous section_header
+      let lastHeaderIndex = -1
+      for (let i = index - 1; i >= 0; i--) {
+        if (currentItems[i].type === 'section_header') {
+          lastHeaderIndex = i
+          break
+        }
+      }
+
+      // Find articles between last header and this summary (excluding other summaries/notes)
+      const articlesBefore = currentItems.slice(lastHeaderIndex + 1, index).filter(
+        i => i.type === 'article'
+      )
+
+      return {
+        ...item,
+        pvp_total: articlesBefore.reduce((sum, i) => sum + (i.pvp_total || 0), 0),
+        neto_total1: articlesBefore.reduce((sum, i) => sum + (i.neto_total1 || 0), 0),
+        neto_total2: articlesBefore.reduce((sum, i) => sum + (i.neto_total2 || 0), 0),
+      }
+    })
+  }
+
   const handleItemChange = (index: number, field: keyof OfferItem, value: string | number) => {
     const newItems = [...items]
     newItems[index] = { ...newItems[index], [field]: value }
@@ -676,7 +703,8 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
       newItems[index] = calculateItemTotals(newItems[index])
     }
 
-    setItems(newItems)
+    // Recalcular todos los resúmenes con los nuevos valores
+    setItems(recalculateSummaries(newItems))
   }
 
   const addItem = () => {
@@ -729,7 +757,8 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
 
   const removeItem = (index: number) => {
     if (items.length > 1) {
-      setItems(items.filter((_, i) => i !== index))
+      const newItems = items.filter((_, i) => i !== index)
+      setItems(recalculateSummaries(newItems))
     }
   }
 
