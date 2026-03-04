@@ -4,6 +4,7 @@ import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import fs from 'fs'
 import path from 'path'
+import sharp from 'sharp'
 
 export async function GET(
   _req: Request,
@@ -35,8 +36,13 @@ export async function GET(
 
   const offerItems = items || []
 
-  // ---- PDF setup ----
-  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
+  // ---- PDF setup with compression ----
+  const doc = new jsPDF({ 
+    orientation: 'portrait', 
+    unit: 'mm', 
+    format: 'a4',
+    compress: true  // Enable compression to reduce file size
+  })
   const pageW = doc.internal.pageSize.getWidth()
   const marginL = 14
   const marginR = 14
@@ -50,19 +56,22 @@ export async function GET(
   const rowAlt: [number, number, number] = [246, 249, 252]
   const totalBg: [number, number, number] = [232, 240, 248]
 
-  // ---- Logo (maintain 1:1 native aspect ratio) ----
+  // ---- Logo (maintain 1:1 native aspect ratio, compressed) ----
   try {
     const logoPath = path.join(process.cwd(), 'public', 'mysair-logo.png')
     if (fs.existsSync(logoPath)) {
-      const base64 = fs.readFileSync(logoPath).toString('base64')
-      // Read native dimensions to preserve aspect ratio
-      const imgData = `data:image/png;base64,${base64}`
-      // Use a target height of 11mm (half of 22mm) and compute width from native ratio
+      // Compress and optimize the logo with sharp
+      const compressedBuffer = await sharp(logoPath)
+        .resize(150, 150, { fit: 'inside', withoutEnlargement: true })
+        .jpeg({ quality: 80 })
+        .toBuffer()
+      
+      const base64 = compressedBuffer.toString('base64')
+      const imgData = `data:image/jpeg;base64,${base64}`
       const targetH = 11
-      // jsPDF getImageProperties gives us the pixel dims
       const props = doc.getImageProperties(imgData)
       const targetW = (props.width / props.height) * targetH
-      doc.addImage(imgData, 'PNG', marginL, 6, targetW, targetH)
+      doc.addImage(imgData, 'JPEG', marginL, 6, targetW, targetH)
     }
   } catch {
     doc.setFontSize(20).setFont('helvetica', 'bold').setTextColor(...blue)
