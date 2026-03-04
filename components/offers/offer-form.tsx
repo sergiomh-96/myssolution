@@ -411,12 +411,21 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
     const loadData = async () => {
       const supabase = createClient()
 
-      // Load products
-      const { data: productsData } = await supabase
-        .from('products')
-        .select('id, referencia, descripcion, modelo_nombre')
-        .eq('status', 'active')
-        .order('referencia')
+      // Load products - fetch up to 50000 products in parallel batches of 1000
+      const productBatches = await Promise.all(
+        Array.from({ length: 50 }, (_, i) => i).map(async (i) => {
+          return supabase
+            .from('products')
+            .select('id, referencia, descripcion, modelo_nombre')
+            .eq('status', 'active')
+            .order('referencia')
+            .range(i * 1000, i * 1000 + 999)
+        })
+      )
+
+      const productsData = productBatches
+        .flatMap(batch => batch.data || [])
+        .filter((product, index, self) => self.findIndex(p => p.id === product.id) === index)
 
       if (productsData) {
         setProducts(productsData)
