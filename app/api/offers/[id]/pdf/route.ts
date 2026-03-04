@@ -70,7 +70,7 @@ export async function GET(
   }
 
   // ---- Thin rule under logo area ----
-  const ruleY = 32
+  const ruleY = 20
   doc.setDrawColor(...borderColor).setLineWidth(0.5)
   doc.line(marginL, ruleY, pageW - marginR, ruleY)
 
