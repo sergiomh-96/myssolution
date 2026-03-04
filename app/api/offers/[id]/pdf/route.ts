@@ -50,12 +50,19 @@ export async function GET(
   const rowAlt: [number, number, number] = [246, 249, 252]
   const totalBg: [number, number, number] = [232, 240, 248]
 
-  // ---- Logo ----
+  // ---- Logo (maintain 1:1 native aspect ratio) ----
   try {
     const logoPath = path.join(process.cwd(), 'public', 'mysair-logo.png')
     if (fs.existsSync(logoPath)) {
       const base64 = fs.readFileSync(logoPath).toString('base64')
-      doc.addImage(`data:image/png;base64,${base64}`, 'PNG', marginL, 8, 52, 20)
+      // Read native dimensions to preserve aspect ratio
+      const imgData = `data:image/png;base64,${base64}`
+      // Use a target height of 22mm and compute width from native ratio
+      const targetH = 22
+      // jsPDF getImageProperties gives us the pixel dims
+      const props = doc.getImageProperties(imgData)
+      const targetW = (props.width / props.height) * targetH
+      doc.addImage(imgData, 'PNG', marginL, 6, targetW, targetH)
     }
   } catch {
     doc.setFontSize(20).setFont('helvetica', 'bold').setTextColor(...blue)
@@ -97,14 +104,14 @@ export async function GET(
 
   let ly = infoTop + 5
   writeField(marginL, ly, 'Nº OFERTA', offerNum, true, true)
-  hr(ly + 6)
-  ly += 12
+  hr(ly + 5.5)
+  ly += 9
   writeField(marginL, ly, 'REFERENCIA', offer.title || '-')
-  hr(ly + 6)
-  ly += 12
+  hr(ly + 5.5)
+  ly += 9
   writeField(marginL, ly, 'CLIENTE', offer.customer?.company_name || '-')
-  hr(ly + 6)
-  ly += 12
+  hr(ly + 5.5)
+  ly += 9
   const contacto = offer.contact
     ? `${offer.contact.nombre || ''} ${offer.contact.apellidos || ''}`.trim()
     : '-'
@@ -112,18 +119,18 @@ export async function GET(
 
   let ry = infoTop + 5
   writeField(colMid, ry, 'FECHA', offerDate, true, true)
-  hr(ry + 6, colMid, pageW - marginR)
-  ry += 12
+  hr(ry + 5.5, colMid, pageW - marginR)
+  ry += 9
   const realizaPor = offer.created_by_profile?.email || offer.created_by_profile?.full_name || '-'
   writeField(colMid, ry, 'REALIZA POR', realizaPor)
-  hr(ry + 6, colMid, pageW - marginR)
-  ry += 12
+  hr(ry + 5.5, colMid, pageW - marginR)
+  ry += 9
   writeField(colMid, ry, 'PLAZO DE ENTREGA', 'A consultar')
-  hr(ry + 6, colMid, pageW - marginR)
-  ry += 12
+  hr(ry + 5.5, colMid, pageW - marginR)
+  ry += 9
   writeField(colMid, ry, 'PRECIO', 'NETO', true)
 
-  const tableTop = ruleY + 51
+  const tableTop = ruleY + 42
 
   // Rule above table
   doc.setDrawColor(...borderColor).setLineWidth(0.5)
@@ -150,8 +157,7 @@ export async function GET(
       fontSize: 7.5,
       cellPadding: { top: 2.5, bottom: 2.5, left: 3, right: 3 },
       textColor: textDark,
-      lineColor: borderColor,
-      lineWidth: 0.2,
+      lineWidth: 0,
       overflow: 'linebreak',
     },
     headStyles: {
@@ -160,12 +166,14 @@ export async function GET(
       fontStyle: 'bold',
       fontSize: 8,
       halign: 'left',
+      lineWidth: 0,
     },
     footStyles: {
       fillColor: totalBg,
       textColor: textDark,
       fontStyle: 'bold',
       fontSize: 8.5,
+      lineWidth: 0,
     },
     columnStyles: {
       0: { cellWidth: 32, fontStyle: 'bold' },
