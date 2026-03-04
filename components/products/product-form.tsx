@@ -185,55 +185,79 @@ export function ProductForm({ productId }: ProductFormProps) {
     try {
       if (isEditMode) {
         // Update existing product
+        console.log('[v0] Updating product:', productId, 'with data:', formData)
         const { error: updateError } = await supabase
           .from('products')
           .update(formData)
           .eq('id', productId)
 
-        if (updateError) throw updateError
+        if (updateError) {
+          console.error('[v0] Update error:', updateError)
+          throw updateError
+        }
+        console.log('[v0] Product updated successfully')
 
         // Update precios
         for (const tarifa of tarifas) {
           if (tarifa.precio !== null) {
-            const { data: existing } = await supabase
+            const { data: existing, error: existError } = await supabase
               .from('precios_producto')
               .select('id_precio')
               .eq('id_producto', productId)
               .eq('id_tarifa', tarifa.id_tarifa)
               .maybeSingle()
 
+            if (existError) {
+              console.error('[v0] Error checking existing price:', existError)
+              throw existError
+            }
+
             if (existing) {
-              await supabase
+              console.log('[v0] Updating precio:', existing.id_precio)
+              const { error: updatePrecioError } = await supabase
                 .from('precios_producto')
                 .update({ precio: tarifa.precio })
                 .eq('id_precio', existing.id_precio)
+              
+              if (updatePrecioError) throw updatePrecioError
             } else {
-              await supabase
+              console.log('[v0] Inserting new precio for tarifa:', tarifa.id_tarifa)
+              const { error: insertPrecioError } = await supabase
                 .from('precios_producto')
                 .insert({
                   id_producto: productId,
                   id_tarifa: tarifa.id_tarifa,
                   precio: tarifa.precio,
                 })
+              
+              if (insertPrecioError) throw insertPrecioError
             }
           } else if (tarifa.precio === null) {
             // Delete if price is cleared
-            await supabase
+            console.log('[v0] Deleting precio for tarifa:', tarifa.id_tarifa)
+            const { error: deletePrecioError } = await supabase
               .from('precios_producto')
               .delete()
               .eq('id_producto', productId)
               .eq('id_tarifa', tarifa.id_tarifa)
+            
+            if (deletePrecioError) throw deletePrecioError
           }
         }
       } else {
         // Create new product
+        console.log('[v0] Creating new product with data:', formData)
         const { data: newProduct, error: insertError } = await supabase
           .from('products')
           .insert([formData])
           .select('id')
           .single()
 
-        if (insertError) throw insertError
+        if (insertError) {
+          console.error('[v0] Insert error:', insertError)
+          throw insertError
+        }
+        console.log('[v0] Product created with id:', newProduct.id)
 
         // Insert precios if any
         const preciosToInsert = tarifas
@@ -242,6 +266,32 @@ export function ProductForm({ productId }: ProductFormProps) {
             id_producto: newProduct.id,
             id_tarifa: t.id_tarifa,
             precio: t.precio,
+          }))
+
+        if (preciosToInsert.length > 0) {
+          console.log('[v0] Inserting precios:', preciosToInsert)
+          const { error: preciosError } = await supabase
+            .from('precios_producto')
+            .insert(preciosToInsert)
+
+          if (preciosError) {
+            console.error('[v0] Precios insert error:', preciosError)
+            throw preciosError
+          }
+        }
+      }
+
+      console.log('[v0] Product save completed successfully')
+      router.push('/dashboard/products')
+      router.refresh()
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Error desconocido'
+      console.error('[v0] Error in handleSubmit:', errorMsg, err)
+      setError(errorMsg)
+    } finally {
+      setIsLoading(false)
+    }
+  }
           }))
 
         if (preciosToInsert.length > 0) {
