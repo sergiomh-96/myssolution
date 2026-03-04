@@ -64,16 +64,24 @@ export function ProductsTable({ products: initialProducts }: ProductsTableProps)
   const [products, setProducts] = useState(initialProducts)
   const supabase = createClient()
 
-  // Load tarifas on mount
+  // Load tarifas and set default from app_settings
   useEffect(() => {
     const load = async () => {
-      const { data } = await supabase
+      const { data: tarifasData } = await supabase
         .from('tarifas')
         .select('id_tarifa, nombre')
         .order('nombre')
-      if (data && data.length > 0) {
-        setTarifas(data)
-        setSelectedTarifa(data[0].id_tarifa)
+      
+      const { data: settingsData } = await supabase
+        .from('app_settings')
+        .select('default_tarifa_id')
+        .single()
+      
+      if (tarifasData && tarifasData.length > 0) {
+        setTarifas(tarifasData)
+        // Use default tarifa from settings, or fall back to first tarifa
+        const defaultTarifaId = settingsData?.default_tarifa_id || tarifasData[0].id_tarifa
+        setSelectedTarifa(defaultTarifaId)
       }
     }
     load()
