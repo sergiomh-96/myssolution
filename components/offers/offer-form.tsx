@@ -344,7 +344,6 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
       console.error('[v0] Error loading adjacent offers:', err)
     }
   }
-  }
 
   // Load offer items when offer is provided
   const loadOfferItems = async () => {
