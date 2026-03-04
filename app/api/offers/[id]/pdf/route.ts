@@ -56,22 +56,22 @@ export async function GET(
   const rowAlt: [number, number, number] = [246, 249, 252]
   const totalBg: [number, number, number] = [232, 240, 248]
 
-  // ---- Logo (maintain 1:1 native aspect ratio, compressed) ----
+  // ---- Logo (maintain 1:1 native aspect ratio, high quality) ----
   try {
     const logoPath = path.join(process.cwd(), 'public', 'mysair-logo.png')
     if (fs.existsSync(logoPath)) {
-      // Compress and optimize the logo with sharp
+      // Optimize the logo with sharp - use PNG compression for better quality
       const compressedBuffer = await sharp(logoPath)
-        .resize(150, 150, { fit: 'inside', withoutEnlargement: true })
-        .jpeg({ quality: 80 })
+        .resize(280, 280, { fit: 'inside', withoutEnlargement: true })
+        .png({ compressionLevel: 9 })
         .toBuffer()
       
       const base64 = compressedBuffer.toString('base64')
-      const imgData = `data:image/jpeg;base64,${base64}`
+      const imgData = `data:image/png;base64,${base64}`
       const targetH = 11
       const props = doc.getImageProperties(imgData)
       const targetW = (props.width / props.height) * targetH
-      doc.addImage(imgData, 'JPEG', marginL, 6, targetW, targetH)
+      doc.addImage(imgData, 'PNG', marginL, 6, targetW, targetH)
     }
   } catch {
     doc.setFontSize(20).setFont('helvetica', 'bold').setTextColor(...blue)
