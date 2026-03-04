@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -15,6 +15,7 @@ import {
 import { Card } from '@/components/ui/card'
 import { createClient } from '@/lib/supabase/client'
 import { Textarea } from '@/components/ui/textarea'
+import { AlertCircle } from 'lucide-react'
 
 const FAMILIAS = ['Cortinas', 'Persianas', 'Paneles', 'Ventilación', 'Climatización', 'Control', 'Accesorios']
 const SUBFAMILIAS: Record<string, string[]> = {
@@ -27,11 +28,24 @@ const SUBFAMILIAS: Record<string, string[]> = {
   'Accesorios': ['Marcos', 'Difusores'],
 }
 
-export function ProductForm() {
+interface ProductFormProps {
+  productId?: number
+}
+
+interface TarifaPrice {
+  id_tarifa: number
+  nombre: string
+  precio: number | null
+}
+
+export function ProductForm({ productId }: ProductFormProps) {
   const router = useRouter()
   const supabase = createClient()
+  const isEditMode = !!productId
   const [isLoading, setIsLoading] = useState(false)
   const [selectedFamilia, setSelectedFamilia] = useState('')
+  const [tarifas, setTarifas] = useState<TarifaPrice[]>([])
+  const [error, setError] = useState<string | null>(null)
   const [formData, setFormData] = useState({
     referencia: '',
     descripcion: '',
@@ -54,27 +68,195 @@ export function ProductForm() {
     ficha_tecnica: '',
     area_efectiva: '',
     art_personalizado: false,
+    brand_id: '',
     status: 'active',
   })
+
+  // Load product data if editing
+  useEffect(() => {
+    if (!isEditMode) return
+
+    const loadProduct = async () => {
+      try {
+        const { data: product, error: productError } = await supabase
+          .from('products')
+          .select('*')
+          .eq('id', productId)
+          .single()
+
+        if (productError) throw productError
+
+        setFormData({
+          referencia: product.referencia || '',
+          descripcion: product.descripcion || '',
+          texto_prescripcion: product.texto_prescripcion || '',
+          largo: product.largo || '',
+          alto: product.alto || '',
+          ancho: product.ancho || '',
+          volumen: product.volumen || '',
+          larguero_largo: product.larguero_largo || '',
+          larguero_alto: product.larguero_alto || '',
+          familia: product.familia || '',
+          subfamilia: product.subfamilia || '',
+          motorizada: product.motorizada || false,
+          modelo_nombre: product.modelo_nombre || '',
+          tipo_deflexion: product.tipo_deflexion || '',
+          fijacion: product.fijacion || '',
+          acabado: product.acabado || '',
+          compuerta: product.compuerta || '',
+          regulacion_compuerta: product.regulacion_compuerta || '',
+          ficha_tecnica: product.ficha_tecnica || '',
+          area_efectiva: product.area_efectiva || '',
+          art_personalizado: product.art_personalizado || false,
+          brand_id: product.brand_id || '',
+          status: product.status || 'active',
+        })
+        setSelectedFamilia(product.familia || '')
+
+        // Load tarifas with prices for this product
+        const { data: tarifasData, error: tarifasError } = await supabase
+          .from('tarifas')
+          .select('id_tarifa, nombre')
+          .order('nombre')
+
+        if (tarifasError) throw tarifasError
+
+        // Get existing precios for this product
+        const { data: preciosData } = await supabase
+          .from('precios_producto')
+          .select('id_tarifa, precio')
+          .eq('id_producto', productId)
+
+        const preciosMap = new Map((preciosData || []).map(p => [p.id_tarifa, p.precio]))
+
+        setTarifas((tarifasData || []).map(t => ({
+          id_tarifa: t.id_tarifa,
+          nombre: t.nombre,
+          precio: preciosMap.get(t.id_tarifa) || null,
+        })))
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Error cargando el producto')
+      }
+    }
+
+    loadProduct()
+  }, [productId, isEditMode, supabase])
+
+  // Load tarifas for new product
+  useEffect(() => {
+    if (isEditMode) return
+
+    const loadTarifas = async () => {
+      try {
+        const { data, error: err } = await supabase
+          .from('tarifas')
+          .select('id_tarifa, nombre')
+          .order('nombre')
+
+        if (err) throw err
+        setTarifas((data || []).map(t => ({
+          id_tarifa: t.id_tarifa,
+          nombre: t.nombre,
+          precio: null,
+        })))
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Error cargando tarifas')
+      }
+    }
+
+    loadTarifas()
+  }, [isEditMode, supabase])
 
   const handleChange = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }))
   }
 
+  const handleTarifaPriceChange = (tarifaId: number, precio: string) => {
+    setTarifas(prev => prev.map(t =>
+      t.id_tarifa === tarifaId ? { ...t, precio: precio ? parseFloat(precio) : null } : t
+    ))
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
+    setError(null)
 
     try {
-      const { error } = await supabase.from('products').insert([formData])
+      if (isEditMode) {
+        // Update existing product
+        const { error: updateError } = await supabase
+          .from('products')
+          .update(formData)
+          .eq('id', productId)
 
-      if (error) throw error
+        if (updateError) throw updateError
+
+        // Update precios
+        for (const tarifa of tarifas) {
+          if (tarifa.precio !== null) {
+            const { data: existing } = await supabase
+              .from('precios_producto')
+              .select('id_precio')
+              .eq('id_producto', productId)
+              .eq('id_tarifa', tarifa.id_tarifa)
+              .maybeSingle()
+
+            if (existing) {
+              await supabase
+                .from('precios_producto')
+                .update({ precio: tarifa.precio })
+                .eq('id_precio', existing.id_precio)
+            } else {
+              await supabase
+                .from('precios_producto')
+                .insert({
+                  id_producto: productId,
+                  id_tarifa: tarifa.id_tarifa,
+                  precio: tarifa.precio,
+                })
+            }
+          } else if (tarifa.precio === null) {
+            // Delete if price is cleared
+            await supabase
+              .from('precios_producto')
+              .delete()
+              .eq('id_producto', productId)
+              .eq('id_tarifa', tarifa.id_tarifa)
+          }
+        }
+      } else {
+        // Create new product
+        const { data: newProduct, error: insertError } = await supabase
+          .from('products')
+          .insert([formData])
+          .select('id')
+          .single()
+
+        if (insertError) throw insertError
+
+        // Insert precios if any
+        const preciosToInsert = tarifas
+          .filter(t => t.precio !== null)
+          .map(t => ({
+            id_producto: newProduct.id,
+            id_tarifa: t.id_tarifa,
+            precio: t.precio,
+          }))
+
+        if (preciosToInsert.length > 0) {
+          const { error: preciosError } = await supabase
+            .from('precios_producto')
+            .insert(preciosToInsert)
+
+          if (preciosError) throw preciosError
+        }
+      }
 
       router.push('/dashboard/products')
       router.refresh()
-    } catch (error) {
-      console.error('Error creating product:', error)
-      alert('Error al crear el producto')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al guardar el producto')
     } finally {
       setIsLoading(false)
     }
@@ -82,19 +264,26 @@ export function ProductForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {error && (
+        <div className="flex items-start gap-3 bg-destructive/10 border border-destructive rounded-lg p-4">
+          <AlertCircle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
+          <div className="text-sm text-destructive">{error}</div>
+        </div>
+      )}
+
       <Card className="p-6 space-y-4">
         <h2 className="text-lg font-semibold">Información General</h2>
         
         <div className="grid grid-cols-2 gap-4">
           <div>
             <Label>Marca</Label>
-            <Select value={formData.marca} onValueChange={(value) => handleChange('marca', value)}>
+            <Select value={formData.brand_id} onValueChange={(value) => handleChange('brand_id', value)}>
               <SelectTrigger>
-                <SelectValue />
+                <SelectValue placeholder="Selecciona marca" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="AGFRI">AGFRI</SelectItem>
-                <SelectItem value="MYSAIR">MYSAIR</SelectItem>
+                <SelectItem value="1">AGFRI</SelectItem>
+                <SelectItem value="2">MYSAIR</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -121,20 +310,27 @@ export function ProductForm() {
       </Card>
 
       <Card className="p-6 space-y-4">
-        <h2 className="text-lg font-semibold">Precios</h2>
-        <div className="grid grid-cols-3 gap-4">
-          <div>
-            <Label>PVP 25</Label>
-            <Input type="number" step="0.01" value={formData.pvp_25} onChange={(e) => handleChange('pvp_25', e.target.value)} />
-          </div>
-          <div>
-            <Label>PVP 26</Label>
-            <Input type="number" step="0.01" value={formData.pvp_26} onChange={(e) => handleChange('pvp_26', e.target.value)} />
-          </div>
-          <div>
-            <Label>PVP 27</Label>
-            <Input type="number" step="0.01" value={formData.pvp_27} onChange={(e) => handleChange('pvp_27', e.target.value)} />
-          </div>
+        <h2 className="text-lg font-semibold">Precios por Tarifa</h2>
+        <div className="space-y-3">
+          {tarifas.length === 0 ? (
+            <p className="text-muted-foreground text-sm">Cargando tarifas...</p>
+          ) : (
+            tarifas.map(tarifa => (
+              <div key={tarifa.id_tarifa} className="flex items-end gap-3">
+                <div className="flex-1">
+                  <Label className="text-sm">{tarifa.nombre}</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    placeholder="0.00"
+                    value={tarifa.precio !== null ? tarifa.precio : ''}
+                    onChange={(e) => handleTarifaPriceChange(tarifa.id_tarifa, e.target.value)}
+                    className="mt-1"
+                  />
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </Card>
 
@@ -257,7 +453,7 @@ export function ProductForm() {
 
       <div className="flex gap-4">
         <Button type="submit" disabled={isLoading}>
-          {isLoading ? 'Guardando...' : 'Crear Producto'}
+          {isLoading ? 'Guardando...' : isEditMode ? 'Guardar Cambios' : 'Crear Producto'}
         </Button>
         <Button variant="outline" onClick={() => window.history.back()}>
           Cancelar

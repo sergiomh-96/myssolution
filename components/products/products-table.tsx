@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import {
   Table,
   TableBody,
@@ -56,6 +57,7 @@ interface ProductsTableProps {
 const PAGE_SIZE = 500
 
 export function ProductsTable({ products: initialProducts }: ProductsTableProps) {
+  const router = useRouter()
   const [search, setSearch] = useState('')
   const [selectedTarifa, setSelectedTarifa] = useState<number | null>(null)
   const [tarifas, setTarifas] = useState<Tarifa[]>([])
@@ -241,7 +243,7 @@ export function ProductsTable({ products: initialProducts }: ProductsTableProps)
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Acciones</DropdownMenuLabel>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => router.push(`/dashboard/products/${product.id}/edit`)}>
                             <Edit className="h-4 w-4 mr-2" />
                             Editar
                           </DropdownMenuItem>
