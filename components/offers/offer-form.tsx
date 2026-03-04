@@ -864,11 +864,15 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
             }))
 
           if (itemsToInsert.length > 0) {
+            console.log('[v0] itemsToInsert:', JSON.stringify(itemsToInsert, null, 2))
             const { error: insertError } = await supabase
               .from('offer_items')
               .insert(itemsToInsert)
 
-            if (insertError) throw insertError
+            if (insertError) {
+              console.log('[v0] insert error:', JSON.stringify(insertError))
+              throw insertError
+            }
           }
         }
       } else {
