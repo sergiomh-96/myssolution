@@ -8,10 +8,8 @@ export async function POST(request: Request) {
     await requireRole(['admin'])
 
     const body = await request.json()
-    const { tarifaNombre, tarifaFechaInicio, tarifaFechaFin, rows } = body as {
+    const { tarifaNombre, rows } = body as {
       tarifaNombre: string
-      tarifaFechaInicio?: string
-      tarifaFechaFin?: string
       rows: Record<string, string>[]
     }
 
@@ -33,12 +31,10 @@ export async function POST(request: Request) {
     let tarifaId: number
 
     if (existingTarifa) {
-      // Update existing tarifa dates if provided
+      // Update existing tarifa
       await supabase
         .from('tarifas')
         .update({
-          ...(tarifaFechaInicio ? { fecha_inicio: tarifaFechaInicio } : {}),
-          ...(tarifaFechaFin ? { fecha_fin: tarifaFechaFin } : {}),
           updated_at: new Date().toISOString(),
         })
         .eq('id_tarifa', existingTarifa.id_tarifa)
@@ -50,8 +46,8 @@ export async function POST(request: Request) {
         .from('tarifas')
         .insert({
           nombre: tarifaNombre.trim(),
-          fecha_inicio: tarifaFechaInicio || new Date().toISOString(),
-          fecha_fin: tarifaFechaFin || null,
+          fecha_inicio: new Date().toISOString(),
+          fecha_fin: null,
         })
         .select('id_tarifa')
         .single()

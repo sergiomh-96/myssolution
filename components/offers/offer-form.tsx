@@ -411,9 +411,9 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
     const loadData = async () => {
       const supabase = createClient()
 
-      // Load products - fetch up to 50000 products in sequential batches of 1000
+      // Load products - fetch up to 10000 products (10 batches of 1000) to avoid memory/URI issues
       let allProducts: any[] = []
-      for (let i = 0; i < 50; i++) {
+      for (let i = 0; i < 10; i++) {
         const { data } = await supabase
           .from('products')
           .select('id, referencia, descripcion, modelo_nombre')
