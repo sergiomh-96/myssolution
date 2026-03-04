@@ -130,11 +130,11 @@ export async function GET(
   ry += 9
   writeField(colMid, ry, 'PRECIO', 'NETO', true)
 
-  const tableTop = ruleY + 42
+  const tableTop = ruleY + 47
 
-  // Rule above table
+  // Rule above table (with 5mm gap before it)
   doc.setDrawColor(...borderColor).setLineWidth(0.5)
-  doc.line(marginL, tableTop - 1, pageW - marginR, tableTop - 1)
+  doc.line(marginL, tableTop - 5, pageW - marginR, tableTop - 5)
 
   // ---- Articles table ----
   const tableRows = offerItems.map((item) => [
