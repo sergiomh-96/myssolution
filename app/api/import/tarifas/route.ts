@@ -58,29 +58,26 @@ export async function POST(request: Request) {
       tarifaId = newTarifa.id_tarifa
     }
 
-    // 2. Resolve product references to IDs - batch in groups of 500 to avoid URI too large
-    const referencias = rows
-      .map(r => (r['referencia'] ?? r['REFERENCIA'] ?? '').toString().trim())
-      .filter(r => r.length > 0)
-
-    const REF_BATCH = 500
+    // 2. Load ALL products from DB in batches of 1000 to build referencia→id map in memory
+    //    This avoids sending 50k references as URL params (414 error) and is faster overall
     const allProducts: { id: number; referencia: string }[] = []
-
-    for (let i = 0; i < referencias.length; i += REF_BATCH) {
-      const batch = referencias.slice(i, i + REF_BATCH)
+    for (let i = 0; ; i += 1000) {
       const { data, error } = await supabase
         .from('products')
         .select('id, referencia')
-        .in('referencia', batch)
+        .order('id')
+        .range(i, i + 999)
 
       if (error) {
-        return NextResponse.json({ error: `Error buscando productos (batch ${i}): ${error.message}` }, { status: 500 })
+        return NextResponse.json({ error: `Error cargando productos: ${error.message}` }, { status: 500 })
       }
-      if (data) allProducts.push(...data)
+      if (!data || data.length === 0) break
+      allProducts.push(...data)
+      if (data.length < 1000) break // last page
     }
 
     const refToId = new Map<string, number>()
-    allProducts.forEach(p => refToId.set(p.referencia, p.id))
+    allProducts.forEach(p => refToId.set(p.referencia.trim(), p.id))
 
     // 3. Build precios_producto rows
     const precios: { id_tarifa: number; id_producto: number; precio: number }[] = []
