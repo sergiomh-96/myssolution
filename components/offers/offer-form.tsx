@@ -344,6 +344,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
       console.error('[v0] Error loading adjacent offers:', err)
     }
   }
+  }
 
   // Load offer items when offer is provided
   const loadOfferItems = async () => {
@@ -1262,13 +1263,13 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
                 // Section Header Row
                 if (item.type === 'section_header') {
                   return (
-                    <tr key={item.id} className="border-t border-border bg-black">
+                    <tr key={item.id} className="border-t border-border bg-[#1a2e4a]">
                       <td colSpan={9} className="px-2 py-2">
                         <Input
                           value={item.description}
                           onChange={(e) => handleItemChange(index, 'description', e.target.value)}
                           placeholder="Título de sección"
-                          className="h-7 text-xs font-semibold bg-black text-white placeholder:text-white/50 border-white/20"
+                          className="h-7 text-xs font-semibold bg-[#1a2e4a] text-white placeholder:text-white/50 border-white/20"
                           disabled={loading}
                         />
                       </td>
