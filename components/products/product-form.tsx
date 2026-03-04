@@ -183,12 +183,23 @@ export function ProductForm({ productId }: ProductFormProps) {
     setError(null)
 
     try {
+      // Clean empty numeric fields - convert empty strings to null
+      const cleanFormData = {
+        ...formData,
+        largo: formData.largo ? parseFloat(formData.largo) : null,
+        alto: formData.alto ? parseFloat(formData.alto) : null,
+        ancho: formData.ancho ? parseFloat(formData.ancho) : null,
+        volumen: formData.volumen ? parseFloat(formData.volumen) : null,
+        larguero_largo: formData.larguero_largo ? parseFloat(formData.larguero_largo) : null,
+        larguero_alto: formData.larguero_alto ? parseFloat(formData.larguero_alto) : null,
+      }
+
       if (isEditMode) {
         // Update existing product
-        console.log('[v0] Updating product:', productId, 'with data:', formData)
+        console.log('[v0] Updating product:', productId, 'with data:', cleanFormData)
         const { error: updateError } = await supabase
           .from('products')
-          .update(formData)
+          .update(cleanFormData)
           .eq('id', productId)
 
         if (updateError) {
@@ -246,10 +257,10 @@ export function ProductForm({ productId }: ProductFormProps) {
         }
       } else {
         // Create new product
-        console.log('[v0] Creating new product with data:', formData)
+        console.log('[v0] Creating new product with data:', cleanFormData)
         const { data: newProduct, error: insertError } = await supabase
           .from('products')
-          .insert([formData])
+          .insert([cleanFormData])
           .select('id')
           .single()
 
