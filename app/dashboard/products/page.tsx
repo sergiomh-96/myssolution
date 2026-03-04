@@ -16,9 +16,9 @@ export default async function ProductsPage() {
     redirect('/auth/login')
   }
 
-  // Fetch up to 5000 products in 5 parallel batches of 1000
+  // Fetch up to 50000 products in 50 parallel batches of 1000
   const batches = await Promise.all(
-    [0, 1, 2, 3, 4].map(async (i) => {
+    Array.from({ length: 50 }, (_, i) => i).map(async (i) => {
       return supabase
         .from('products')
         .select('*')
