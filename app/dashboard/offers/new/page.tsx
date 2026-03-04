@@ -7,7 +7,7 @@ export default async function NewOfferPage() {
   const profile = await requireProfile()
   const supabase = await createClient()
 
-  // Get customers for the dropdown
+  // Get customers for the dropdown - load up to 5000 in batches of 1000
   let customers: { id: string; company_name: string; status: string }[] = []
 
   if (profile.role === 'sales_rep') {
@@ -19,22 +19,40 @@ export default async function NewOfferPage() {
 
     const assignedCustomerIds = (assignedViaProfile || []).map(a => a.customer_id)
 
-    // Get customers assigned directly + via profile assignments
-    const { data: customersData } = await supabase
-      .from('customers')
-      .select('id, company_name, status')
-      .or(`assigned_to.eq.${profile.id},id.in.(${assignedCustomerIds.length > 0 ? assignedCustomerIds.join(',') : 'null'})`)
-      .order('company_name')
-
-    customers = customersData || []
+    // Get customers assigned directly + via profile assignments in batches
+    const allCustomers: typeof customers = []
+    for (let i = 0; i < 5; i++) {
+      const { data: customersData } = await supabase
+        .from('customers')
+        .select('id, company_name, status')
+        .or(`assigned_to.eq.${profile.id},id.in.(${assignedCustomerIds.length > 0 ? assignedCustomerIds.join(',') : 'null'})`)
+        .order('company_name')
+        .range(i * 1000, i * 1000 + 999)
+      
+      if (customersData && customersData.length > 0) {
+        allCustomers.push(...customersData)
+      } else {
+        break
+      }
+    }
+    customers = allCustomers
   } else {
-    // Admins and managers see all customers
-    const { data: customersData } = await supabase
-      .from('customers')
-      .select('id, company_name, status')
-      .order('company_name')
-
-    customers = customersData || []
+    // Admins and managers see all customers - load in batches
+    const allCustomers: typeof customers = []
+    for (let i = 0; i < 5; i++) {
+      const { data: customersData } = await supabase
+        .from('customers')
+        .select('id, company_name, status')
+        .order('company_name')
+        .range(i * 1000, i * 1000 + 999)
+      
+      if (customersData && customersData.length > 0) {
+        allCustomers.push(...customersData)
+      } else {
+        break
+      }
+    }
+    customers = allCustomers
   }
 
   return (

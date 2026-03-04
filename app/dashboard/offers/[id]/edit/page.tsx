@@ -34,17 +34,44 @@ export default async function EditOfferPage({ params }: PageProps) {
     .eq('offer_id', id)
     .order('id')
 
-  // Get customers for the dropdown
-  let customersQuery = supabase
-    .from('customers')
-    .select('id, company_name, status')
-    .order('company_name')
-
+  // Get customers for the dropdown - load up to 5000 in batches of 1000
+  let customers: { id: string; company_name: string; status: string }[] = []
+  
   if (profile.role === 'sales_rep') {
-    customersQuery = customersQuery.eq('assigned_to', profile.id)
+    const allCustomers: typeof customers = []
+    for (let i = 0; i < 5; i++) {
+      const { data: customersData } = await supabase
+        .from('customers')
+        .select('id, company_name, status')
+        .eq('assigned_to', profile.id)
+        .order('company_name')
+        .range(i * 1000, i * 1000 + 999)
+      
+      if (customersData && customersData.length > 0) {
+        allCustomers.push(...customersData)
+      } else {
+        break
+      }
+    }
+    customers = allCustomers
+  } else {
+    // Admins and managers see all customers
+    const allCustomers: typeof customers = []
+    for (let i = 0; i < 5; i++) {
+      const { data: customersData } = await supabase
+        .from('customers')
+        .select('id, company_name, status')
+        .order('company_name')
+        .range(i * 1000, i * 1000 + 999)
+      
+      if (customersData && customersData.length > 0) {
+        allCustomers.push(...customersData)
+      } else {
+        break
+      }
+    }
+    customers = allCustomers
   }
-
-  const { data: customers } = await customersQuery
 
   return (
     <div className="max-w-[1800px] mx-auto space-y-6 px-4">
