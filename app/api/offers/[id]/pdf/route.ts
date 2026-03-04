@@ -57,8 +57,8 @@ export async function GET(
       const base64 = fs.readFileSync(logoPath).toString('base64')
       // Read native dimensions to preserve aspect ratio
       const imgData = `data:image/png;base64,${base64}`
-      // Use a target height of 22mm and compute width from native ratio
-      const targetH = 22
+      // Use a target height of 11mm (half of 22mm) and compute width from native ratio
+      const targetH = 11
       // jsPDF getImageProperties gives us the pixel dims
       const props = doc.getImageProperties(imgData)
       const targetW = (props.width / props.height) * targetH
@@ -76,11 +76,11 @@ export async function GET(
 
   // ---- Two-column header info ----
   const colMid = pageW / 2 + 2
-  const infoTop = ruleY + 5
+  const infoTop = ruleY + 2  // shifted up 3mm to centre between the two horizontal rules
 
   // Vertical separator
   doc.setDrawColor(...borderColor).setLineWidth(0.3)
-  doc.line(colMid - 3, ruleY, colMid - 3, ruleY + 46)
+  doc.line(colMid - 3, ruleY, colMid - 3, ruleY + 43)
 
   const offerYear = new Date(offer.created_at).getFullYear()
   const offerNum = `${offerYear}-${String(offer.offer_number).padStart(4, '0')}`
