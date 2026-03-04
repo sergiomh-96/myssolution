@@ -161,25 +161,66 @@ export function OfferDetailView({ offer, items, onPrint, onDownload }: OfferView
               </tr>
             </thead>
             <tbody>
-              {items.map((item, idx) => (
-                <tr key={item.id} className={idx % 2 === 0 ? 'bg-white' : 'bg-muted/30'}>
-                  <td className="py-2 px-3 text-[0.65rem] text-foreground border border-border font-medium">
-                    {item.product?.referencia || '-'}
-                  </td>
-                  <td className="py-2 px-3 text-[0.65rem] text-foreground border border-border">
-                    {item.description || item.product?.descripcion || '-'}
-                  </td>
-                  <td className="py-2 px-3 text-[0.65rem] text-center text-foreground border border-border">
-                    {item.quantity}
-                  </td>
-                  <td className="py-2 px-3 text-[0.65rem] text-right text-foreground border border-border">
-                    {Number(item.pvp).toFixed(2)} €
-                  </td>
-                  <td className="py-2 px-3 text-[0.65rem] text-right font-semibold text-foreground border border-border">
-                    {Number(item.neto_total2).toFixed(2)} €
-                  </td>
-                </tr>
-              ))}
+              {items.map((item, idx) => {
+                // Section header row — black background, white text
+                if (item.type === 'section_header') {
+                  return (
+                    <tr key={item.id} className="bg-black">
+                      <td colSpan={5} className="py-2 px-3 text-[0.65rem] font-bold text-white">
+                        {item.description || ''}
+                      </td>
+                    </tr>
+                  )
+                }
+
+                // Note row — soft yellow background
+                if (item.type === 'note') {
+                  return (
+                    <tr key={item.id} className="bg-yellow-100">
+                      <td colSpan={5} className="py-2 px-3 text-[0.65rem] italic text-yellow-900">
+                        {item.description || ''}
+                      </td>
+                    </tr>
+                  )
+                }
+
+                // Summary row — dark navy background, white text, no quantity/neto
+                if (item.type === 'summary') {
+                  return (
+                    <tr key={item.id} className="bg-[#1a2e4a]">
+                      <td colSpan={2} className="py-2 px-3 text-[0.65rem] font-bold text-white">
+                        {item.description || 'Resumen'}
+                      </td>
+                      <td className="py-2 px-3 text-[0.65rem] text-center text-white"></td>
+                      <td className="py-2 px-3 text-[0.65rem] text-right text-white"></td>
+                      <td className="py-2 px-3 text-[0.65rem] text-right font-bold text-white">
+                        {Number(item.neto_total2).toFixed(2)} €
+                      </td>
+                    </tr>
+                  )
+                }
+
+                // Article row — alternating background
+                return (
+                  <tr key={item.id} className={idx % 2 === 0 ? 'bg-white' : 'bg-muted/30'}>
+                    <td className="py-2 px-3 text-[0.65rem] text-foreground border border-border font-medium">
+                      {item.product?.referencia || '-'}
+                    </td>
+                    <td className="py-2 px-3 text-[0.65rem] text-foreground border border-border">
+                      {item.description || item.product?.descripcion || '-'}
+                    </td>
+                    <td className="py-2 px-3 text-[0.65rem] text-center text-foreground border border-border">
+                      {item.quantity}
+                    </td>
+                    <td className="py-2 px-3 text-[0.65rem] text-right text-foreground border border-border">
+                      {Number(item.pvp).toFixed(2)} €
+                    </td>
+                    <td className="py-2 px-3 text-[0.65rem] text-right font-semibold text-foreground border border-border">
+                      {Number(item.neto_total2).toFixed(2)} €
+                    </td>
+                  </tr>
+                )
+              })}
               <tr className="bg-primary/5 font-bold">
                 <td colSpan={4} className="py-3 px-3 text-sm text-right text-foreground border border-border">
                   Total:

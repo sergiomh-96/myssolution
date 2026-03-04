@@ -1262,13 +1262,13 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
                 // Section Header Row
                 if (item.type === 'section_header') {
                   return (
-                    <tr key={item.id} className="border-t border-border bg-muted/50">
+                    <tr key={item.id} className="border-t border-border bg-black">
                       <td colSpan={9} className="px-2 py-2">
                         <Input
                           value={item.description}
                           onChange={(e) => handleItemChange(index, 'description', e.target.value)}
                           placeholder="Título de sección"
-                          className="h-7 text-xs font-semibold"
+                          className="h-7 text-xs font-semibold bg-black text-white placeholder:text-white/50 border-white/20"
                           disabled={loading}
                         />
                       </td>
@@ -1291,13 +1291,13 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
                 // Note Row
                 if (item.type === 'note') {
                   return (
-                    <tr key={item.id} className="border-t border-border bg-yellow-50/30">
+                    <tr key={item.id} className="border-t border-border bg-yellow-100">
                       <td colSpan={9} className="px-2 py-2">
                         <Input
                           value={item.description}
                           onChange={(e) => handleItemChange(index, 'description', e.target.value)}
                           placeholder="Anotación"
-                          className="h-7 text-xs italic"
+                          className="h-7 text-xs italic bg-yellow-100 text-yellow-900 placeholder:text-yellow-700/60 border-yellow-300"
                           disabled={loading}
                         />
                       </td>
@@ -1320,18 +1320,18 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
                 // Summary Row
                 if (item.type === 'summary') {
                   return (
-                    <tr key={item.id} className="border-t-2 border-border bg-blue-50/40 font-semibold">
-                      <td colSpan={4} className="px-2 py-1.5 text-xs text-muted-foreground italic">
+                    <tr key={item.id} className="border-t-2 border-border bg-[#1a2e4a] font-semibold">
+                      <td colSpan={4} className="px-2 py-1.5 text-xs text-white italic">
                         {item.description || 'Resumen'}
                       </td>
-                      <td className="px-2 py-1.5 text-right text-xs">
+                      <td className="px-2 py-1.5 text-right text-xs text-white">
                         {formatNumber(item.pvp_total)}
                       </td>
                       <td colSpan={2} className="px-2 py-1.5"></td>
-                      <td className="px-2 py-1.5 text-right text-xs">
+                      <td className="px-2 py-1.5 text-right text-xs text-white">
                         {formatNumber(item.neto_total1)}
                       </td>
-                      <td className="px-2 py-1.5 text-right text-xs text-primary">
+                      <td className="px-2 py-1.5 text-right text-xs text-white font-bold">
                         {formatNumber(item.neto_total2)}
                       </td>
                       <td className="px-2 py-1 text-center">

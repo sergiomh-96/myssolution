@@ -136,16 +136,46 @@ export async function GET(
   doc.setDrawColor(...borderColor).setLineWidth(0.5)
   doc.line(marginL, tableTop - 5, pageW - marginR, tableTop - 5)
 
-  // ---- Articles table ----
-  const tableRows = offerItems.map((item) => [
-    item.product?.referencia || '-',
-    item.description || item.product?.descripcion || '-',
-    String(item.quantity ?? 1),
-    `€${Number(item.pvp || 0).toFixed(2)}`,
-    `€${Number(item.neto_total2 || 0).toFixed(2)}`,
-  ])
+  // Colors for special row types
+  const navyBg: [number, number, number] = [26, 46, 74]
+  const navyText: [number, number, number] = [255, 255, 255]
+  const yellowBg: [number, number, number] = [255, 251, 204]
+  const yellowText: [number, number, number] = [120, 90, 10]
+  const blackBg: [number, number, number] = [10, 10, 10]
+  const whiteText: [number, number, number] = [255, 255, 255]
 
-  const total = offerItems.reduce((s, i) => s + Number(i.neto_total2 || 0), 0)
+  // ---- Articles table ----
+  const tableRows = offerItems.map((item) => {
+    if (item.type === 'summary') {
+      return [
+        { content: item.description || 'Resumen', colSpan: 2, styles: { fontStyle: 'bold' as const, textColor: navyText, fillColor: navyBg } },
+        { content: '', styles: { textColor: navyText, fillColor: navyBg } },
+        { content: '', styles: { textColor: navyText, fillColor: navyBg } },
+        { content: `€${Number(item.neto_total2 || 0).toFixed(2)}`, styles: { fontStyle: 'bold' as const, halign: 'right' as const, textColor: navyText, fillColor: navyBg } },
+      ]
+    }
+    if (item.type === 'section_header') {
+      return [
+        { content: item.description || '', colSpan: 5, styles: { fontStyle: 'bold' as const, textColor: whiteText, fillColor: blackBg } },
+      ]
+    }
+    if (item.type === 'note') {
+      return [
+        { content: item.description || '', colSpan: 5, styles: { fontStyle: 'italic' as const, textColor: yellowText, fillColor: yellowBg } },
+      ]
+    }
+    return [
+      item.product?.referencia || '-',
+      item.description || item.product?.descripcion || '-',
+      String(item.quantity ?? 1),
+      `€${Number(item.pvp || 0).toFixed(2)}`,
+      `€${Number(item.neto_total2 || 0).toFixed(2)}`,
+    ]
+  })
+
+  const total = offerItems
+    .filter(i => i.type === 'article' || !i.type)
+    .reduce((s, i) => s + Number(i.neto_total2 || 0), 0)
 
   autoTable(doc, {
     startY: tableTop,
