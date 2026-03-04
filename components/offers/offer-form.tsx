@@ -322,10 +322,8 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
       const supabase = createClient()
       const offerNum = Number(offer.offer_number)
 
-      console.log('[v0] loadAdjacentOffers - offer_number:', offerNum)
-
       // Get previous offer (highest offer_number below current)
-      const { data: prevOffers, error: prevError } = await supabase
+      const { data: prevOffers } = await supabase
         .from('offers')
         .select('id, offer_number')
         .lt('offer_number', offerNum)
@@ -333,15 +331,12 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
         .limit(1)
 
       // Get next offer (lowest offer_number above current)
-      const { data: nextOffers, error: nextError } = await supabase
+      const { data: nextOffers } = await supabase
         .from('offers')
         .select('id, offer_number')
         .gt('offer_number', offerNum)
         .order('offer_number', { ascending: true })
         .limit(1)
-
-      console.log('[v0] prevOffers:', prevOffers, prevError)
-      console.log('[v0] nextOffers:', nextOffers, nextError)
 
       setPreviousOfferId(prevOffers?.[0]?.id ?? null)
       setNextOfferId(nextOffers?.[0]?.id ?? null)
@@ -864,15 +859,11 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
             }))
 
           if (itemsToInsert.length > 0) {
-            console.log('[v0] itemsToInsert:', JSON.stringify(itemsToInsert, null, 2))
             const { error: insertError } = await supabase
               .from('offer_items')
               .insert(itemsToInsert)
 
-            if (insertError) {
-              console.log('[v0] insert error:', JSON.stringify(insertError))
-              throw insertError
-            }
+            if (insertError) throw insertError
           }
         }
       } else {
