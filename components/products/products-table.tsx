@@ -77,42 +77,41 @@ export function ProductsTable({ products: initialProducts }: ProductsTableProps)
         .select('default_tarifa_id')
         .single()
       
-      console.log('[v0] Tarifas loaded:', tarifasData)
-      console.log('[v0] Settings:', settingsData)
-      
       if (tarifasData && tarifasData.length > 0) {
         setTarifas(tarifasData)
         // Use default tarifa from settings, or fall back to first tarifa
         const defaultTarifaId = settingsData?.default_tarifa_id || tarifasData[0].id_tarifa
-        console.log('[v0] Setting selected tarifa to:', defaultTarifaId)
         setSelectedTarifa(defaultTarifaId)
       }
     }
     load()
   }, [])
 
-  // Load precios when tarifa changes
+  // Load precios when tarifa changes - load up to 50000 in batches of 1000
   useEffect(() => {
-    if (!selectedTarifa) {
-      console.log('[v0] No tarifa selected yet')
-      return
-    }
+    if (!selectedTarifa) return
     const load = async () => {
-      console.log('[v0] Loading precios for tarifa:', selectedTarifa)
-      const { data, error } = await supabase
-        .from('precios_producto')
-        .select('id_producto, precio')
-        .eq('id_tarifa', selectedTarifa)
+      const allPrecios: PrecioProducto[] = []
       
-      console.log('[v0] Precios query result:', { data, error })
-      
-      if (data) {
-        console.log('[v0] Found', data.length, 'precios')
-        const map = new Map<number, number>()
-        data.forEach(p => map.set(p.id_producto, p.precio))
-        console.log('[v0] Precios map size:', map.size)
-        setPrecios(map)
+      // Load in batches using range() to avoid URI too large errors
+      for (let i = 0; i < 50; i++) {
+        const { data, error } = await supabase
+          .from('precios_producto')
+          .select('id_producto, precio')
+          .eq('id_tarifa', selectedTarifa)
+          .order('id_producto')
+          .range(i * 1000, i * 1000 + 999)
+        
+        if (error) break
+        if (!data || data.length === 0) break
+        
+        allPrecios.push(...data)
+        if (data.length < 1000) break // Last page
       }
+      
+      const map = new Map<number, number>()
+      allPrecios.forEach(p => map.set(p.id_producto, p.precio))
+      setPrecios(map)
     }
     load()
   }, [selectedTarifa, supabase])
