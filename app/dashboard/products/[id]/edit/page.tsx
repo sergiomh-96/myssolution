@@ -1,7 +1,9 @@
 import { ProductForm } from '@/components/products/product-form'
+import { use } from 'react'
 
-export default function EditProductPage({ params }: { params: { id: string } }) {
-  const productId = parseInt(params.id, 10)
+export default function EditProductPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params)
+  const productId = parseInt(id, 10)
 
   if (isNaN(productId)) {
     return <div>ID de producto inválido</div>
