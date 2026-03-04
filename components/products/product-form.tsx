@@ -292,25 +292,6 @@ export function ProductForm({ productId }: ProductFormProps) {
       setIsLoading(false)
     }
   }
-          }))
-
-        if (preciosToInsert.length > 0) {
-          const { error: preciosError } = await supabase
-            .from('precios_producto')
-            .insert(preciosToInsert)
-
-          if (preciosError) throw preciosError
-        }
-      }
-
-      router.push('/dashboard/products')
-      router.refresh()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al guardar el producto')
-    } finally {
-      setIsLoading(false)
-    }
-  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
