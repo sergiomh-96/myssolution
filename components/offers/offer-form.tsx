@@ -1493,7 +1493,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
             className="h-8 text-xs"
           >
             <Plus className="mr-2 h-3 w-3" />
-            Crear Oferta
+            Nueva Oferta
           </Button>
           <DuplicateOfferButton 
             offerId={savedOfferId ?? ''} 
@@ -1531,7 +1531,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
           </Button>
           <Button type="submit" disabled={loading} className="h-8 text-xs">
             {loading && <Loader2 className="mr-2 h-3 w-3 animate-spin" />}
-            {offer ? 'Actualizar Oferta' : 'Crear Oferta'}
+            {offer ? 'Actualizar Oferta' : 'Guardar'}
           </Button>
         </div>
       </div>
