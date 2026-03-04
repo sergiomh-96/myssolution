@@ -77,10 +77,14 @@ export function ProductsTable({ products: initialProducts }: ProductsTableProps)
         .select('default_tarifa_id')
         .single()
       
+      console.log('[v0] Tarifas loaded:', tarifasData)
+      console.log('[v0] Settings:', settingsData)
+      
       if (tarifasData && tarifasData.length > 0) {
         setTarifas(tarifasData)
         // Use default tarifa from settings, or fall back to first tarifa
         const defaultTarifaId = settingsData?.default_tarifa_id || tarifasData[0].id_tarifa
+        console.log('[v0] Setting selected tarifa to:', defaultTarifaId)
         setSelectedTarifa(defaultTarifaId)
       }
     }
@@ -89,20 +93,29 @@ export function ProductsTable({ products: initialProducts }: ProductsTableProps)
 
   // Load precios when tarifa changes
   useEffect(() => {
-    if (!selectedTarifa) return
+    if (!selectedTarifa) {
+      console.log('[v0] No tarifa selected yet')
+      return
+    }
     const load = async () => {
-      const { data } = await supabase
+      console.log('[v0] Loading precios for tarifa:', selectedTarifa)
+      const { data, error } = await supabase
         .from('precios_producto')
         .select('id_producto, precio')
         .eq('id_tarifa', selectedTarifa)
+      
+      console.log('[v0] Precios query result:', { data, error })
+      
       if (data) {
+        console.log('[v0] Found', data.length, 'precios')
         const map = new Map<number, number>()
         data.forEach(p => map.set(p.id_producto, p.precio))
+        console.log('[v0] Precios map size:', map.size)
         setPrecios(map)
       }
     }
     load()
-  }, [selectedTarifa])
+  }, [selectedTarifa, supabase])
 
   const sortedProducts = useMemo(() =>
     [...products].sort((a, b) =>
