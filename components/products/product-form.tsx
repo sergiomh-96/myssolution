@@ -182,123 +182,103 @@ export function ProductForm({ productId }: ProductFormProps) {
     setIsLoading(true)
     setError(null)
 
+    // Helper to convert empty string to null, or parse as float
+    const toNum = (v: any) => (v === '' || v === null || v === undefined) ? null : parseFloat(v)
+    // Helper to convert empty string to null for text fields
+    const toText = (v: any) => (v === '' || v === null || v === undefined) ? null : v
+
     try {
-      // Clean empty numeric fields - convert empty strings to null
       const cleanFormData = {
-        ...formData,
-        largo: formData.largo ? parseFloat(formData.largo) : null,
-        alto: formData.alto ? parseFloat(formData.alto) : null,
-        ancho: formData.ancho ? parseFloat(formData.ancho) : null,
-        volumen: formData.volumen ? parseFloat(formData.volumen) : null,
-        larguero_largo: formData.larguero_largo ? parseFloat(formData.larguero_largo) : null,
-        larguero_alto: formData.larguero_alto ? parseFloat(formData.larguero_alto) : null,
+        referencia: formData.referencia,
+        descripcion: toText(formData.descripcion),
+        texto_prescripcion: toText(formData.texto_prescripcion),
+        largo: toNum(formData.largo),
+        alto: toNum(formData.alto),
+        ancho: toNum(formData.ancho),
+        volumen: toNum(formData.volumen),
+        larguero_largo: toNum(formData.larguero_largo),
+        larguero_alto: toNum(formData.larguero_alto),
+        area_efectiva: toNum(formData.area_efectiva),
+        brand_id: toNum(formData.brand_id),
+        familia: toText(formData.familia),
+        subfamilia: toText(formData.subfamilia),
+        modelo_nombre: toText(formData.modelo_nombre),
+        tipo_deflexion: toText(formData.tipo_deflexion),
+        fijacion: toText(formData.fijacion),
+        acabado: toText(formData.acabado),
+        compuerta: toText(formData.compuerta),
+        regulacion_compuerta: toText(formData.regulacion_compuerta),
+        ficha_tecnica: toText(formData.ficha_tecnica),
+        motorizada: formData.motorizada,
+        art_personalizado: formData.art_personalizado,
+        status: formData.status,
       }
 
       if (isEditMode) {
-        // Update existing product
-        console.log('[v0] Updating product:', productId, 'with data:', cleanFormData)
         const { error: updateError } = await supabase
           .from('products')
           .update(cleanFormData)
           .eq('id', productId)
 
-        if (updateError) {
-          console.error('[v0] Update error:', updateError)
-          throw updateError
-        }
-        console.log('[v0] Product updated successfully')
+        if (updateError) throw updateError
 
-        // Update precios
+        // Update precios: upsert if price set, delete if cleared
         for (const tarifa of tarifas) {
-          if (tarifa.precio !== null) {
-            const { data: existing, error: existError } = await supabase
+          if (tarifa.precio !== null && tarifa.precio !== undefined) {
+            const { data: existing } = await supabase
               .from('precios_producto')
               .select('id_precio')
               .eq('id_producto', productId)
               .eq('id_tarifa', tarifa.id_tarifa)
               .maybeSingle()
 
-            if (existError) {
-              console.error('[v0] Error checking existing price:', existError)
-              throw existError
-            }
-
             if (existing) {
-              console.log('[v0] Updating precio:', existing.id_precio)
-              const { error: updatePrecioError } = await supabase
+              const { error } = await supabase
                 .from('precios_producto')
                 .update({ precio: tarifa.precio })
                 .eq('id_precio', existing.id_precio)
-              
-              if (updatePrecioError) throw updatePrecioError
+              if (error) throw error
             } else {
-              console.log('[v0] Inserting new precio for tarifa:', tarifa.id_tarifa)
-              const { error: insertPrecioError } = await supabase
+              const { error } = await supabase
                 .from('precios_producto')
-                .insert({
-                  id_producto: productId,
-                  id_tarifa: tarifa.id_tarifa,
-                  precio: tarifa.precio,
-                })
-              
-              if (insertPrecioError) throw insertPrecioError
+                .insert({ id_producto: productId, id_tarifa: tarifa.id_tarifa, precio: tarifa.precio })
+              if (error) throw error
             }
-          } else if (tarifa.precio === null) {
-            // Delete if price is cleared
-            console.log('[v0] Deleting precio for tarifa:', tarifa.id_tarifa)
-            const { error: deletePrecioError } = await supabase
+          } else {
+            // Price cleared — remove existing entry if any
+            await supabase
               .from('precios_producto')
               .delete()
               .eq('id_producto', productId)
               .eq('id_tarifa', tarifa.id_tarifa)
-            
-            if (deletePrecioError) throw deletePrecioError
           }
         }
       } else {
-        // Create new product
-        console.log('[v0] Creating new product with data:', cleanFormData)
         const { data: newProduct, error: insertError } = await supabase
           .from('products')
           .insert([cleanFormData])
           .select('id')
           .single()
 
-        if (insertError) {
-          console.error('[v0] Insert error:', insertError)
-          throw insertError
-        }
-        console.log('[v0] Product created with id:', newProduct.id)
+        if (insertError) throw insertError
 
-        // Insert precios if any
         const preciosToInsert = tarifas
-          .filter(t => t.precio !== null)
-          .map(t => ({
-            id_producto: newProduct.id,
-            id_tarifa: t.id_tarifa,
-            precio: t.precio,
-          }))
+          .filter(t => t.precio !== null && t.precio !== undefined)
+          .map(t => ({ id_producto: newProduct.id, id_tarifa: t.id_tarifa, precio: t.precio }))
 
         if (preciosToInsert.length > 0) {
-          console.log('[v0] Inserting precios:', preciosToInsert)
           const { error: preciosError } = await supabase
             .from('precios_producto')
             .insert(preciosToInsert)
-
-          if (preciosError) {
-            console.error('[v0] Precios insert error:', preciosError)
-            throw preciosError
-          }
+          if (preciosError) throw preciosError
         }
       }
 
-      console.log('[v0] Product save completed successfully')
       router.push('/dashboard/products')
       router.refresh()
     } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : 'Error desconocido'
-      console.error('[v0] Error in handleSubmit:', errorMsg, err)
-      setError(errorMsg)
+      const msg = err instanceof Error ? err.message : (err as any)?.message ?? 'Error desconocido'
+      setError(msg)
     } finally {
       setIsLoading(false)
     }
