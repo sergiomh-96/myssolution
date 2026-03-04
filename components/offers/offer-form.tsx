@@ -63,13 +63,25 @@ function ProductSearchInput({
     }
   }, [value, products])
 
-  // Filter products by search term
+  // Filter products by search term, prioritizing referencia matches
   const filteredProducts = searchTerm.trim()
     ? products.filter(p => 
         p.referencia.toLowerCase().includes(searchTerm.toLowerCase()) ||
         p.descripcion.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (p.modelo_nombre && p.modelo_nombre.toLowerCase().includes(searchTerm.toLowerCase()))
-      ).slice(0, 10)
+      )
+      .sort((a, b) => {
+        const aRefMatch = a.referencia.toLowerCase().includes(searchTerm.toLowerCase())
+        const bRefMatch = b.referencia.toLowerCase().includes(searchTerm.toLowerCase())
+        
+        // Priorize referencia matches first
+        if (aRefMatch && !bRefMatch) return -1
+        if (!aRefMatch && bRefMatch) return 1
+        
+        // Then sort alphabetically
+        return a.referencia.localeCompare(b.referencia)
+      })
+      .slice(0, 10)
     : []
 
   const handleProductSelect = (product: typeof products[0]) => {
