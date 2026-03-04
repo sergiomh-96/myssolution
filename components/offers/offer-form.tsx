@@ -368,13 +368,13 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
       }
 
       if (offerItems && offerItems.length > 0) {
-        // Load items and ensure at least 15 rows when editing (fill with empty articles if needed)
+        // Load items and ensure at least 5 empty rows when editing (fill with empty articles if needed)
         const loadedItems = offerItems as OfferItem[]
-        const itemsToSet = loadedItems.length >= 15 
+        const itemsToSet = loadedItems.length >= 5 
           ? loadedItems 
           : [
               ...loadedItems,
-              ...Array.from({ length: 15 - loadedItems.length }, () => createEmptyItem('article'))
+              ...Array.from({ length: 5 - loadedItems.length }, () => createEmptyItem('article'))
             ]
         setItems(itemsToSet)
       }
