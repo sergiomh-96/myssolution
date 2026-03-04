@@ -162,10 +162,10 @@ export function OfferDetailView({ offer, items, onPrint, onDownload }: OfferView
             </thead>
             <tbody>
               {items.map((item, idx) => {
-                // Section header row — black background, white text
+                // Section header row — navy background, white text
                 if (item.type === 'section_header') {
                   return (
-                    <tr key={item.id} className="bg-black">
+                    <tr key={item.id} className="bg-[#1a2e4a]">
                       <td colSpan={5} className="py-2 px-3 text-[0.65rem] font-bold text-white">
                         {item.description || ''}
                       </td>

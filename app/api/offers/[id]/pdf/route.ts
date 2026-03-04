@@ -141,8 +141,6 @@ export async function GET(
   const navyText: [number, number, number] = [255, 255, 255]
   const yellowBg: [number, number, number] = [255, 251, 204]
   const yellowText: [number, number, number] = [120, 90, 10]
-  const blackBg: [number, number, number] = [10, 10, 10]
-  const whiteText: [number, number, number] = [255, 255, 255]
 
   // ---- Articles table ----
   const tableRows = offerItems.map((item) => {
@@ -156,7 +154,7 @@ export async function GET(
     }
     if (item.type === 'section_header') {
       return [
-        { content: item.description || '', colSpan: 5, styles: { fontStyle: 'bold' as const, textColor: whiteText, fillColor: blackBg } },
+        { content: item.description || '', colSpan: 5, styles: { fontStyle: 'bold' as const, textColor: navyText, fillColor: navyBg } },
       ]
     }
     if (item.type === 'note') {
