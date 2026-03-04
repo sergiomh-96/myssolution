@@ -140,8 +140,6 @@ export async function POST(request: Request) {
     })
   } catch (err) {
     const errorMessage = err instanceof Error ? err.message : String(err)
-    console.error('[v0] Tarifas import error:', errorMessage)
-    console.error('[v0] Full error:', err)
     return NextResponse.json({ 
       error: `Error interno del servidor: ${errorMessage}` 
     }, { status: 500 })
