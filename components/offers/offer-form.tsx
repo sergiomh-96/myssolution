@@ -273,6 +273,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
+  const [savedOfferId, setSavedOfferId] = useState<string | null>(offer?.id ?? null)
   const [products, setProducts] = useState<any[]>([])
   const [tarifas, setTarifas] = useState<any[]>([])
   const [nextOfferNumber, setNextOfferNumber] = useState<number | null>(null)
@@ -941,6 +942,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
       // Show success message
       setSuccess(true)
       setError(null)
+      setSavedOfferId(offerId)
       setLoading(false)
       
       // Reset success message after 2 seconds
@@ -974,7 +976,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
       {/* Detalles de la Oferta — 4 filas x 4 columnas */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
 
-        {/* ── Fila 1: Nº Oferta | — | — | Tarifa ── */}
+        {/* ── Fila 1: Nº Oferta | — | — | Tarifa ��─ */}
         <div className="space-y-0.5">
           <Label className="text-xs">Nº Oferta</Label>
           <div className="flex items-center gap-1">
@@ -1483,58 +1485,45 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
 
       <div className="flex justify-between gap-2">
         <div className="flex gap-2">
-          {offer?.id && (
-            <>
-              <Button 
-                type="button" 
-                variant="default"
-                onClick={() => router.push('/dashboard/offers/new')} 
-                disabled={loading} 
-                className="h-8 text-xs"
-              >
-                <Plus className="mr-2 h-3 w-3" />
-                Crear Oferta
-              </Button>
-              <DuplicateOfferButton 
-                offerId={offer.id} 
-                variant="outline" 
-                size="sm" 
-                showLabel={true}
-              />
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={() => router.push(`/dashboard/offers/${offer.id}`)} 
-                disabled={loading} 
-                className="h-8 text-xs"
-              >
-                <Eye className="mr-2 h-3 w-3" />
-                Ver
-              </Button>
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={() => window.open(`/api/offers/${offer.id}/pdf`, '_blank')} 
-                disabled={loading} 
-                className="h-8 text-xs"
-              >
-                <FileText className="mr-2 h-3 w-3" />
-                Generar PDF
-              </Button>
-            </>
-          )}
-          {!offer?.id && (
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={() => router.push('/dashboard/offers/new')} 
-              disabled={loading} 
-              className="h-8 text-xs"
-            >
-              <Plus className="mr-2 h-3 w-3" />
-              Crear Nueva Oferta
-            </Button>
-          )}
+          <Button 
+            type="button" 
+            variant="default"
+            onClick={() => router.push('/dashboard/offers/new')} 
+            disabled={loading} 
+            className="h-8 text-xs"
+          >
+            <Plus className="mr-2 h-3 w-3" />
+            Crear Oferta
+          </Button>
+          <DuplicateOfferButton 
+            offerId={savedOfferId ?? ''} 
+            variant="outline" 
+            size="sm" 
+            showLabel={true}
+            disabled={!savedOfferId}
+          />
+          <Button 
+            type="button" 
+            variant="outline" 
+            onClick={() => savedOfferId && router.push(`/dashboard/offers/${savedOfferId}`)} 
+            disabled={loading || !savedOfferId} 
+            className="h-8 text-xs"
+            title={!savedOfferId ? 'Guarda la oferta primero para poder verla' : undefined}
+          >
+            <Eye className="mr-2 h-3 w-3" />
+            Ver
+          </Button>
+          <Button 
+            type="button" 
+            variant="outline" 
+            onClick={() => savedOfferId && window.open(`/api/offers/${savedOfferId}/pdf`, '_blank')} 
+            disabled={loading || !savedOfferId} 
+            className="h-8 text-xs"
+            title={!savedOfferId ? 'Guarda la oferta primero para generar el PDF' : undefined}
+          >
+            <FileText className="mr-2 h-3 w-3" />
+            Generar PDF
+          </Button>
         </div>
         <div className="flex gap-2">
           <Button type="button" variant="outline" onClick={() => router.push('/dashboard/offers')} disabled={loading} className="h-8 text-xs">

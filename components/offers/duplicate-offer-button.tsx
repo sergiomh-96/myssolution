@@ -10,9 +10,10 @@ interface DuplicateOfferButtonProps {
   variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost'
   size?: 'default' | 'sm' | 'lg' | 'icon'
   showLabel?: boolean
+  disabled?: boolean
 }
 
-export function DuplicateOfferButton({ offerId, variant = 'outline', size = 'default', showLabel = true }: DuplicateOfferButtonProps) {
+export function DuplicateOfferButton({ offerId, variant = 'outline', size = 'default', showLabel = true, disabled = false }: DuplicateOfferButtonProps) {
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
 
@@ -44,10 +45,11 @@ export function DuplicateOfferButton({ offerId, variant = 'outline', size = 'def
   return (
     <Button
       onClick={handleDuplicate}
-      disabled={isLoading}
+      disabled={isLoading || disabled}
       variant={variant}
       size={size}
-      title="Duplicar oferta"
+      title={disabled ? 'Guarda la oferta primero para poder duplicarla' : 'Duplicar oferta'}
+      className="h-8 text-xs"
     >
       {isLoading ? (
         <>
