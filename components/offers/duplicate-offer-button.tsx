@@ -11,13 +11,19 @@ interface DuplicateOfferButtonProps {
   size?: 'default' | 'sm' | 'lg' | 'icon'
   showLabel?: boolean
   disabled?: boolean
+  onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void
 }
 
-export function DuplicateOfferButton({ offerId, variant = 'outline', size = 'default', showLabel = true, disabled = false }: DuplicateOfferButtonProps) {
+export function DuplicateOfferButton({ offerId, variant = 'outline', size = 'default', showLabel = true, disabled = false, onClick }: DuplicateOfferButtonProps) {
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
 
-  const handleDuplicate = async () => {
+  const handleDuplicate = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    if (onClick) {
+      onClick(e)
+      return
+    }
+    
     setIsLoading(true)
     try {
       const response = await fetch(`/api/offers/duplicate?id=${offerId}`, {

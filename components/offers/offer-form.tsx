@@ -1,7 +1,7 @@
 'use client'
 
 // CACHE CLEAR: Complete rebuild - contacts renamed to contactList
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
@@ -280,6 +280,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
   const [precios, setPrecios] = useState<any[]>([])
   const [defaultTarifa, setDefaultTarifa] = useState<number | null>(null)
   const [contactList, setContactList] = useState<any[]>([])
+  const callbackRef = useRef<(() => void) | null>(null)
   const [currentCustomer, setCurrentCustomer] = useState<any>(null)
   const [users, setUsers] = useState<any[]>([])
   const [assignedUserIds, setAssignedUserIds] = useState<string[]>([])
@@ -647,6 +648,16 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
 
     setItems(updatedItems)
   }, [precios])
+
+  // Execute callback action after successful save
+  useEffect(() => {
+    if (savedOfferId && success && callbackRef.current) {
+      const callback = callbackRef.current
+      callbackRef.current = null
+      callback()
+      setSuccess(false)
+    }
+  }, [savedOfferId, success])
 
   const getPrecioForProduct = (productId: number): number | null => {
     const precio = precios.find(p => p.id_producto === productId)
@@ -1500,15 +1511,31 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
             variant="outline" 
             size="sm" 
             showLabel={true}
-            disabled={!savedOfferId}
+            disabled={!savedOfferId && !offer?.id}
+            onClick={(e) => {
+              if (!savedOfferId && !offer?.id) {
+                e.preventDefault()
+                callbackRef.current = () => router.push(`/dashboard/offers/${savedOfferId}/duplicate`)
+                const form = document.querySelector('form') as HTMLFormElement | null
+                if (form) form.requestSubmit()
+              }
+            }}
           />
           <Button 
             type="button" 
             variant="outline" 
-            onClick={() => savedOfferId && router.push(`/dashboard/offers/${savedOfferId}`)} 
-            disabled={loading || !savedOfferId} 
+            onClick={() => {
+              if (savedOfferId || offer?.id) {
+                router.push(`/dashboard/offers/${savedOfferId || offer?.id}`)
+              } else {
+                callbackRef.current = () => router.push(`/dashboard/offers/${savedOfferId}`)
+                const form = document.querySelector('form') as HTMLFormElement | null
+                if (form) form.requestSubmit()
+              }
+            }} 
+            disabled={loading} 
             className="h-8 text-xs"
-            title={!savedOfferId ? 'Guarda la oferta primero para poder verla' : undefined}
+            title={!savedOfferId && !offer?.id ? 'Guarda la oferta primero para poder verla' : undefined}
           >
             <Eye className="mr-2 h-3 w-3" />
             Ver
@@ -1516,10 +1543,18 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
           <Button 
             type="button" 
             variant="outline" 
-            onClick={() => savedOfferId && window.open(`/api/offers/${savedOfferId}/pdf`, '_blank')} 
-            disabled={loading || !savedOfferId} 
+            onClick={() => {
+              if (savedOfferId || offer?.id) {
+                window.open(`/api/offers/${savedOfferId || offer?.id}/pdf`, '_blank')
+              } else {
+                callbackRef.current = () => window.open(`/api/offers/${savedOfferId}/pdf`, '_blank')
+                const form = document.querySelector('form') as HTMLFormElement | null
+                if (form) form.requestSubmit()
+              }
+            }} 
+            disabled={loading} 
             className="h-8 text-xs"
-            title={!savedOfferId ? 'Guarda la oferta primero para generar el PDF' : undefined}
+            title={!savedOfferId && !offer?.id ? 'Guarda la oferta primero para generar el PDF' : undefined}
           >
             <FileText className="mr-2 h-3 w-3" />
             Generar PDF
