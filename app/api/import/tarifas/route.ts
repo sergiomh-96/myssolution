@@ -113,29 +113,38 @@ export async function POST(request: Request) {
     const priceErrors: string[] = []
 
     for (const precio of precios) {
-      const { data: existing } = await supabase
-        .from('precios_producto')
-        .select('id_precio')
-        .eq('id_tarifa', precio.id_tarifa)
-        .eq('id_producto', precio.id_producto)
-        .limit(1)
-        .single()
+      try {
+        const { data: existing, error: existingError } = await supabase
+          .from('precios_producto')
+          .select('id_precio')
+          .eq('id_tarifa', precio.id_tarifa)
+          .eq('id_producto', precio.id_producto)
+          .limit(1)
+          .maybeSingle()
 
-      if (existing) {
-        // Update existing
-        const { error } = await supabase
-          .from('precios_producto')
-          .update({ precio })
-          .eq('id_precio', existing.id_precio)
-        if (error) priceErrors.push(`Error actualizando precio: ${error.message}`)
-        else updated++
-      } else {
-        // Insert new
-        const { error } = await supabase
-          .from('precios_producto')
-          .insert(precio)
-        if (error) priceErrors.push(`Error insertando precio: ${error.message}`)
-        else inserted++
+        if (existingError) {
+          priceErrors.push(`Error buscando precio existente: ${existingError.message}`)
+          continue
+        }
+
+        if (existing) {
+          // Update existing
+          const { error } = await supabase
+            .from('precios_producto')
+            .update({ precio })
+            .eq('id_precio', existing.id_precio)
+          if (error) priceErrors.push(`Error actualizando precio: ${error.message}`)
+          else updated++
+        } else {
+          // Insert new
+          const { error } = await supabase
+            .from('precios_producto')
+            .insert(precio)
+          if (error) priceErrors.push(`Error insertando precio: ${error.message}`)
+          else inserted++
+        }
+      } catch (err) {
+        priceErrors.push(`Error procesando precio: ${err instanceof Error ? err.message : 'Error desconocido'}`)
       }
     }
 
