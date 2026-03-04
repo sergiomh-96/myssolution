@@ -561,14 +561,23 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
 
     const loadPrecios = async () => {
       const supabase = createClient()
-      const { data } = await supabase
-        .from('precios_producto')
-        .select('id_producto, id_tarifa, precio')
-        .eq('id_tarifa', formData.tarifa_id)
-
-      if (data) {
-        setPrecios(data)
+      const allPrecios: any[] = []
+      
+      // Load precios in batches up to 50000
+      for (let i = 0; i < 50; i++) {
+        const { data, error } = await supabase
+          .from('precios_producto')
+          .select('id_producto, id_tarifa, precio')
+          .eq('id_tarifa', formData.tarifa_id)
+          .order('id_producto')
+          .range(i * 1000, i * 1000 + 999)
+        
+        if (error || !data || data.length === 0) break
+        allPrecios.push(...data)
+        if (data.length < 1000) break
       }
+
+      setPrecios(allPrecios)
     }
     loadPrecios()
   }, [formData.tarifa_id])
