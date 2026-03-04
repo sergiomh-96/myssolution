@@ -15,7 +15,8 @@ import {
 import { Card } from '@/components/ui/card'
 import { createClient } from '@/lib/supabase/client'
 import { Textarea } from '@/components/ui/textarea'
-import { AlertCircle } from 'lucide-react'
+import { AlertCircle, Check, ChevronLeft } from 'lucide-react'
+import { toast } from 'sonner'
 
 const FAMILIAS = ['Cortinas', 'Persianas', 'Paneles', 'Ventilación', 'Climatización', 'Control', 'Accesorios']
 const SUBFAMILIAS: Record<string, string[]> = {
@@ -46,6 +47,7 @@ export function ProductForm({ productId }: ProductFormProps) {
   const [selectedFamilia, setSelectedFamilia] = useState('')
   const [tarifas, setTarifas] = useState<TarifaPrice[]>([])
   const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState(false)
   const [formData, setFormData] = useState({
     referencia: '',
     descripcion: '',
@@ -274,8 +276,14 @@ export function ProductForm({ productId }: ProductFormProps) {
         }
       }
 
-      router.push('/dashboard/products')
       router.refresh()
+      setSuccess(true)
+      
+      // Show success toast
+      const successMsg = isEditMode ? 'Artículo actualizado correctamente' : 'Artículo creado correctamente'
+      toast.success(successMsg, {
+        icon: <Check className="h-4 w-4 text-green-600" />,
+      })
     } catch (err) {
       const msg = err instanceof Error ? err.message : (err as any)?.message ?? 'Error desconocido'
       setError(msg)
@@ -474,11 +482,17 @@ export function ProductForm({ productId }: ProductFormProps) {
       </Card>
 
       <div className="flex gap-4">
+        <Button 
+          type="button"
+          variant="outline"
+          onClick={() => router.back()}
+          className="gap-2"
+        >
+          <ChevronLeft className="h-4 w-4" />
+          Atrás
+        </Button>
         <Button type="submit" disabled={isLoading}>
           {isLoading ? 'Guardando...' : isEditMode ? 'Guardar Cambios' : 'Crear Producto'}
-        </Button>
-        <Button variant="outline" onClick={() => window.history.back()}>
-          Cancelar
         </Button>
       </div>
     </form>
