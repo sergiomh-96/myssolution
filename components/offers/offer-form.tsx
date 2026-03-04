@@ -843,7 +843,12 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
 
           // Insert new items
           const itemsToInsert = items
-            .filter(item => item.type === 'section_header' || item.type === 'note' || item.type === 'summary' || item.description)
+            .filter(item =>
+              item.type === 'section_header' ||
+              item.type === 'note' ||
+              item.type === 'summary' ||
+              (item.type === 'article' && (item.product_id || item.description))
+            )
             .map(item => ({
               offer_id: offerId,
               type: item.type,
@@ -885,7 +890,12 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
         // Insert offer items
         if (items.length > 0) {
           const itemsToInsert = items
-            .filter(item => item.type === 'section_header' || item.type === 'note' || item.type === 'summary' || item.description)
+            .filter(item =>
+              item.type === 'section_header' ||
+              item.type === 'note' ||
+              item.type === 'summary' ||
+              (item.type === 'article' && (item.product_id || item.description))
+            )
             .map(item => ({
               offer_id: offerId,
               type: item.type,
