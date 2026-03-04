@@ -58,22 +58,29 @@ export async function POST(request: Request) {
       tarifaId = newTarifa.id_tarifa
     }
 
-    // 2. Resolve product references to IDs
+    // 2. Resolve product references to IDs - batch in groups of 500 to avoid URI too large
     const referencias = rows
       .map(r => (r['referencia'] ?? r['REFERENCIA'] ?? '').toString().trim())
       .filter(r => r.length > 0)
 
-    const { data: products, error: productsError } = await supabase
-      .from('products')
-      .select('id, referencia')
-      .in('referencia', referencias)
+    const REF_BATCH = 500
+    const allProducts: { id: number; referencia: string }[] = []
 
-    if (productsError) {
-      return NextResponse.json({ error: `Error buscando productos: ${productsError.message}` }, { status: 500 })
+    for (let i = 0; i < referencias.length; i += REF_BATCH) {
+      const batch = referencias.slice(i, i + REF_BATCH)
+      const { data, error } = await supabase
+        .from('products')
+        .select('id, referencia')
+        .in('referencia', batch)
+
+      if (error) {
+        return NextResponse.json({ error: `Error buscando productos (batch ${i}): ${error.message}` }, { status: 500 })
+      }
+      if (data) allProducts.push(...data)
     }
 
     const refToId = new Map<string, number>()
-    products?.forEach(p => refToId.set(p.referencia, p.id))
+    allProducts.forEach(p => refToId.set(p.referencia, p.id))
 
     // 3. Build precios_producto rows
     const precios: { id_tarifa: number; id_producto: number; precio: number }[] = []
@@ -103,61 +110,23 @@ export async function POST(request: Request) {
       }, { status: 400 })
     }
 
-    // Process prices in batches for efficiency with large files
+    // Process inserts in batches using upsert (insert or update by id_tarifa+id_producto)
     let inserted = 0
     let updated = 0
     const priceErrors: string[] = []
-    const BATCH_SIZE = 1000
+    const BATCH_SIZE = 500
 
-    // Fetch existing prices for this tarifa in one query
-    const { data: existingPrices, error: existingError } = await supabase
-      .from('precios_producto')
-      .select('id_precio, id_producto')
-      .eq('id_tarifa', tarifaId)
-
-    if (existingError) {
-      return NextResponse.json({ error: `Error buscando precios existentes: ${existingError.message}` }, { status: 500 })
-    }
-
-    const existingPriceMap = new Map<number, number>() // id_producto -> id_precio
-    existingPrices?.forEach(p => existingPriceMap.set(p.id_producto, p.id_precio))
-
-    // Separate into insert and update batches
-    const toInsert: typeof precios = []
-    const toUpdate: Array<{ id_precio: number; precio: number }> = []
-
-    for (const precio of precios) {
-      const existingId = existingPriceMap.get(precio.id_producto)
-      if (existingId) {
-        toUpdate.push({ id_precio: existingId, precio: precio.precio })
-      } else {
-        toInsert.push(precio)
-      }
-    }
-
-    // Process inserts in batches
-    for (let i = 0; i < toInsert.length; i += BATCH_SIZE) {
-      const batch = toInsert.slice(i, i + BATCH_SIZE)
-      const { error } = await supabase
+    for (let i = 0; i < precios.length; i += BATCH_SIZE) {
+      const batch = precios.slice(i, i + BATCH_SIZE)
+      const { error, data } = await supabase
         .from('precios_producto')
-        .insert(batch)
+        .upsert(batch, { onConflict: 'id_tarifa,id_producto', ignoreDuplicates: false })
+        .select('id_precio')
+
       if (error) {
-        priceErrors.push(`Error en batch de inserts (${i}-${i + batch.length}): ${error.message}`)
+        priceErrors.push(`Error en batch ${i}-${i + batch.length}: ${error.message}`)
       } else {
         inserted += batch.length
-      }
-    }
-
-    // Process updates individually (Supabase no tiene upsert batch directamente)
-    for (const upd of toUpdate) {
-      const { error } = await supabase
-        .from('precios_producto')
-        .update({ precio: upd.precio })
-        .eq('id_precio', upd.id_precio)
-      if (error) {
-        priceErrors.push(`Error actualizando precio ${upd.id_precio}: ${error.message}`)
-      } else {
-        updated++
       }
     }
 
