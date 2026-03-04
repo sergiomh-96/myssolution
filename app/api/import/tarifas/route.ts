@@ -103,44 +103,61 @@ export async function POST(request: Request) {
       }, { status: 400 })
     }
 
-    // Process each price individually: check if exists by tarifa+producto, then update or insert
+    // Process prices in batches for efficiency with large files
     let inserted = 0
     let updated = 0
     const priceErrors: string[] = []
+    const BATCH_SIZE = 1000
+
+    // Fetch existing prices for this tarifa in one query
+    const { data: existingPrices, error: existingError } = await supabase
+      .from('precios_producto')
+      .select('id_precio, id_producto')
+      .eq('id_tarifa', tarifaId)
+
+    if (existingError) {
+      return NextResponse.json({ error: `Error buscando precios existentes: ${existingError.message}` }, { status: 500 })
+    }
+
+    const existingPriceMap = new Map<number, number>() // id_producto -> id_precio
+    existingPrices?.forEach(p => existingPriceMap.set(p.id_producto, p.id_precio))
+
+    // Separate into insert and update batches
+    const toInsert: typeof precios = []
+    const toUpdate: Array<{ id_precio: number; precio: number }> = []
 
     for (const precio of precios) {
-      try {
-        const { data: existing, error: existingError } = await supabase
-          .from('precios_producto')
-          .select('id_precio')
-          .eq('id_tarifa', precio.id_tarifa)
-          .eq('id_producto', precio.id_producto)
-          .limit(1)
-          .maybeSingle()
+      const existingId = existingPriceMap.get(precio.id_producto)
+      if (existingId) {
+        toUpdate.push({ id_precio: existingId, precio: precio.precio })
+      } else {
+        toInsert.push(precio)
+      }
+    }
 
-        if (existingError) {
-          priceErrors.push(`Error buscando precio existente: ${existingError.message}`)
-          continue
-        }
+    // Process inserts in batches
+    for (let i = 0; i < toInsert.length; i += BATCH_SIZE) {
+      const batch = toInsert.slice(i, i + BATCH_SIZE)
+      const { error } = await supabase
+        .from('precios_producto')
+        .insert(batch)
+      if (error) {
+        priceErrors.push(`Error en batch de inserts (${i}-${i + batch.length}): ${error.message}`)
+      } else {
+        inserted += batch.length
+      }
+    }
 
-        if (existing) {
-          // Update existing
-          const { error } = await supabase
-            .from('precios_producto')
-            .update({ precio })
-            .eq('id_precio', existing.id_precio)
-          if (error) priceErrors.push(`Error actualizando precio: ${error.message}`)
-          else updated++
-        } else {
-          // Insert new
-          const { error } = await supabase
-            .from('precios_producto')
-            .insert(precio)
-          if (error) priceErrors.push(`Error insertando precio: ${error.message}`)
-          else inserted++
-        }
-      } catch (err) {
-        priceErrors.push(`Error procesando precio: ${err instanceof Error ? err.message : 'Error desconocido'}`)
+    // Process updates individually (Supabase no tiene upsert batch directamente)
+    for (const upd of toUpdate) {
+      const { error } = await supabase
+        .from('precios_producto')
+        .update({ precio: upd.precio })
+        .eq('id_precio', upd.id_precio)
+      if (error) {
+        priceErrors.push(`Error actualizando precio ${upd.id_precio}: ${error.message}`)
+      } else {
+        updated++
       }
     }
 
