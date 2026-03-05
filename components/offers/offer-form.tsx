@@ -85,39 +85,58 @@ function ProductSearchInput({
     : []
 
   const inputRef = useRef<HTMLInputElement>(null)
+  const [highlightedIndex, setHighlightedIndex] = useState(-1)
+
+  // Reset highlighted index when filtered results change
+  useEffect(() => {
+    setHighlightedIndex(-1)
+  }, [filteredProducts.length, searchTerm])
 
   const handleProductSelect = (product: typeof products[0]) => {
     onSelect(product.id)
     setSelectedProduct(product)
     setSearchTerm('')
     setIsOpen(false)
+    setHighlightedIndex(-1)
   }
 
   const handleClear = () => {
     onSelect('')
     setSelectedProduct(null)
     setSearchTerm('')
-    // Re-focus the input after clearing
+    setHighlightedIndex(-1)
     setTimeout(() => inputRef.current?.focus(), 0)
   }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Tab' && filteredProducts.length > 0) {
-      // Select first result and let Tab move to the next field naturally
+    if (!isOpen || filteredProducts.length === 0) return
+
+    if (e.key === 'ArrowDown') {
       e.preventDefault()
-      handleProductSelect(filteredProducts[0])
-      // Move focus to the next focusable sibling (Descripción field)
+      setHighlightedIndex(prev => (prev + 1) % filteredProducts.length)
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      setHighlightedIndex(prev => (prev <= 0 ? filteredProducts.length - 1 : prev - 1))
+    } else if (e.key === 'Enter') {
+      e.preventDefault()
+      const idx = highlightedIndex >= 0 ? highlightedIndex : 0
+      handleProductSelect(filteredProducts[idx])
+    } else if (e.key === 'Tab') {
+      // Select first (or highlighted) result and move to next field
+      e.preventDefault()
+      const idx = highlightedIndex >= 0 ? highlightedIndex : 0
+      handleProductSelect(filteredProducts[idx])
       const focusable = 'input, select, textarea, button, [tabindex]:not([tabindex="-1"])'
       const all = Array.from(document.querySelectorAll<HTMLElement>(focusable)).filter(
         el => !el.hasAttribute('disabled') && el.offsetParent !== null
       )
-      const idx = all.indexOf(inputRef.current as HTMLElement)
-      if (idx !== -1 && all[idx + 1]) {
-        all[idx + 1].focus()
+      const current = all.indexOf(inputRef.current as HTMLElement)
+      if (current !== -1 && all[current + 1]) {
+        all[current + 1].focus()
       }
-    }
-    if (e.key === 'Escape') {
+    } else if (e.key === 'Escape') {
       setIsOpen(false)
+      setHighlightedIndex(-1)
     }
   }
 
@@ -161,11 +180,16 @@ function ProductSearchInput({
                 onClick={() => setIsOpen(false)}
               />
               <div className="absolute z-50 w-full mt-1 max-h-60 overflow-y-auto bg-popover border border-border rounded-md shadow-lg">
-                {filteredProducts.map((product) => (
+                {filteredProducts.map((product, idx) => (
                   <button
                     key={product.id}
                     type="button"
-                    className="w-full text-left px-2 py-1.5 text-xs hover:bg-accent cursor-pointer"
+                    className={`w-full text-left px-2 py-1.5 text-xs cursor-pointer ${
+                      idx === highlightedIndex
+                        ? 'bg-accent text-accent-foreground'
+                        : 'hover:bg-accent'
+                    }`}
+                    onMouseEnter={() => setHighlightedIndex(idx)}
                     onClick={() => handleProductSelect(product)}
                   >
                     <div className="font-medium">{product.referencia}</div>
