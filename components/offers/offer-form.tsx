@@ -622,6 +622,38 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
     loadCustomerData()
   }, [formData.customer_id])
 
+  // Recalculate discounts when customer changes
+  useEffect(() => {
+    if (!currentCustomer || items.length === 0) return
+
+    const updatedItems = items.map(item => {
+      if (!item.product_id) return item
+
+      const product = products.find(p => p.id === item.product_id)
+      if (!product) return item
+
+      // Calculate new discount based on product family and current customer discounts
+      let newDiscount = 0
+      if (product.familia === 'SISTEMAS') {
+        newDiscount = currentCustomer.descuento_sistemas || 0
+      } else if (product.familia === 'DIFUSIÓN') {
+        newDiscount = currentCustomer.descuento_difusion || 0
+      } else if (product.familia === 'MYSAir') {
+        newDiscount = currentCustomer.descuento_agfri || 0
+      }
+
+      // Only update if discount changed
+      if (newDiscount !== item.discount1) {
+        const updatedItem = { ...item, discount1: newDiscount }
+        return calculateItemTotals(updatedItem)
+      }
+
+      return item
+    })
+
+    setItems(updatedItems)
+  }, [currentCustomer])
+
   // Load precios when tarifa changes
   useEffect(() => {
     if (!formData.tarifa_id) return
