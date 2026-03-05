@@ -26,7 +26,7 @@ interface OfferFormProps {
 
 interface OfferItem {
   id: string
-  type: 'article' | 'section_header' | 'note' | 'summary'
+  type: 'article' | 'section_header' | 'note' | 'summary' | 'external'
   product_id: string | null
   description: string
   quantity: number
@@ -36,6 +36,7 @@ interface OfferItem {
   discount2: number
   neto_total1: number
   neto_total2: number
+  external_ref?: string  // Free-text reference for external articles
 }
 
 // Product Search Input Component
@@ -816,6 +817,14 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
     setItems([...items, createEmptyItem('article')])
   }
 
+  const addExternalItem = () => {
+    const item: OfferItem = {
+      ...createEmptyItem('external'),
+      external_ref: '',
+    }
+    setItems([...items, item])
+  }
+
   const addSectionHeader = () => {
     setItems([...items, createEmptyItem('section_header')])
   }
@@ -922,13 +931,16 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
               item.type === 'section_header' ||
               item.type === 'note' ||
               item.type === 'summary' ||
-              (item.type === 'article' && (item.product_id || item.description))
+              (item.type === 'article' && (item.product_id || item.description)) ||
+              (item.type === 'external' && (item.external_ref || item.description))
             )
             .map(item => ({
               offer_id: offerId,
               type: item.type,
               product_id: item.product_id ? Number(item.product_id) : null,
-              description: item.description || null,
+              description: item.type === 'external'
+                ? [item.external_ref, item.description].filter(Boolean).join(' — ')
+                : (item.description || null),
               quantity: item.type === 'summary' ? 0 : (parseInt(String(item.quantity)) || 0),
               pvp: parseFloat(String(item.pvp)) || 0,
               pvp_total: parseFloat(String(item.pvp_total)) || 0,
@@ -969,13 +981,16 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
               item.type === 'section_header' ||
               item.type === 'note' ||
               item.type === 'summary' ||
-              (item.type === 'article' && (item.product_id || item.description))
+              (item.type === 'article' && (item.product_id || item.description)) ||
+              (item.type === 'external' && (item.external_ref || item.description))
             )
             .map(item => ({
               offer_id: offerId,
               type: item.type,
               product_id: item.product_id ? Number(item.product_id) : null,
-              description: item.description || null,
+              description: item.type === 'external'
+                ? [item.external_ref, item.description].filter(Boolean).join(' — ')
+                : (item.description || null),
               quantity: item.type === 'summary' ? 0 : (parseInt(String(item.quantity)) || 0),
               pvp: parseFloat(String(item.pvp)) || 0,
               pvp_total: parseFloat(String(item.pvp_total)) || 0,
@@ -1431,6 +1446,102 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
                   )
                 }
 
+                // External Article Row — free-text reference, no product lookup
+                if (item.type === 'external') {
+                  return (
+                    <tr key={item.id} className="border-t border-border hover:bg-muted/20">
+                      <td className="px-2 py-1">
+                        <Input
+                          value={item.external_ref ?? ''}
+                          onChange={(e) => handleItemChange(index, 'external_ref', e.target.value)}
+                          placeholder="Referencia libre"
+                          className="h-7 text-xs font-medium"
+                          disabled={loading}
+                        />
+                      </td>
+                      <td className="px-2 py-1">
+                        <Input
+                          value={item.description}
+                          onChange={(e) => handleItemChange(index, 'description', e.target.value)}
+                          placeholder="Descripción"
+                          className="h-7 text-xs"
+                          disabled={loading}
+                        />
+                      </td>
+                      <td className="px-2 py-1">
+                        <Input
+                          type="number"
+                          min="0"
+                          step="1"
+                          value={item.quantity || ''}
+                          onChange={(e) => handleItemChange(index, 'quantity', Number(e.target.value))}
+                          className="h-7 text-xs text-right"
+                          disabled={loading}
+                        />
+                      </td>
+                      <td className="px-2 py-1">
+                        <Input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={item.pvp || ''}
+                          onChange={(e) => handleItemChange(index, 'pvp', Number(e.target.value))}
+                          className="h-7 text-xs text-right"
+                          disabled={loading}
+                          placeholder="-"
+                        />
+                      </td>
+                      <td className="px-2 py-1 text-right font-medium text-xs">
+                        {item.pvp > 0 ? formatNumber(item.pvp_total) : '-'}
+                      </td>
+                      <td className="px-2 py-1">
+                        <Input
+                          type="number"
+                          min="0"
+                          max="100"
+                          step="0.01"
+                          value={item.discount1 || ''}
+                          onChange={(e) => handleItemChange(index, 'discount1', Number(e.target.value))}
+                          className="h-7 text-xs text-right"
+                          disabled={loading}
+                          placeholder="-"
+                        />
+                      </td>
+                      <td className="px-2 py-1">
+                        <Input
+                          type="number"
+                          min="0"
+                          max="100"
+                          step="0.01"
+                          value={item.discount2 || ''}
+                          onChange={(e) => handleItemChange(index, 'discount2', Number(e.target.value))}
+                          className="h-7 text-xs text-right"
+                          disabled={loading}
+                          placeholder="-"
+                        />
+                      </td>
+                      <td className="px-2 py-1 text-right font-medium text-xs">
+                        {item.neto_total1 > 0 ? formatNumber(item.neto_total1) : '-'}
+                      </td>
+                      <td className="px-2 py-1 text-right font-semibold text-xs text-primary">
+                        {item.neto_total2 > 0 ? formatNumber(item.neto_total2) : '-'}
+                      </td>
+                      <td className="px-2 py-1 text-center">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeItem(index)}
+                          disabled={loading}
+                          className="h-6 w-6 p-0"
+                        >
+                          <X className="w-3 h-3" />
+                        </Button>
+                      </td>
+                    </tr>
+                  )
+                }
+
                 // Article Row (regular)
                 return (
                   <tr key={item.id} className="border-t border-border hover:bg-muted/20">
@@ -1544,6 +1655,10 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
         <Button type="button" variant="outline" size="sm" onClick={addItem} disabled={loading} className="h-7 text-xs">
           <Plus className="w-3 h-3 mr-1" />
           Añadir Artículo
+        </Button>
+        <Button type="button" variant="outline" size="sm" onClick={addExternalItem} disabled={loading} className="h-7 text-xs">
+          <Plus className="w-3 h-3 mr-1" />
+          Añadir Artículo Externo
         </Button>
         <Button type="button" variant="outline" size="sm" onClick={addSectionHeader} disabled={loading} className="h-7 text-xs">
           <Plus className="w-3 h-3 mr-1" />
