@@ -58,11 +58,13 @@ export function AddOfferItem({ offerId, onItemAdded }: AddOfferItemProps) {
             .single()
           
           if (customerData) {
-            setCustomerDiscounts({
+            const discounts = {
               sistemas: customerData.descuento_sistemas || 0,
               difusion: customerData.descuento_difusion || 0,
               agfri: customerData.descuento_agfri || 0,
-            })
+            }
+            console.log('[v0] Customer discounts loaded:', discounts)
+            setCustomerDiscounts(discounts)
           }
         }
       } catch (error) {
@@ -100,14 +102,20 @@ export function AddOfferItem({ offerId, onItemAdded }: AddOfferItemProps) {
     
     // Calculate discount1 based on product family and customer discounts
     let calculatedDiscount = 0
+    console.log('[v0] Product selected:', { familia: product.familia, customerDiscounts })
+    
     if (product.familia === 'SISTEMAS') {
       calculatedDiscount = customerDiscounts.sistemas
+      console.log('[v0] Applying SISTEMAS discount:', calculatedDiscount)
     } else if (product.familia === 'DIFUSIÓN') {
       calculatedDiscount = customerDiscounts.difusion
-    } else if (product.familia === 'HERRAMIENTA') {
+      console.log('[v0] Applying DIFUSIÓN discount:', calculatedDiscount)
+    } else if (product.familia === 'MYSAir') {
       calculatedDiscount = customerDiscounts.agfri
+      console.log('[v0] Applying MYSAir (agfri) discount:', calculatedDiscount)
     }
     
+    console.log('[v0] Final calculated discount:', calculatedDiscount)
     setDiscount1(calculatedDiscount.toString())
     setFilteredProducts([])
     setShowDropdown(false)
