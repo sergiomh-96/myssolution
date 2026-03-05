@@ -453,9 +453,6 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
     tarifa_id: offer?.tarifa_id || null,
     status: (offer?.status || 'draft') as OfferStatus,
     valid_until: offer?.valid_until ? offer.valid_until.split('T')[0] : addDays(new Date().toISOString().split('T')[0], 30),
-    discount_sistemas: (offer as any)?.discount_sistemas || null,
-    discount_difusion: (offer as any)?.discount_difusion || null,
-    discount_agfri: (offer as any)?.discount_agfri || null,
   })
 
   // Load active products and tarifas
@@ -1200,16 +1197,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
           <CustomerSearchInput
             value={formData.customer_id}
             customers={customers}
-            onSelect={(customerId) => {
-              const selectedCustomer = customers.find(c => c.id === parseInt(String(customerId)))
-              setFormData(prev => ({ 
-                ...prev, 
-                customer_id: parseInt(String(customerId)),
-                discount_sistemas: selectedCustomer?.discount_sistemas || null,
-                discount_difusion: selectedCustomer?.discount_difusion || null,
-                discount_agfri: selectedCustomer?.discount_agfri || null,
-              }))
-            }}
+            onSelect={(customerId) => setFormData(prev => ({ ...prev, customer_id: parseInt(String(customerId)) }))}
             disabled={loading}
           />
         </div>
@@ -1244,7 +1232,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
                 min="0"
                 max="100"
                 step="0.01"
-                value={formData.discount_sistemas || ''}
+                value={currentCustomer?.discount_sistemas || ''}
                 readOnly
                 disabled
                 className="h-7 text-xs bg-muted text-center"
@@ -1259,7 +1247,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
                 min="0"
                 max="100"
                 step="0.01"
-                value={formData.discount_difusion || ''}
+                value={currentCustomer?.discount_difusion || ''}
                 readOnly
                 disabled
                 className="h-7 text-xs bg-muted text-center"
@@ -1274,7 +1262,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
                 min="0"
                 max="100"
                 step="0.01"
-                value={formData.discount_agfri || ''}
+                value={currentCustomer?.discount_agfri || ''}
                 readOnly
                 disabled
                 className="h-7 text-xs bg-muted text-center"
