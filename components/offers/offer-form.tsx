@@ -453,6 +453,9 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
     tarifa_id: offer?.tarifa_id || null,
     status: (offer?.status || 'draft') as OfferStatus,
     valid_until: offer?.valid_until ? offer.valid_until.split('T')[0] : addDays(new Date().toISOString().split('T')[0], 30),
+    discount_sistemas: (offer as any)?.discount_sistemas || null,
+    discount_difusion: (offer as any)?.discount_difusion || null,
+    discount_agfri: (offer as any)?.discount_agfri || null,
   })
 
   // Load active products and tarifas
@@ -899,6 +902,9 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
         tarifa_id: formData.tarifa_id ? parseInt(String(formData.tarifa_id)) : null,
         status: formData.status,
         valid_until: formData.valid_until || null,
+        discount_sistemas: formData.discount_sistemas || null,
+        discount_difusion: formData.discount_difusion || null,
+        discount_agfri: formData.discount_agfri || null,
       }
 
       let offerId: string | null = null
@@ -1131,8 +1137,8 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
           </Select>
         </div>
 
-        {/* ── Fila 2: Título (2 cols) | — | Fecha Creación ── */}
-        <div className="space-y-0.5 md:col-span-2">
+        {/* ── Fila 2: Título (1 col) | Estado (1 col) | — | Fecha Creación (1 col) ── */}
+        <div className="space-y-0.5">
           <Label htmlFor="title" className="text-xs">Título Oferta *</Label>
           <Input
             id="title"
@@ -1142,6 +1148,32 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
             disabled={loading}
             className="h-9 text-sm"
           />
+        </div>
+
+        <div className="space-y-0.5">
+          <Label htmlFor="status" className="text-xs">Estado</Label>
+          <Select
+            value={formData.status}
+            onValueChange={(value) => setFormData({ ...formData, status: value as OfferStatus })}
+            disabled={loading}
+          >
+            <SelectTrigger id="status" className="h-9 text-sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="draft">Borrador</SelectItem>
+              <SelectItem value="pending">Pendiente</SelectItem>
+              {(currentUserRole === 'admin' || currentUserRole === 'manager') && (
+                <>
+                  <SelectItem value="approved">Aprobada</SelectItem>
+                  <SelectItem value="rejected">Rechazada</SelectItem>
+                </>
+              )}
+              <SelectItem value="sent">Enviada</SelectItem>
+              <SelectItem value="accepted">Aceptada</SelectItem>
+              <SelectItem value="declined">Declinada</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="hidden md:block" />
@@ -1167,7 +1199,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
           />
         </div>
 
-        {/* ── Fila 3: Cliente | Contacto | Estado | Fecha Validez ── */}
+        {/* ── Fila 3: Cliente | Contacto | Sistemas | Difusión | Agfri ── */}
         <div className="space-y-0.5">
           <Label htmlFor="customer_id" className="text-xs">Cliente *</Label>
           <CustomerSearchInput
@@ -1199,29 +1231,51 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
         </div>
 
         <div className="space-y-0.5">
-          <Label htmlFor="status" className="text-xs">Estado</Label>
-          <Select
-            value={formData.status}
-            onValueChange={(value) => setFormData({ ...formData, status: value as OfferStatus })}
+          <Label htmlFor="discount_sistemas" className="text-xs">Descuento Sistemas (%)</Label>
+          <Input
+            id="discount_sistemas"
+            type="number"
+            min="0"
+            max="100"
+            step="0.01"
+            value={formData.discount_sistemas || ''}
+            onChange={(e) => setFormData({ ...formData, discount_sistemas: e.target.value ? parseFloat(e.target.value) : null })}
             disabled={loading}
-          >
-            <SelectTrigger id="status" className="h-9 text-sm">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="draft">Borrador</SelectItem>
-              <SelectItem value="pending">Pendiente</SelectItem>
-              {(currentUserRole === 'admin' || currentUserRole === 'manager') && (
-                <>
-                  <SelectItem value="approved">Aprobada</SelectItem>
-                  <SelectItem value="rejected">Rechazada</SelectItem>
-                </>
-              )}
-              <SelectItem value="sent">Enviada</SelectItem>
-              <SelectItem value="accepted">Aceptada</SelectItem>
-              <SelectItem value="declined">Declinada</SelectItem>
-            </SelectContent>
-          </Select>
+            className="h-9 text-sm"
+            placeholder="0.00"
+          />
+        </div>
+
+        <div className="space-y-0.5">
+          <Label htmlFor="discount_difusion" className="text-xs">Descuento Difusión (%)</Label>
+          <Input
+            id="discount_difusion"
+            type="number"
+            min="0"
+            max="100"
+            step="0.01"
+            value={formData.discount_difusion || ''}
+            onChange={(e) => setFormData({ ...formData, discount_difusion: e.target.value ? parseFloat(e.target.value) : null })}
+            disabled={loading}
+            className="h-9 text-sm"
+            placeholder="0.00"
+          />
+        </div>
+
+        <div className="space-y-0.5">
+          <Label htmlFor="discount_agfri" className="text-xs">Descuento Agfri (%)</Label>
+          <Input
+            id="discount_agfri"
+            type="number"
+            min="0"
+            max="100"
+            step="0.01"
+            value={formData.discount_agfri || ''}
+            onChange={(e) => setFormData({ ...formData, discount_agfri: e.target.value ? parseFloat(e.target.value) : null })}
+            disabled={loading}
+            className="h-9 text-sm"
+            placeholder="0.00"
+          />
         </div>
 
         <div className="space-y-0.5">
