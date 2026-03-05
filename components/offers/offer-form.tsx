@@ -1232,7 +1232,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
                 min="0"
                 max="100"
                 step="0.01"
-                value={currentCustomer?.discount_sistemas || ''}
+                value={currentCustomer?.descuento_sistemas || ''}
                 readOnly
                 disabled
                 className="h-7 text-xs bg-muted text-center"
@@ -1247,7 +1247,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
                 min="0"
                 max="100"
                 step="0.01"
-                value={currentCustomer?.discount_difusion || ''}
+                value={currentCustomer?.descuento_difusion || ''}
                 readOnly
                 disabled
                 className="h-7 text-xs bg-muted text-center"
@@ -1262,7 +1262,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
                 min="0"
                 max="100"
                 step="0.01"
-                value={currentCustomer?.discount_agfri || ''}
+                value={currentCustomer?.descuento_agfri || ''}
                 readOnly
                 disabled
                 className="h-7 text-xs bg-muted text-center"
