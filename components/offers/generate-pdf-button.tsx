@@ -81,15 +81,23 @@ export function GeneratePdfButton({ offerId, offerNumber }: GeneratePdfButtonPro
       <DropdownMenuContent align="start">
         <DropdownMenuLabel>Selecciona formato</DropdownMenuLabel>
         <DropdownMenuSeparator />
-        {PDF_OPTIONS.map((option) => (
-          <DropdownMenuItem
-            key={`${option.company}-${option.priceType}`}
-            onClick={() => handleGeneratePdf(option.company, option.priceType)}
-            disabled={loading}
-          >
-            {option.label}
-          </DropdownMenuItem>
-        ))}
+        {PDF_OPTIONS.map((option) => {
+          const color = option.company === 'mysair' ? '#2980b9' : '#dc1414'
+          return (
+            <DropdownMenuItem
+              key={`${option.company}-${option.priceType}`}
+              onClick={() => handleGeneratePdf(option.company, option.priceType)}
+              disabled={loading}
+              className="flex items-center gap-2"
+            >
+              <div 
+                className="w-2.5 h-2.5 flex-shrink-0 rounded-sm" 
+                style={{ backgroundColor: color }}
+              />
+              {option.label}
+            </DropdownMenuItem>
+          )
+        })}
       </DropdownMenuContent>
     </DropdownMenu>
   )
