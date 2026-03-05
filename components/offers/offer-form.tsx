@@ -416,10 +416,23 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
       }
 
       if (offerItems && offerItems.length > 0) {
-        // Load items and ensure at least 5 empty rows when editing (fill with empty articles if needed)
-        const loadedItems = offerItems as OfferItem[]
-        const itemsToSet = loadedItems.length >= 5 
-          ? loadedItems 
+        // Load items — map external_ref from DB into item state
+        const loadedItems: OfferItem[] = (offerItems as any[]).map(item => ({
+          id: item.id,
+          type: item.type,
+          product_id: item.product_id ? String(item.product_id) : null,
+          description: item.description || '',
+          quantity: item.quantity || 1,
+          pvp: item.pvp || 0,
+          pvp_total: item.pvp_total || 0,
+          discount1: item.discount1 || 0,
+          discount2: item.discount2 || 0,
+          neto_total1: item.neto_total1 || 0,
+          neto_total2: item.neto_total2 || 0,
+          external_ref: item.external_ref || '',
+        }))
+        const itemsToSet = loadedItems.length >= 5
+          ? loadedItems
           : [
               ...loadedItems,
               ...Array.from({ length: 5 - loadedItems.length }, () => createEmptyItem('article'))
@@ -938,9 +951,8 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
               offer_id: offerId,
               type: item.type,
               product_id: item.product_id ? Number(item.product_id) : null,
-              description: item.type === 'external'
-                ? [item.external_ref, item.description].filter(Boolean).join(' — ')
-                : (item.description || null),
+              description: item.description || null,
+              external_ref: item.type === 'external' ? (item.external_ref || null) : null,
               quantity: item.type === 'summary' ? 0 : (parseInt(String(item.quantity)) || 0),
               pvp: parseFloat(String(item.pvp)) || 0,
               pvp_total: parseFloat(String(item.pvp_total)) || 0,
@@ -988,9 +1000,8 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
               offer_id: offerId,
               type: item.type,
               product_id: item.product_id ? Number(item.product_id) : null,
-              description: item.type === 'external'
-                ? [item.external_ref, item.description].filter(Boolean).join(' — ')
-                : (item.description || null),
+              description: item.description || null,
+              external_ref: item.type === 'external' ? (item.external_ref || null) : null,
               quantity: item.type === 'summary' ? 0 : (parseInt(String(item.quantity)) || 0),
               pvp: parseFloat(String(item.pvp)) || 0,
               pvp_total: parseFloat(String(item.pvp_total)) || 0,
