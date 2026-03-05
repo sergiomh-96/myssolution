@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Copy, Loader2, Plus, X, CheckCircle, ChevronDown, Check, Search, Eye, FileText, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react'
 import { DuplicateOfferButton } from './duplicate-offer-button'
+import { GeneratePdfButton } from './generate-pdf-button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { ImportItemsDialog } from './import-items'
 import type { Offer, OfferStatus, UserRole } from '@/lib/types/database'
@@ -1723,25 +1724,10 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
             <Eye className="mr-2 h-3 w-3" />
             Ver
           </Button>
-          <Button 
-            type="button" 
-            variant="outline" 
-            onClick={() => {
-              if (savedOfferId || offer?.id) {
-                window.open(`/api/offers/${savedOfferId || offer?.id}/pdf`, '_blank')
-              } else {
-                callbackRef.current = () => window.open(`/api/offers/${savedOfferId}/pdf`, '_blank')
-                const form = document.querySelector('form') as HTMLFormElement | null
-                if (form) form.requestSubmit()
-              }
-            }} 
-            disabled={loading} 
-            className="h-8 text-xs"
-            title={!savedOfferId && !offer?.id ? 'Guarda la oferta primero para generar el PDF' : undefined}
-          >
-            <FileText className="mr-2 h-3 w-3" />
-            Generar PDF
-          </Button>
+          <GeneratePdfButton 
+            offerId={savedOfferId || offer?.id || ''} 
+            offerNumber={offer?.offer_number || 0}
+          />
         </div>
         <div className="flex gap-2">
           <Button type="button" variant="outline" onClick={() => router.push('/dashboard/offers')} disabled={loading} className="h-8 text-xs">
