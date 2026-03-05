@@ -1176,8 +1176,6 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
           </Select>
         </div>
 
-        <div className="hidden md:block" />
-
         <div className="space-y-0.5">
           <Label className="text-xs">Fecha Creación</Label>
           <Input
@@ -1199,7 +1197,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
           />
         </div>
 
-        {/* ── Fila 3: Cliente | Contacto | Sistemas | Difusión | Agfri ── */}
+        {/* ── Fila 3: Cliente | Contacto | Descuentos ── */}
         <div className="space-y-0.5">
           <Label htmlFor="customer_id" className="text-xs">Cliente *</Label>
           <CustomerSearchInput
