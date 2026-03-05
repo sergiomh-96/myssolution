@@ -13,9 +13,14 @@ type Product = Database['public']['Tables']['products']['Row']
 interface AddOfferItemProps {
   offerId: string
   onItemAdded?: () => void
+  customerDiscounts?: {
+    sistemas: number
+    difusion: number
+    agfri: number
+  }
 }
 
-export function AddOfferItem({ offerId, onItemAdded }: AddOfferItemProps) {
+export function AddOfferItem({ offerId, onItemAdded, customerDiscounts: initialDiscounts }: AddOfferItemProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [products, setProducts] = useState<Product[]>([])
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([])
@@ -26,7 +31,7 @@ export function AddOfferItem({ offerId, onItemAdded }: AddOfferItemProps) {
   const [discount2, setDiscount2] = useState('')
   const [loading, setLoading] = useState(false)
   const [showDropdown, setShowDropdown] = useState(false)
-  const [customerDiscounts, setCustomerDiscounts] = useState({ sistemas: 0, difusion: 0, agfri: 0 })
+  const [customerDiscounts, setCustomerDiscounts] = useState(initialDiscounts || { sistemas: 0, difusion: 0, agfri: 0 })
 
   // Load all products on mount - only columns that exist in the table
   useEffect(() => {
@@ -43,29 +48,33 @@ export function AddOfferItem({ offerId, onItemAdded }: AddOfferItemProps) {
         if (error) throw error
         setProducts(data || [])
         
-        // Load current offer to get customer discounts
-        const { data: offerData } = await supabase
-          .from('offers')
-          .select('customer_id')
-          .eq('id', offerId)
-          .single()
-        
-        if (offerData?.customer_id) {
-          const { data: customerData } = await supabase
-            .from('customers')
-            .select('descuento_sistemas, descuento_difusion, descuento_agfri')
-            .eq('id', offerData.customer_id)
+        // If discounts not provided as props, load them from DB
+        if (!initialDiscounts) {
+          const { data: offerData } = await supabase
+            .from('offers')
+            .select('customer_id')
+            .eq('id', offerId)
             .single()
           
-          if (customerData) {
-            const discounts = {
-              sistemas: customerData.descuento_sistemas || 0,
-              difusion: customerData.descuento_difusion || 0,
-              agfri: customerData.descuento_agfri || 0,
+          if (offerData?.customer_id) {
+            const { data: customerData } = await supabase
+              .from('customers')
+              .select('descuento_sistemas, descuento_difusion, descuento_agfri')
+              .eq('id', offerData.customer_id)
+              .single()
+            
+            if (customerData) {
+              const discounts = {
+                sistemas: customerData.descuento_sistemas || 0,
+                difusion: customerData.descuento_difusion || 0,
+                agfri: customerData.descuento_agfri || 0,
+              }
+              console.log('[v0] Customer discounts loaded from DB:', discounts)
+              setCustomerDiscounts(discounts)
             }
-            console.log('[v0] Customer discounts loaded:', discounts)
-            setCustomerDiscounts(discounts)
           }
+        } else {
+          console.log('[v0] Using customerDiscounts from props:', initialDiscounts)
         }
       } catch (error) {
         console.error('Error loading products:', error)
@@ -73,7 +82,7 @@ export function AddOfferItem({ offerId, onItemAdded }: AddOfferItemProps) {
     }
 
     loadProductsAndCustomer()
-  }, [offerId])
+  }, [offerId, initialDiscounts])
 
   // Filter products based on search query
   useEffect(() => {

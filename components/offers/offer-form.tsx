@@ -503,7 +503,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
 
       // ── Phase 2: enrich with full columns + load tarifas/settings in parallel
       const [fullProducts, tarifasResponse, settingsResponse] = await Promise.all([
-        fetchAllProducts('id, referencia, descripcion, modelo_nombre'),
+        fetchAllProducts('id, referencia, descripcion, modelo_nombre, familia'),
         supabase.from('tarifas').select('id_tarifa, nombre').order('nombre'),
         supabase.from('app_settings').select('default_tarifa_id').eq('id', 1).single(),
       ])
@@ -764,11 +764,24 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
     const newItems = [...items]
     const precioFromTarifa = getPrecioForProduct(product.id)
 
+    // Calculate automatic discount based on product family and customer discounts
+    let automaticDiscount = 0
+    if (currentCustomer) {
+      if (product.familia === 'SISTEMAS') {
+        automaticDiscount = currentCustomer.descuento_sistemas || 0
+      } else if (product.familia === 'DIFUSIÓN') {
+        automaticDiscount = currentCustomer.descuento_difusion || 0
+      } else if (product.familia === 'MYSAir') {
+        automaticDiscount = currentCustomer.descuento_agfri || 0
+      }
+    }
+
     newItems[index] = {
       ...newItems[index],
       product_id: productId,
       description: `${product.referencia} - ${product.modelo_nombre || product.descripcion || ''}`,
       pvp: precioFromTarifa !== null ? precioFromTarifa : 0,
+      discount1: automaticDiscount,
     }
     newItems[index] = calculateItemTotals(newItems[index])
     setItems(newItems)
