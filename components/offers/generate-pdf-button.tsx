@@ -10,6 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 
 interface GeneratePdfButtonProps {
@@ -63,18 +64,20 @@ export function GeneratePdfButton({ offerId, offerNumber }: GeneratePdfButtonPro
 
   return (
     <DropdownMenu>
-      <Button
-        variant="outline"
-        disabled={loading}
-        className="h-8 text-xs"
-      >
-        {loading ? (
-          <Loader2 className="h-3 w-3 mr-2 animate-spin" />
-        ) : (
-          <FileDown className="h-3 w-3 mr-2" />
-        )}
-        {loading ? 'Generando...' : 'Generar PDF'}
-      </Button>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="outline"
+          disabled={loading}
+          className="h-8 text-xs"
+        >
+          {loading ? (
+            <Loader2 className="h-3 w-3 mr-2 animate-spin" />
+          ) : (
+            <FileDown className="h-3 w-3 mr-2" />
+          )}
+          {loading ? 'Generando...' : 'Generar PDF'}
+        </Button>
+      </DropdownMenuTrigger>
       <DropdownMenuContent align="start">
         <DropdownMenuLabel>Selecciona formato</DropdownMenuLabel>
         <DropdownMenuSeparator />
