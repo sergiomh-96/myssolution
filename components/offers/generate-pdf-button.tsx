@@ -66,16 +66,14 @@ export function GeneratePdfButton({ offerId, offerNumber }: GeneratePdfButtonPro
       <Button
         variant="outline"
         disabled={loading}
-        asChild
+        className="h-8 text-xs"
       >
-        <div className="cursor-pointer">
-          {loading ? (
-            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-          ) : (
-            <FileDown className="h-4 w-4 mr-2" />
-          )}
-          {loading ? 'Generando...' : 'Generar PDF'}
-        </div>
+        {loading ? (
+          <Loader2 className="h-3 w-3 mr-2 animate-spin" />
+        ) : (
+          <FileDown className="h-3 w-3 mr-2" />
+        )}
+        {loading ? 'Generando...' : 'Generar PDF'}
       </Button>
       <DropdownMenuContent align="start">
         <DropdownMenuLabel>Selecciona formato</DropdownMenuLabel>
