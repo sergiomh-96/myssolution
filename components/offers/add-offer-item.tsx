@@ -27,14 +27,14 @@ export function AddOfferItem({ offerId, onItemAdded }: AddOfferItemProps) {
   const [loading, setLoading] = useState(false)
   const [showDropdown, setShowDropdown] = useState(false)
 
-  // Load all products on mount
+  // Load all products on mount - only columns that exist in the table
   useEffect(() => {
     const loadProducts = async () => {
       try {
         const supabase = createClient()
         const { data, error } = await supabase
           .from('products')
-          .select('*')
+          .select('id, referencia, descripcion, modelo_nombre')
           .order('referencia')
 
         if (error) throw error

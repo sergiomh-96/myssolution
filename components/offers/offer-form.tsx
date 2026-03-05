@@ -420,11 +420,11 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
       }
 
       // ── Phase 2: load remaining columns + tarifas/settings in parallel
-      // Once refs are shown, enrich with pvp/descripcion and load tarifa config
+      // Once refs are shown, enrich with descripcion/modelo_nombre and load tarifa config
       const [fullProductsResponse, tarifasResponse, settingsResponse] = await Promise.all([
         supabase
           .from('products')
-          .select('id, referencia, pvp, descripcion, modelo_nombre')
+          .select('id, referencia, descripcion, modelo_nombre')
           .order('referencia'),
         supabase.from('tarifas').select('id_tarifa, nombre').order('nombre'),
         supabase.from('app_settings').select('default_tarifa_id').eq('id', 1).single(),
