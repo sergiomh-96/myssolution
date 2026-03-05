@@ -902,9 +902,6 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
         tarifa_id: formData.tarifa_id ? parseInt(String(formData.tarifa_id)) : null,
         status: formData.status,
         valid_until: formData.valid_until || null,
-        discount_sistemas: formData.discount_sistemas || null,
-        discount_difusion: formData.discount_difusion || null,
-        discount_agfri: formData.discount_agfri || null,
       }
 
       let offerId: string | null = null
@@ -1203,7 +1200,16 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
           <CustomerSearchInput
             value={formData.customer_id}
             customers={customers}
-            onSelect={(customerId) => setFormData(prev => ({ ...prev, customer_id: parseInt(String(customerId)) }))}
+            onSelect={(customerId) => {
+              const selectedCustomer = customers.find(c => c.id === parseInt(String(customerId)))
+              setFormData(prev => ({ 
+                ...prev, 
+                customer_id: parseInt(String(customerId)),
+                discount_sistemas: selectedCustomer?.discount_sistemas || null,
+                discount_difusion: selectedCustomer?.discount_difusion || null,
+                discount_agfri: selectedCustomer?.discount_agfri || null,
+              }))
+            }}
             disabled={loading}
           />
         </div>
