@@ -256,8 +256,10 @@ export async function GET(
   const finalY: number = (doc as any).lastAutoTable?.finalY ?? pageH - 30
   doc.setFontSize(7).setFont('helvetica', 'normal').setTextColor(...palette.textMuted)
   doc.text('Precios en €, IVA no incluido. Oferta sujeta a disponibilidad de stock.', marginL, finalY + 9)
+  doc.text('Portes no incluidos', marginL, finalY + 13)
+  doc.text('El plazo de entrega se confirmará tras la aceptación del pedido.', marginL, finalY + 17)
   doc.setDrawColor(...palette.borderColor).setLineWidth(0.3)
-  doc.line(marginL, finalY + 11, pageW - marginR, finalY + 11)
+  doc.line(marginL, finalY + 19, pageW - marginR, finalY + 19)
   doc.text('Página 1 de 1', pageW / 2, pageH - 7, { align: 'center' })
 
   // ---- Return PDF ----
