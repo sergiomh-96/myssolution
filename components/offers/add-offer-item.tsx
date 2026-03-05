@@ -27,18 +27,14 @@ export function AddOfferItem({ offerId, onItemAdded }: AddOfferItemProps) {
   const [loading, setLoading] = useState(false)
   const [showDropdown, setShowDropdown] = useState(false)
 
-  // Load all products on mount - prioritize loading referencia first
+  // Load all products on mount
   useEffect(() => {
     const loadProducts = async () => {
       try {
         const supabase = createClient()
-        
-        // Load only essential columns to minimize data transfer
-        // Prioritize: id, referencia, pvp (needed for functionality)
-        // Then: descripcion, modelo_nombre (for display)
         const { data, error } = await supabase
           .from('products')
-          .select('id, referencia, pvp, descripcion, modelo_nombre')
+          .select('*')
           .order('referencia')
 
         if (error) throw error

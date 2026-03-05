@@ -408,36 +408,41 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
     const loadData = async () => {
       const supabase = createClient()
 
-      // Load products, tarifas, and settings in parallel for speed
-      // Prioritize loading referencia first by selecting only essential columns
-      const loadProducts = supabase
-        .from('products')
-        .select('id, referencia, pvp, descripcion, modelo_nombre')
-        .order('referencia')
-
-      const [productsResponse, tarifasResponse, settingsResponse] = await Promise.all([
-        loadProducts,
-        supabase.from('tarifas').select('id_tarifa, nombre').order('nombre'),
-        supabase.from('app_settings').select('default_tarifa_id').eq('id', 1).single(),
-      ])
-
-      // Handle products
-      const { data: productsData, error: productsError } = productsResponse
-      if (productsError) {
-        console.error('[v0] Error loading products:', productsError)
-      } else if (productsData && productsData.length > 0) {
-        setProducts(productsData)
+      // Load products - fetch up to 50000 products (50 batches of 1000) to avoid memory/URI issues
+      let allProducts: any[] = []
+      for (let i = 0; i < 50; i++) {
+        const { data } = await supabase
+          .from('products')
+          .select('id, referencia, descripcion, modelo_nombre')
+          .order('referencia')
+          .range(i * 1000, i * 1000 + 999)
+        
+        if (data && data.length > 0) {
+          allProducts = allProducts.concat(data)
+        } else {
+          break // No more products to fetch
+        }
       }
 
-      // Handle tarifas
-      const { data: tarifasData, error: tarifasError } = tarifasResponse
-      if (tarifasError) {
-        console.error('[v0] Error loading tarifas:', tarifasError)
-      } else if (tarifasData) {
+      if (allProducts.length > 0) {
+        setProducts(allProducts)
+      }
+
+      // Load tarifas
+      const { data: tarifasData } = await supabase
+        .from('tarifas')
+        .select('id_tarifa, nombre')
+        .order('nombre')
+
+      if (tarifasData) {
         setTarifas(tarifasData)
 
-        // Load default tarifa
-        const { data: settingsData } = settingsResponse
+        // Load default tarifa from app_settings
+        const { data: settingsData } = await supabase
+          .from('app_settings')
+          .select('default_tarifa_id')
+          .eq('id', 1)
+          .single()
 
         let defaultTarifaId = null
 
