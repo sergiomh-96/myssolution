@@ -178,6 +178,11 @@ export async function GET(
       ? Number(item.neto_total2 || 0).toFixed(2)
       : Number(item.pvp_total || 0).toFixed(2)
 
+    // Calculate unit price: if neto, show neto_unit = neto_total2 / quantity
+    const unitPrice = priceType === 'neto'
+      ? (Number(item.neto_total2 || 0) / Math.max(Number(item.quantity || 1), 1)).toFixed(2)
+      : Number(item.pvp || 0).toFixed(2)
+
     if (item.type === 'summary') {
       return [
         { content: item.description || 'Resumen', colSpan: 2, styles: { fontStyle: 'bold' as const, textColor: navyText, fillColor: navyBg } },
@@ -200,7 +205,7 @@ export async function GET(
       item.product?.referencia || '-',
       item.description || item.product?.descripcion || '-',
       String(item.quantity ?? 1),
-      `€${Number(item.pvp || 0).toFixed(2)}`,
+      `€${unitPrice}`,
       `€${priceValue}`,
     ]
   })
