@@ -1137,8 +1137,8 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
           </Select>
         </div>
 
-        {/* ── Fila 2: Título (1 col) | Estado (1 col) | — | Fecha Creación (1 col) ── */}
-        <div className="space-y-0.5">
+        {/* ── Fila 2: Título (2 cols) | Estado (1 col) | — | Fecha Creación (1 col) ── */}
+        <div className="space-y-0.5 md:col-span-2">
           <Label htmlFor="title" className="text-xs">Título Oferta *</Label>
           <Input
             id="title"
@@ -1234,7 +1234,6 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
           <Label className="text-xs">Descuentos (%)</Label>
           <div className="grid grid-cols-3 gap-2">
             <div className="flex flex-col gap-1">
-              <Label htmlFor="discount_sistemas" className="text-xs">Sist.</Label>
               <Input
                 id="discount_sistemas"
                 type="number"
@@ -1242,14 +1241,14 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
                 max="100"
                 step="0.01"
                 value={formData.discount_sistemas || ''}
-                onChange={(e) => setFormData({ ...formData, discount_sistemas: e.target.value ? parseFloat(e.target.value) : null })}
-                disabled={loading}
-                className="h-7 text-xs"
+                readOnly
+                disabled
+                className="h-7 text-xs bg-muted text-center"
                 placeholder="0.00"
               />
+              <Label htmlFor="discount_sistemas" className="text-xs text-center">Sist.</Label>
             </div>
             <div className="flex flex-col gap-1">
-              <Label htmlFor="discount_difusion" className="text-xs">Difus.</Label>
               <Input
                 id="discount_difusion"
                 type="number"
@@ -1257,14 +1256,14 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
                 max="100"
                 step="0.01"
                 value={formData.discount_difusion || ''}
-                onChange={(e) => setFormData({ ...formData, discount_difusion: e.target.value ? parseFloat(e.target.value) : null })}
-                disabled={loading}
-                className="h-7 text-xs"
+                readOnly
+                disabled
+                className="h-7 text-xs bg-muted text-center"
                 placeholder="0.00"
               />
+              <Label htmlFor="discount_difusion" className="text-xs text-center">Difus.</Label>
             </div>
             <div className="flex flex-col gap-1">
-              <Label htmlFor="discount_agfri" className="text-xs">Agfri</Label>
               <Input
                 id="discount_agfri"
                 type="number"
@@ -1272,11 +1271,12 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
                 max="100"
                 step="0.01"
                 value={formData.discount_agfri || ''}
-                onChange={(e) => setFormData({ ...formData, discount_agfri: e.target.value ? parseFloat(e.target.value) : null })}
-                disabled={loading}
-                className="h-7 text-xs"
+                readOnly
+                disabled
+                className="h-7 text-xs bg-muted text-center"
                 placeholder="0.00"
               />
+              <Label htmlFor="discount_agfri" className="text-xs text-center">Agfri</Label>
             </div>
           </div>
         </div>
