@@ -1550,7 +1550,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
                           min="0"
                           max="100"
                           step="0.01"
-                          value={item.discount1 || ''}
+                          value={item.discount1 !== undefined && item.discount1 !== null ? item.discount1 : ''}
                           onChange={(e) => handleItemChange(index, 'discount1', Number(e.target.value))}
                           className="h-7 text-xs text-right"
                           disabled={loading}
