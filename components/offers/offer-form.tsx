@@ -408,40 +408,63 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
     const loadData = async () => {
       const supabase = createClient()
 
-      // ── Phase 1: load only referencia first (minimal payload, no pagination needed)
-      // This makes references appear in the table immediately
-      const { data: refsOnly } = await supabase
-        .from('products')
-        .select('id, referencia')
-        .order('referencia')
+      const BATCH = 1000
+      const MAX_PRODUCTS = 50000
 
-      if (refsOnly && refsOnly.length > 0) {
+      // Helper: fetch all products in parallel batches to bypass the 1000-row limit
+      const fetchAllProducts = async (columns: string) => {
+        // First batch to know total count
+        const first = await supabase
+          .from('products')
+          .select(columns, { count: 'exact' })
+          .order('referencia')
+          .range(0, BATCH - 1)
+
+        const total = first.count ?? BATCH
+        const pages = Math.min(Math.ceil(total / BATCH), MAX_PRODUCTS / BATCH)
+
+        // If only one page, return immediately
+        if (pages <= 1) return first.data ?? []
+
+        // Fetch remaining pages in parallel
+        const rest = await Promise.all(
+          Array.from({ length: pages - 1 }, (_, i) =>
+            supabase
+              .from('products')
+              .select(columns)
+              .order('referencia')
+              .range((i + 1) * BATCH, (i + 2) * BATCH - 1)
+          )
+        )
+
+        return [
+          ...(first.data ?? []),
+          ...rest.flatMap(r => r.data ?? []),
+        ]
+      }
+
+      // ── Phase 1: load only referencia (minimal payload) — shows references immediately
+      const refsOnly = await fetchAllProducts('id, referencia')
+      if (refsOnly.length > 0) {
         setProducts(refsOnly as any[])
       }
 
-      // ── Phase 2: load remaining columns + tarifas/settings in parallel
-      // Once refs are shown, enrich with descripcion/modelo_nombre and load tarifa config
-      const [fullProductsResponse, tarifasResponse, settingsResponse] = await Promise.all([
-        supabase
-          .from('products')
-          .select('id, referencia, descripcion, modelo_nombre')
-          .order('referencia'),
+      // ── Phase 2: enrich with full columns + load tarifas/settings in parallel
+      const [fullProducts, tarifasResponse, settingsResponse] = await Promise.all([
+        fetchAllProducts('id, referencia, descripcion, modelo_nombre'),
         supabase.from('tarifas').select('id_tarifa, nombre').order('nombre'),
         supabase.from('app_settings').select('default_tarifa_id').eq('id', 1).single(),
       ])
 
-      // Enrich products with full data
-      if (fullProductsResponse.data && fullProductsResponse.data.length > 0) {
-        setProducts(fullProductsResponse.data)
+      if (fullProducts.length > 0) {
+        setProducts(fullProducts as any[])
       }
 
-      // Handle tarifas + default
       const { data: tarifasData } = tarifasResponse
       if (tarifasData) {
         setTarifas(tarifasData)
 
         const { data: settingsData } = settingsResponse
-
         let defaultTarifaId: number | null = null
 
         if (settingsData?.default_tarifa_id) {
