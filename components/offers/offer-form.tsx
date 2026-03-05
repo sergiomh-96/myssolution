@@ -408,39 +408,32 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
     const loadData = async () => {
       const supabase = createClient()
 
-      // Load products in parallel - prioritize referencia and core fields
-      // Fetch in batches to avoid memory issues
-      const loadProducts = async () => {
-        let allProducts: any[] = []
-        for (let i = 0; i < 50; i++) {
-          const { data } = await supabase
-            .from('products')
-            .select('id, referencia, pvp')  // Minimize columns for speed - prioritize referencia
-            .order('referencia')
-            .range(i * 1000, i * 1000 + 999)
-          
-          if (data && data.length > 0) {
-            allProducts = allProducts.concat(data)
-          } else {
-            break
-          }
-        }
-        return allProducts
-      }
+      // Load products, tarifas, and settings in parallel for speed
+      // Prioritize loading referencia first by selecting only essential columns
+      const loadProducts = supabase
+        .from('products')
+        .select('id, referencia, pvp, descripcion, modelo_nombre')
+        .order('referencia')
 
-      // Load tarifas, prices, and other data in parallel
-      const [productsData, tarifasResponse, settingsResponse] = await Promise.all([
-        loadProducts(),
+      const [productsResponse, tarifasResponse, settingsResponse] = await Promise.all([
+        loadProducts,
         supabase.from('tarifas').select('id_tarifa, nombre').order('nombre'),
         supabase.from('app_settings').select('default_tarifa_id').eq('id', 1).single(),
       ])
 
-      if (productsData && productsData.length > 0) {
+      // Handle products
+      const { data: productsData, error: productsError } = productsResponse
+      if (productsError) {
+        console.error('[v0] Error loading products:', productsError)
+      } else if (productsData && productsData.length > 0) {
         setProducts(productsData)
       }
 
-      const { data: tarifasData } = tarifasResponse
-      if (tarifasData) {
+      // Handle tarifas
+      const { data: tarifasData, error: tarifasError } = tarifasResponse
+      if (tarifasError) {
+        console.error('[v0] Error loading tarifas:', tarifasError)
+      } else if (tarifasData) {
         setTarifas(tarifasData)
 
         // Load default tarifa
