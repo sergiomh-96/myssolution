@@ -7,10 +7,14 @@ import path from 'path'
 import sharp from 'sharp'
 
 export async function GET(
-  _req: Request,
+  req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params
+  const url = new URL(req.url)
+  const company = (url.searchParams.get('company') || 'mysair') as 'mysair' | 'agfri'
+  const priceType = (url.searchParams.get('priceType') || 'pvp') as 'pvp' | 'neto'
+
   const supabase = await createClient()
 
   const { data: offer, error } = await supabase
@@ -41,26 +45,38 @@ export async function GET(
     orientation: 'portrait', 
     unit: 'mm', 
     format: 'a4',
-    compress: true  // Enable compression to reduce file size
+    compress: true
   })
   const pageW = doc.internal.pageSize.getWidth()
   const marginL = 14
   const marginR = 14
 
-  // Palette matching the "Ver" page
-  const blue: [number, number, number] = [41, 128, 185]
-  const headerBg: [number, number, number] = [214, 234, 248]
-  const borderColor: [number, number, number] = [189, 215, 238]
-  const textDark: [number, number, number] = [25, 25, 25]
-  const textMuted: [number, number, number] = [110, 110, 110]
-  const rowAlt: [number, number, number] = [246, 249, 252]
-  const totalBg: [number, number, number] = [232, 240, 248]
+  // Palette based on company
+  const palette = company === 'agfri' 
+    ? {
+        primary: [220, 20, 20],      // Red for AGFRI
+        headerBg: [255, 200, 200],
+        borderColor: [255, 150, 150],
+        textDark: [25, 25, 25],
+        textMuted: [110, 110, 110],
+        rowAlt: [255, 245, 245],
+        totalBg: [255, 220, 220],
+      }
+    : {
+        primary: [41, 128, 185],      // Blue for MYSAIR
+        headerBg: [214, 234, 248],
+        borderColor: [189, 215, 238],
+        textDark: [25, 25, 25],
+        textMuted: [110, 110, 110],
+        rowAlt: [246, 249, 252],
+        totalBg: [232, 240, 248],
+      }
 
   // ---- Logo (maintain 1:1 native aspect ratio, high quality) ----
   try {
-    const logoPath = path.join(process.cwd(), 'public', 'mysair-logo.png')
+    const logoFilename = company === 'agfri' ? 'agfri-logo.png' : 'mysair-logo.png'
+    const logoPath = path.join(process.cwd(), 'public', logoFilename)
     if (fs.existsSync(logoPath)) {
-      // Optimize the logo with sharp - use PNG compression for better quality
       const compressedBuffer = await sharp(logoPath)
         .resize(280, 280, { fit: 'inside', withoutEnlargement: true })
         .png({ compressionLevel: 9 })
@@ -74,21 +90,22 @@ export async function GET(
       doc.addImage(imgData, 'PNG', marginL, 6, targetW, targetH)
     }
   } catch {
-    doc.setFontSize(20).setFont('helvetica', 'bold').setTextColor(...blue)
-    doc.text('MYSair', marginL, 22)
+    doc.setFontSize(20).setFont('helvetica', 'bold').setTextColor(...palette.primary)
+    const companyText = company === 'agfri' ? 'AGFRI' : 'MYSair'
+    doc.text(companyText, marginL, 22)
   }
 
   // ---- Thin rule under logo area ----
   const ruleY = 20
-  doc.setDrawColor(...borderColor).setLineWidth(0.5)
+  doc.setDrawColor(...palette.borderColor).setLineWidth(0.5)
   doc.line(marginL, ruleY, pageW - marginR, ruleY)
 
   // ---- Two-column header info ----
   const colMid = pageW / 2 + 2
-  const infoTop = ruleY + 2  // shifted up 3mm to centre between the two horizontal rules
+  const infoTop = ruleY + 2
 
   // Vertical separator
-  doc.setDrawColor(...borderColor).setLineWidth(0.3)
+  doc.setDrawColor(...palette.borderColor).setLineWidth(0.3)
   doc.line(colMid - 3, ruleY, colMid - 3, ruleY + 43)
 
   const offerYear = new Date(offer.created_at).getFullYear()
@@ -98,16 +115,16 @@ export async function GET(
   })
 
   const writeField = (x: number, y: number, label: string, value: string, bold = false, big = false) => {
-    doc.setFontSize(6).setFont('helvetica', 'bold').setTextColor(...textMuted)
+    doc.setFontSize(6).setFont('helvetica', 'bold').setTextColor(...palette.textMuted)
     doc.text(label, x, y)
     doc.setFontSize(big ? 11 : 8)
       .setFont('helvetica', bold ? 'bold' : 'normal')
-      .setTextColor(...textDark)
+      .setTextColor(...palette.textDark)
     doc.text(value || '-', x, y + 4.8)
   }
 
   const hr = (y: number, x1 = marginL, x2 = colMid - 5) => {
-    doc.setDrawColor(...borderColor).setLineWidth(0.2)
+    doc.setDrawColor(...palette.borderColor).setLineWidth(0.2)
     doc.line(x1, y, x2, y)
   }
 
@@ -137,12 +154,13 @@ export async function GET(
   writeField(colMid, ry, 'PLAZO DE ENTREGA', 'A consultar')
   hr(ry + 5.5, colMid, pageW - marginR)
   ry += 9
-  writeField(colMid, ry, 'PRECIO', 'NETO', true)
+  const priceLabel = priceType === 'neto' ? 'NETO' : 'PVP'
+  writeField(colMid, ry, 'PRECIO', priceLabel, true)
 
   const tableTop = ruleY + 47
 
   // Rule above table (with 5mm gap before it)
-  doc.setDrawColor(...borderColor).setLineWidth(0.5)
+  doc.setDrawColor(...palette.borderColor).setLineWidth(0.5)
   doc.line(marginL, tableTop - 5, pageW - marginR, tableTop - 5)
 
   // Colors for special row types
@@ -152,13 +170,20 @@ export async function GET(
   const yellowText: [number, number, number] = [120, 90, 10]
 
   // ---- Articles table ----
+  const priceColumn = priceType === 'neto' ? 'neto_total2' : 'pvp_total'
+  const priceHeader = priceType === 'neto' ? 'Neto Total' : 'PVP Total'
+
   const tableRows = offerItems.map((item) => {
+    const priceValue = priceType === 'neto' 
+      ? Number(item.neto_total2 || 0).toFixed(2)
+      : Number(item.pvp_total || 0).toFixed(2)
+
     if (item.type === 'summary') {
       return [
         { content: item.description || 'Resumen', colSpan: 2, styles: { fontStyle: 'bold' as const, textColor: navyText, fillColor: navyBg } },
         { content: '', styles: { textColor: navyText, fillColor: navyBg } },
         { content: '', styles: { textColor: navyText, fillColor: navyBg } },
-        { content: `€${Number(item.neto_total2 || 0).toFixed(2)}`, styles: { fontStyle: 'bold' as const, halign: 'right' as const, textColor: navyText, fillColor: navyBg } },
+        { content: `€${priceValue}`, styles: { fontStyle: 'bold' as const, halign: 'right' as const, textColor: navyText, fillColor: navyBg } },
       ]
     }
     if (item.type === 'section_header') {
@@ -176,38 +201,41 @@ export async function GET(
       item.description || item.product?.descripcion || '-',
       String(item.quantity ?? 1),
       `€${Number(item.pvp || 0).toFixed(2)}`,
-      `€${Number(item.neto_total2 || 0).toFixed(2)}`,
+      `€${priceValue}`,
     ]
   })
 
   const total = offerItems
     .filter(i => i.type === 'article' || !i.type)
-    .reduce((s, i) => s + Number(i.neto_total2 || 0), 0)
+    .reduce((s, i) => {
+      const value = priceType === 'neto' ? Number(i.neto_total2 || 0) : Number(i.pvp_total || 0)
+      return s + value
+    }, 0)
 
   autoTable(doc, {
     startY: tableTop,
     margin: { left: marginL, right: marginR },
-    head: [['Referencia', 'Descripción', 'Cantidad', 'Neto', 'Neto Total']],
+    head: [['Referencia', 'Descripción', 'Cantidad', priceType === 'neto' ? 'Neto' : 'PVP', priceHeader]],
     body: tableRows,
     foot: [['', '', '', 'TOTAL:', `€${total.toFixed(2)}`]],
     styles: {
       fontSize: 7.5,
       cellPadding: { top: 2.5, bottom: 2.5, left: 3, right: 3 },
-      textColor: textDark,
+      textColor: palette.textDark,
       lineWidth: 0,
       overflow: 'linebreak',
     },
     headStyles: {
-      fillColor: headerBg,
-      textColor: textDark,
+      fillColor: palette.headerBg,
+      textColor: palette.textDark,
       fontStyle: 'bold',
       fontSize: 8,
       halign: 'left',
       lineWidth: 0,
     },
     footStyles: {
-      fillColor: totalBg,
-      textColor: textDark,
+      fillColor: palette.totalBg,
+      textColor: palette.textDark,
       fontStyle: 'bold',
       fontSize: 8.5,
       lineWidth: 0,
@@ -219,16 +247,16 @@ export async function GET(
       3: { cellWidth: 22, halign: 'right' },
       4: { cellWidth: 26, halign: 'right', fontStyle: 'bold' },
     },
-    alternateRowStyles: { fillColor: rowAlt },
+    alternateRowStyles: { fillColor: palette.rowAlt },
     showFoot: 'lastPage',
   })
 
   // ---- Footer ----
   const pageH = doc.internal.pageSize.getHeight()
   const finalY: number = (doc as any).lastAutoTable?.finalY ?? pageH - 30
-  doc.setFontSize(7).setFont('helvetica', 'normal').setTextColor(...textMuted)
+  doc.setFontSize(7).setFont('helvetica', 'normal').setTextColor(...palette.textMuted)
   doc.text('Precios en €, IVA no incluido. Oferta sujeta a disponibilidad de stock.', marginL, finalY + 9)
-  doc.setDrawColor(...borderColor).setLineWidth(0.3)
+  doc.setDrawColor(...palette.borderColor).setLineWidth(0.3)
   doc.line(marginL, finalY + 11, pageW - marginR, finalY + 11)
   doc.text('Página 1 de 1', pageW / 2, pageH - 7, { align: 'center' })
 
