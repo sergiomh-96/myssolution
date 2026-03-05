@@ -26,26 +26,52 @@ export function AddOfferItem({ offerId, onItemAdded }: AddOfferItemProps) {
   const [discount2, setDiscount2] = useState('')
   const [loading, setLoading] = useState(false)
   const [showDropdown, setShowDropdown] = useState(false)
+  const [customerDiscounts, setCustomerDiscounts] = useState({ sistemas: 0, difusion: 0, agfri: 0 })
 
   // Load all products on mount - only columns that exist in the table
   useEffect(() => {
-    const loadProducts = async () => {
+    const loadProductsAndCustomer = async () => {
       try {
         const supabase = createClient()
+        
+        // Load products with familia column
         const { data, error } = await supabase
           .from('products')
-          .select('id, referencia, descripcion, modelo_nombre')
+          .select('id, referencia, descripcion, modelo_nombre, familia')
           .order('referencia')
 
         if (error) throw error
         setProducts(data || [])
+        
+        // Load current offer to get customer discounts
+        const { data: offerData } = await supabase
+          .from('offers')
+          .select('customer_id')
+          .eq('id', offerId)
+          .single()
+        
+        if (offerData?.customer_id) {
+          const { data: customerData } = await supabase
+            .from('customers')
+            .select('descuento_sistemas, descuento_difusion, descuento_agfri')
+            .eq('id', offerData.customer_id)
+            .single()
+          
+          if (customerData) {
+            setCustomerDiscounts({
+              sistemas: customerData.descuento_sistemas || 0,
+              difusion: customerData.descuento_difusion || 0,
+              agfri: customerData.descuento_agfri || 0,
+            })
+          }
+        }
       } catch (error) {
         console.error('Error loading products:', error)
       }
     }
 
-    loadProducts()
-  }, [])
+    loadProductsAndCustomer()
+  }, [offerId])
 
   // Filter products based on search query
   useEffect(() => {
@@ -71,6 +97,18 @@ export function AddOfferItem({ offerId, onItemAdded }: AddOfferItemProps) {
     setSelectedProduct(product)
     setSearchQuery(`${product.referencia} - ${product.descripcion}`)
     setPvp(product.pvp?.toString() || '')
+    
+    // Calculate discount1 based on product family and customer discounts
+    let calculatedDiscount = 0
+    if (product.familia === 'SISTEMAS') {
+      calculatedDiscount = customerDiscounts.sistemas
+    } else if (product.familia === 'DIFUSIÓN') {
+      calculatedDiscount = customerDiscounts.difusion
+    } else if (product.familia === 'HERRAMIENTA') {
+      calculatedDiscount = customerDiscounts.agfri
+    }
+    
+    setDiscount1(calculatedDiscount.toString())
     setFilteredProducts([])
     setShowDropdown(false)
   }
