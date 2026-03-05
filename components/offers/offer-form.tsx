@@ -1230,52 +1230,55 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
           </Select>
         </div>
 
-        <div className="space-y-0.5">
-          <Label htmlFor="discount_sistemas" className="text-xs">Descuento Sistemas (%)</Label>
-          <Input
-            id="discount_sistemas"
-            type="number"
-            min="0"
-            max="100"
-            step="0.01"
-            value={formData.discount_sistemas || ''}
-            onChange={(e) => setFormData({ ...formData, discount_sistemas: e.target.value ? parseFloat(e.target.value) : null })}
-            disabled={loading}
-            className="h-9 text-sm"
-            placeholder="0.00"
-          />
-        </div>
-
-        <div className="space-y-0.5">
-          <Label htmlFor="discount_difusion" className="text-xs">Descuento Difusión (%)</Label>
-          <Input
-            id="discount_difusion"
-            type="number"
-            min="0"
-            max="100"
-            step="0.01"
-            value={formData.discount_difusion || ''}
-            onChange={(e) => setFormData({ ...formData, discount_difusion: e.target.value ? parseFloat(e.target.value) : null })}
-            disabled={loading}
-            className="h-9 text-sm"
-            placeholder="0.00"
-          />
-        </div>
-
-        <div className="space-y-0.5">
-          <Label htmlFor="discount_agfri" className="text-xs">Descuento Agfri (%)</Label>
-          <Input
-            id="discount_agfri"
-            type="number"
-            min="0"
-            max="100"
-            step="0.01"
-            value={formData.discount_agfri || ''}
-            onChange={(e) => setFormData({ ...formData, discount_agfri: e.target.value ? parseFloat(e.target.value) : null })}
-            disabled={loading}
-            className="h-9 text-sm"
-            placeholder="0.00"
-          />
+        <div className="space-y-2">
+          <Label className="text-xs">Descuentos (%)</Label>
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2">
+              <Label htmlFor="discount_sistemas" className="text-xs min-w-fit">Sistemas:</Label>
+              <Input
+                id="discount_sistemas"
+                type="number"
+                min="0"
+                max="100"
+                step="0.01"
+                value={formData.discount_sistemas || ''}
+                onChange={(e) => setFormData({ ...formData, discount_sistemas: e.target.value ? parseFloat(e.target.value) : null })}
+                disabled={loading}
+                className="h-7 text-xs flex-1"
+                placeholder="0.00"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <Label htmlFor="discount_difusion" className="text-xs min-w-fit">Difusión:</Label>
+              <Input
+                id="discount_difusion"
+                type="number"
+                min="0"
+                max="100"
+                step="0.01"
+                value={formData.discount_difusion || ''}
+                onChange={(e) => setFormData({ ...formData, discount_difusion: e.target.value ? parseFloat(e.target.value) : null })}
+                disabled={loading}
+                className="h-7 text-xs flex-1"
+                placeholder="0.00"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <Label htmlFor="discount_agfri" className="text-xs min-w-fit">Agfri:</Label>
+              <Input
+                id="discount_agfri"
+                type="number"
+                min="0"
+                max="100"
+                step="0.01"
+                value={formData.discount_agfri || ''}
+                onChange={(e) => setFormData({ ...formData, discount_agfri: e.target.value ? parseFloat(e.target.value) : null })}
+                disabled={loading}
+                className="h-7 text-xs flex-1"
+                placeholder="0.00"
+              />
+            </div>
+          </div>
         </div>
 
         <div className="space-y-0.5">
