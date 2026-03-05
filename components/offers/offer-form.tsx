@@ -408,56 +408,51 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
     const loadData = async () => {
       const supabase = createClient()
 
-      // Load products - fetch up to 50000 products (50 batches of 1000) to avoid memory/URI issues
-      let allProducts: any[] = []
-      for (let i = 0; i < 50; i++) {
-        const { data } = await supabase
+      // ── Phase 1: load only referencia first (minimal payload, no pagination needed)
+      // This makes references appear in the table immediately
+      const { data: refsOnly } = await supabase
+        .from('products')
+        .select('id, referencia')
+        .order('referencia')
+
+      if (refsOnly && refsOnly.length > 0) {
+        setProducts(refsOnly as any[])
+      }
+
+      // ── Phase 2: load remaining columns + tarifas/settings in parallel
+      // Once refs are shown, enrich with pvp/descripcion and load tarifa config
+      const [fullProductsResponse, tarifasResponse, settingsResponse] = await Promise.all([
+        supabase
           .from('products')
-          .select('id, referencia, descripcion, modelo_nombre')
-          .order('referencia')
-          .range(i * 1000, i * 1000 + 999)
-        
-        if (data && data.length > 0) {
-          allProducts = allProducts.concat(data)
-        } else {
-          break // No more products to fetch
-        }
+          .select('id, referencia, pvp, descripcion, modelo_nombre')
+          .order('referencia'),
+        supabase.from('tarifas').select('id_tarifa, nombre').order('nombre'),
+        supabase.from('app_settings').select('default_tarifa_id').eq('id', 1).single(),
+      ])
+
+      // Enrich products with full data
+      if (fullProductsResponse.data && fullProductsResponse.data.length > 0) {
+        setProducts(fullProductsResponse.data)
       }
 
-      if (allProducts.length > 0) {
-        setProducts(allProducts)
-      }
-
-      // Load tarifas
-      const { data: tarifasData } = await supabase
-        .from('tarifas')
-        .select('id_tarifa, nombre')
-        .order('nombre')
-
+      // Handle tarifas + default
+      const { data: tarifasData } = tarifasResponse
       if (tarifasData) {
         setTarifas(tarifasData)
 
-        // Load default tarifa from app_settings
-        const { data: settingsData } = await supabase
-          .from('app_settings')
-          .select('default_tarifa_id')
-          .eq('id', 1)
-          .single()
+        const { data: settingsData } = settingsResponse
 
-        let defaultTarifaId = null
+        let defaultTarifaId: number | null = null
 
         if (settingsData?.default_tarifa_id) {
-          // Use tarifa from app_settings
           defaultTarifaId = settingsData.default_tarifa_id
         } else {
-          // Fallback: try to find MYSAIR_2026 tarifa, then first one
           const mysairTarifa = tarifasData.find(t => t.nombre === 'Tarifa_MYSAIR_2026')
           defaultTarifaId = mysairTarifa ? mysairTarifa.id_tarifa : (tarifasData.length > 0 ? tarifasData[0].id_tarifa : null)
         }
 
         if (defaultTarifaId) {
           setDefaultTarifa(defaultTarifaId)
-          // Only set default tarifa if not already set
           setFormData(prev => {
             if (!prev.tarifa_id) {
               return { ...prev, tarifa_id: defaultTarifaId }
