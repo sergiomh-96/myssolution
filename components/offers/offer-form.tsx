@@ -84,6 +84,8 @@ function ProductSearchInput({
       .slice(0, 10)
     : []
 
+  const inputRef = useRef<HTMLInputElement>(null)
+
   const handleProductSelect = (product: typeof products[0]) => {
     onSelect(product.id)
     setSelectedProduct(product)
@@ -95,6 +97,28 @@ function ProductSearchInput({
     onSelect('')
     setSelectedProduct(null)
     setSearchTerm('')
+    // Re-focus the input after clearing
+    setTimeout(() => inputRef.current?.focus(), 0)
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Tab' && filteredProducts.length > 0) {
+      // Select first result and let Tab move to the next field naturally
+      e.preventDefault()
+      handleProductSelect(filteredProducts[0])
+      // Move focus to the next focusable sibling (Descripción field)
+      const focusable = 'input, select, textarea, button, [tabindex]:not([tabindex="-1"])'
+      const all = Array.from(document.querySelectorAll<HTMLElement>(focusable)).filter(
+        el => !el.hasAttribute('disabled') && el.offsetParent !== null
+      )
+      const idx = all.indexOf(inputRef.current as HTMLElement)
+      if (idx !== -1 && all[idx + 1]) {
+        all[idx + 1].focus()
+      }
+    }
+    if (e.key === 'Escape') {
+      setIsOpen(false)
+    }
   }
 
   return (
@@ -118,12 +142,14 @@ function ProductSearchInput({
       ) : (
         <>
           <Input
+            ref={inputRef}
             value={searchTerm}
             onChange={(e) => {
               setSearchTerm(e.target.value)
               setIsOpen(true)
             }}
             onFocus={() => setIsOpen(true)}
+            onKeyDown={handleKeyDown}
             placeholder="Buscar por referencia o descripción..."
             className="h-7 text-xs"
             disabled={disabled}
