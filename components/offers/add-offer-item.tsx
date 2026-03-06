@@ -205,7 +205,7 @@ export function AddOfferItem({ offerId, onItemAdded, customerDiscounts: initialD
 
               {/* Dropdown with search results */}
               {showDropdown && filteredProducts.length > 0 && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-md shadow-lg z-50 max-h-48 overflow-y-auto">
+                <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-md shadow-lg z-[9999] max-h-48 overflow-y-auto">
                   {filteredProducts.map((product) => (
                     <button
                       key={product.id}
