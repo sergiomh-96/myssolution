@@ -216,7 +216,7 @@ export function OfferDetailView({ offer, items, onPrint, onDownload }: OfferView
                       {Number(item.pvp).toFixed(2)} €
                     </td>
                     <td className="py-2 px-3 text-[0.65rem] text-right font-semibold text-foreground border border-border">
-                      {Number(item.neto_total2).toFixed(2)} €
+                      {(Number(item.neto_total2) / Math.max(Number(item.quantity || 1), 1)).toFixed(2)} €
                     </td>
                   </tr>
                 )
