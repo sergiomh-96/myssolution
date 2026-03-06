@@ -313,15 +313,30 @@ export async function GET(
     showFoot: 'lastPage',
   })
 
-  // ---- Footer ----
+  // ---- Descripción visible en oferta (below table) ----
   const pageH = doc.internal.pageSize.getHeight()
   const finalY: number = (doc as any).lastAutoTable?.finalY ?? pageH - 30
+  const descriptionText = (offer as any).description?.trim()
+  let descriptionEndY = finalY
+  if (descriptionText) {
+    const descY = finalY + 7
+    doc.setFontSize(7).setFont('helvetica', 'bold').setTextColor(...palette.textMuted)
+    doc.text('DESCRIPCIÓN', marginL, descY)
+    doc.setFontSize(8).setFont('helvetica', 'normal').setTextColor(...palette.textDark)
+    const lines = doc.splitTextToSize(descriptionText, pageW - marginL - marginR)
+    doc.text(lines, marginL, descY + 4.5)
+    descriptionEndY = descY + 4.5 + lines.length * 4
+    doc.setDrawColor(...palette.borderColor).setLineWidth(0.2)
+    doc.line(marginL, descriptionEndY + 2, pageW - marginR, descriptionEndY + 2)
+  }
+
+  // ---- Footer ----
   doc.setFontSize(7).setFont('helvetica', 'normal').setTextColor(...palette.textMuted)
-  doc.text('Precios en €, IVA no incluido. Oferta sujeta a disponibilidad de stock.', marginL, finalY + 9)
-  doc.text('Portes no incluidos', marginL, finalY + 13)
-  doc.text('El plazo de entrega se confirmará tras la aceptación del pedido.', marginL, finalY + 17)
+  doc.text('Precios en €, IVA no incluido. Oferta sujeta a disponibilidad de stock.', marginL, descriptionEndY + 9)
+  doc.text('Portes no incluidos', marginL, descriptionEndY + 13)
+  doc.text('El plazo de entrega se confirmará tras la aceptación del pedido.', marginL, descriptionEndY + 17)
   doc.setDrawColor(...palette.borderColor).setLineWidth(0.3)
-  doc.line(marginL, finalY + 19, pageW - marginR, finalY + 19)
+  doc.line(marginL, descriptionEndY + 19, pageW - marginR, descriptionEndY + 19)
   const totalPages = company === 'mysair' ? 2 : 1
   const offerPageNum = company === 'mysair' ? 2 : 1
   doc.text(`Página ${offerPageNum} de ${totalPages}`, pageW / 2, pageH - 7, { align: 'center' })
