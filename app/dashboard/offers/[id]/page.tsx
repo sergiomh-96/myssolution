@@ -157,7 +157,7 @@ export default async function OfferDetailPage({ params }: PageProps) {
                           €{(item.pvp || 0).toFixed(2)}
                         </td>
                         <td className="px-4 py-3 text-xs text-right font-bold text-foreground">
-                          €{(item.neto_total2 || 0).toFixed(2)}
+                          €{((item.neto_total2 || 0) / Math.max(item.quantity || 1, 1)).toFixed(2)}
                         </td>
                       </tr>
                     ))}
