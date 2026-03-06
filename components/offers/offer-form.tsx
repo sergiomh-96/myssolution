@@ -2,6 +2,7 @@
 
 // CACHE CLEAR: Complete rebuild - contacts renamed to contactList
 import { useState, useEffect, useRef } from 'react'
+import ReactDOM from 'react-dom'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
@@ -87,7 +88,9 @@ function ProductSearchInput({
     : []
 
   const inputRef = useRef<HTMLInputElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
   const [highlightedIndex, setHighlightedIndex] = useState(-1)
+  const [dropdownRect, setDropdownRect] = useState<DOMRect | null>(null)
 
   // Reset highlighted index when filtered results change
   useEffect(() => {
@@ -168,20 +171,32 @@ function ProductSearchInput({
             onChange={(e) => {
               setSearchTerm(e.target.value)
               setIsOpen(true)
+              if (containerRef.current) setDropdownRect(containerRef.current.getBoundingClientRect())
             }}
-            onFocus={() => setIsOpen(true)}
+            onFocus={() => {
+              setIsOpen(true)
+              if (containerRef.current) setDropdownRect(containerRef.current.getBoundingClientRect())
+            }}
             onKeyDown={handleKeyDown}
             placeholder="Buscar por referencia o descripción..."
             className="h-7 text-xs"
             disabled={disabled}
           />
-          {isOpen && filteredProducts.length > 0 && (
+          {isOpen && filteredProducts.length > 0 && dropdownRect && ReactDOM.createPortal(
             <>
-              <div 
-                className="fixed inset-0 z-40" 
+              <div
+                className="fixed inset-0 z-[9998]"
                 onClick={() => setIsOpen(false)}
               />
-              <div className="absolute z-50 w-full mt-1 max-h-60 overflow-y-auto bg-popover border border-border rounded-md shadow-lg">
+              <div
+                className="fixed z-[9999] bg-popover border border-border rounded-md shadow-xl overflow-y-auto"
+                style={{
+                  top: dropdownRect.bottom + window.scrollY + 2,
+                  left: dropdownRect.left + window.scrollX,
+                  width: dropdownRect.width,
+                  maxHeight: '240px',
+                }}
+              >
                 {filteredProducts.map((product, idx) => (
                   <button
                     key={product.id}
@@ -201,7 +216,8 @@ function ProductSearchInput({
                   </button>
                 ))}
               </div>
-            </>
+            </>,
+            document.body
           )}
         </>
       )}
