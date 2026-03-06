@@ -72,6 +72,13 @@ export async function GET(
         totalBg: [232, 240, 248],
       }
 
+  // ---- Pre-calculate offer number and date (used in cover + header) ----
+  const offerYear = new Date(offer.created_at).getFullYear()
+  const offerNum = `${offerYear}-${String(offer.offer_number).padStart(4, '0')}`
+  const offerDate = new Date(offer.created_at).toLocaleDateString('es-ES', {
+    day: '2-digit', month: '2-digit', year: 'numeric',
+  })
+
   // ---- Cover page (MYSAIR only) ----
   if (company === 'mysair') {
     // We'll build the cover on page 1 and the offer on page 2
@@ -198,11 +205,7 @@ export async function GET(
   doc.setDrawColor(...palette.borderColor).setLineWidth(0.3)
   doc.line(colMid - 3, ruleY, colMid - 3, ruleY + 43)
 
-  const offerYear = new Date(offer.created_at).getFullYear()
-  const offerNum = `${offerYear}-${String(offer.offer_number).padStart(4, '0')}`
-  const offerDate = new Date(offer.created_at).toLocaleDateString('es-ES', {
-    day: '2-digit', month: '2-digit', year: 'numeric',
-  })
+
 
   const writeField = (x: number, y: number, label: string, value: string, bold = false, big = false) => {
     doc.setFontSize(6).setFont('helvetica', 'bold').setTextColor(...palette.textMuted)
