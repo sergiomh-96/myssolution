@@ -101,32 +101,33 @@ export async function GET(
     }
 
     // Overlay dynamic data — positions calibrated to match the template layout
-    // "OFERTA DE VENTAS" is static on the image; we only write the field values
-
-    // "Cliente" label is at ~44% height, value below it
     const labelColor: [number, number, number] = [100, 110, 120]
     const valueColor: [number, number, number] = [50, 60, 80]
     const fieldX = coverW * 0.085
     const labelSize = 9
-    const valueSize = 11
+    const valueSize = 18  // Increased from 11 to 18
+
+    // "OFERTA DE VENTAS" title — large centered text
+    doc.setFontSize(26).setFont('helvetica', 'bold').setTextColor(50, 60, 80)
+    doc.text('OFERTA DE VENTAS', fieldX, coverH * 0.38)
 
     // Cliente
     doc.setFontSize(labelSize).setFont('helvetica', 'normal').setTextColor(...labelColor)
     doc.text('Cliente', fieldX, coverH * 0.455)
     doc.setFontSize(valueSize).setFont('helvetica', 'bold').setTextColor(...valueColor)
-    doc.text(offer.customer?.company_name || '-', fieldX, coverH * 0.479)
+    doc.text(offer.customer?.company_name || '-', fieldX, coverH * 0.495)
 
     // Referencia
     doc.setFontSize(labelSize).setFont('helvetica', 'normal').setTextColor(...labelColor)
     doc.text('Referencia', fieldX, coverH * 0.535)
     doc.setFontSize(valueSize).setFont('helvetica', 'bold').setTextColor(...valueColor)
-    doc.text(offer.title || '-', fieldX, coverH * 0.559)
+    doc.text(offer.title || '-', fieldX, coverH * 0.575)
 
     // Nº Oferta
     doc.setFontSize(labelSize).setFont('helvetica', 'normal').setTextColor(...labelColor)
     doc.text('Nº Oferta', fieldX, coverH * 0.615)
     doc.setFontSize(valueSize).setFont('helvetica', 'bold').setTextColor(...valueColor)
-    doc.text(offerNum, fieldX, coverH * 0.639)
+    doc.text(offerNum, fieldX, coverH * 0.655)
 
     // Now add a new page for the offer content
     doc.addPage()
