@@ -72,6 +72,96 @@ export async function GET(
         totalBg: [232, 240, 248],
       }
 
+  // ---- Cover page (MYSAIR only) ----
+  if (company === 'mysair') {
+    // We'll build the cover on page 1 and the offer on page 2
+    // First draw the cover on the current (first) page
+    const coverW = pageW
+    const coverH = doc.internal.pageSize.getHeight()
+
+    // Dark navy background — top half
+    const splitY = coverH * 0.55
+    doc.setFillColor(10, 30, 60)
+    doc.rect(0, 0, coverW, splitY, 'F')
+
+    // Light grey background — bottom half
+    doc.setFillColor(245, 247, 250)
+    doc.rect(0, splitY, coverW, coverH - splitY, 'F')
+
+    // Logo centered on top half
+    try {
+      const logoPath = path.join(process.cwd(), 'public', 'mysair-logo.png')
+      if (fs.existsSync(logoPath)) {
+        const compressedBuffer = await sharp(logoPath)
+          .resize(400, 200, { fit: 'inside', withoutEnlargement: true })
+          .png({ compressionLevel: 9 })
+          .toBuffer()
+        const base64 = compressedBuffer.toString('base64')
+        const imgData = `data:image/png;base64,${base64}`
+        const props = doc.getImageProperties(imgData)
+        const logoW = 70
+        const logoH = (props.height / props.width) * logoW
+        doc.addImage(imgData, 'PNG', (coverW - logoW) / 2, splitY * 0.18, logoW, logoH)
+      }
+    } catch { /* silent */ }
+
+    // "OFERTA DE VENTAS" title
+    doc.setFontSize(26)
+      .setFont('helvetica', 'bold')
+      .setTextColor(255, 255, 255)
+    doc.text('OFERTA DE VENTAS', coverW / 2, splitY * 0.68, { align: 'center' })
+
+    // Thin white divider line
+    doc.setDrawColor(255, 255, 255)
+    doc.setLineWidth(0.4)
+    doc.line(coverW * 0.15, splitY * 0.75, coverW * 0.85, splitY * 0.75)
+
+    // Year subtitle
+    doc.setFontSize(11)
+      .setFont('helvetica', 'normal')
+      .setTextColor(180, 200, 220)
+    doc.text(String(new Date(offer.created_at).getFullYear()), coverW / 2, splitY * 0.84, { align: 'center' })
+
+    // ---- Data fields on bottom half ----
+    const fieldX = coverW * 0.12
+    const fieldXRight = coverW / 2 + coverW * 0.06
+    const fieldStartY = splitY + 18
+
+    const drawCoverField = (x: number, y: number, label: string, value: string) => {
+      doc.setFontSize(7)
+        .setFont('helvetica', 'bold')
+        .setTextColor(100, 120, 150)
+      doc.text(label, x, y)
+      doc.setFontSize(10)
+        .setFont('helvetica', 'bold')
+        .setTextColor(20, 40, 80)
+      doc.text(value || '-', x, y + 6)
+      // Underline
+      doc.setDrawColor(200, 210, 225)
+        .setLineWidth(0.3)
+      doc.line(x, y + 8, x + (coverW / 2 - coverW * 0.18), y + 8)
+    }
+
+    drawCoverField(fieldX, fieldStartY, 'CLIENTE', offer.customer?.company_name || '-')
+    drawCoverField(fieldX, fieldStartY + 22, 'REFERENCIA', offer.title || '-')
+    drawCoverField(fieldXRight, fieldStartY, 'Nº OFERTA', offerNum)
+    drawCoverField(fieldXRight, fieldStartY + 22, 'FECHA', offerDate)
+
+    // Website footer on cover
+    doc.setFontSize(9)
+      .setFont('helvetica', 'normal')
+      .setTextColor(100, 120, 150)
+    doc.text('www.mysair.es', coverW / 2, coverH - 14, { align: 'center' })
+
+    // Thin accent line above website
+    doc.setDrawColor(...palette.borderColor as [number, number, number])
+      .setLineWidth(0.3)
+    doc.line(coverW * 0.3, coverH - 18, coverW * 0.7, coverH - 18)
+
+    // Now add a new page for the offer content
+    doc.addPage()
+  }
+
   // ---- Logo (maintain 1:1 native aspect ratio, high quality) ----
   try {
     const logoFilename = company === 'agfri' ? 'agfri-logo.png' : 'mysair-logo.png'
@@ -265,7 +355,9 @@ export async function GET(
   doc.text('El plazo de entrega se confirmará tras la aceptación del pedido.', marginL, finalY + 17)
   doc.setDrawColor(...palette.borderColor).setLineWidth(0.3)
   doc.line(marginL, finalY + 19, pageW - marginR, finalY + 19)
-  doc.text('Página 1 de 1', pageW / 2, pageH - 7, { align: 'center' })
+  const totalPages = company === 'mysair' ? 2 : 1
+  const offerPageNum = company === 'mysair' ? 2 : 1
+  doc.text(`Página ${offerPageNum} de ${totalPages}`, pageW / 2, pageH - 7, { align: 'center' })
 
   // ---- Return PDF ----
   const pdfBuffer = Buffer.from(doc.output('arraybuffer'))
