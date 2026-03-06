@@ -81,89 +81,52 @@ export async function GET(
 
   // ---- Cover page (MYSAIR only) ----
   if (company === 'mysair') {
-    // We'll build the cover on page 1 and the offer on page 2
-    // First draw the cover on the current (first) page
     const coverW = pageW
     const coverH = doc.internal.pageSize.getHeight()
 
-    // Dark navy background — top half
-    const splitY = coverH * 0.55
-    doc.setFillColor(10, 30, 60)
-    doc.rect(0, 0, coverW, splitY, 'F')
-
-    // Light grey background — bottom half
-    doc.setFillColor(245, 247, 250)
-    doc.rect(0, splitY, coverW, coverH - splitY, 'F')
-
-    // Logo centered on top half
+    // Use the PNG as a full-page background image
     try {
-      const logoPath = path.join(process.cwd(), 'public', 'mysair-logo.png')
-      if (fs.existsSync(logoPath)) {
-        const compressedBuffer = await sharp(logoPath)
-          .resize(400, 200, { fit: 'inside', withoutEnlargement: true })
-          .png({ compressionLevel: 9 })
+      const coverPath = path.join(process.cwd(), 'public', 'portada-mysair.png')
+      if (fs.existsSync(coverPath)) {
+        const coverBuffer = await sharp(coverPath)
+          .resize(Math.round(coverW * 3.78), Math.round(coverH * 3.78), { fit: 'fill' })
+          .png({ compressionLevel: 6 })
           .toBuffer()
-        const base64 = compressedBuffer.toString('base64')
+        const base64 = coverBuffer.toString('base64')
         const imgData = `data:image/png;base64,${base64}`
-        const props = doc.getImageProperties(imgData)
-        const logoW = 70
-        const logoH = (props.height / props.width) * logoW
-        doc.addImage(imgData, 'PNG', (coverW - logoW) / 2, splitY * 0.18, logoW, logoH)
+        doc.addImage(imgData, 'PNG', 0, 0, coverW, coverH)
       }
-    } catch { /* silent */ }
-
-    // "OFERTA DE VENTAS" title
-    doc.setFontSize(26)
-      .setFont('helvetica', 'bold')
-      .setTextColor(255, 255, 255)
-    doc.text('OFERTA DE VENTAS', coverW / 2, splitY * 0.68, { align: 'center' })
-
-    // Thin white divider line
-    doc.setDrawColor(255, 255, 255)
-    doc.setLineWidth(0.4)
-    doc.line(coverW * 0.15, splitY * 0.75, coverW * 0.85, splitY * 0.75)
-
-    // Year subtitle
-    doc.setFontSize(11)
-      .setFont('helvetica', 'normal')
-      .setTextColor(180, 200, 220)
-    doc.text(String(new Date(offer.created_at).getFullYear()), coverW / 2, splitY * 0.84, { align: 'center' })
-
-    // ---- Data fields on bottom half ----
-    const fieldX = coverW * 0.12
-    const fieldXRight = coverW / 2 + coverW * 0.06
-    const fieldStartY = splitY + 18
-
-    const drawCoverField = (x: number, y: number, label: string, value: string) => {
-      doc.setFontSize(7)
-        .setFont('helvetica', 'bold')
-        .setTextColor(100, 120, 150)
-      doc.text(label, x, y)
-      doc.setFontSize(10)
-        .setFont('helvetica', 'bold')
-        .setTextColor(20, 40, 80)
-      doc.text(value || '-', x, y + 6)
-      // Underline
-      doc.setDrawColor(200, 210, 225)
-        .setLineWidth(0.3)
-      doc.line(x, y + 8, x + (coverW / 2 - coverW * 0.18), y + 8)
+    } catch (e) {
+      console.error('Cover image error:', e)
     }
 
-    drawCoverField(fieldX, fieldStartY, 'CLIENTE', offer.customer?.company_name || '-')
-    drawCoverField(fieldX, fieldStartY + 22, 'REFERENCIA', offer.title || '-')
-    drawCoverField(fieldXRight, fieldStartY, 'Nº OFERTA', offerNum)
-    drawCoverField(fieldXRight, fieldStartY + 22, 'FECHA', offerDate)
+    // Overlay dynamic data — positions calibrated to match the template layout
+    // "OFERTA DE VENTAS" is static on the image; we only write the field values
 
-    // Website footer on cover
-    doc.setFontSize(9)
-      .setFont('helvetica', 'normal')
-      .setTextColor(100, 120, 150)
-    doc.text('www.mysair.es', coverW / 2, coverH - 14, { align: 'center' })
+    // "Cliente" label is at ~44% height, value below it
+    const labelColor: [number, number, number] = [100, 110, 120]
+    const valueColor: [number, number, number] = [50, 60, 80]
+    const fieldX = coverW * 0.085
+    const labelSize = 9
+    const valueSize = 11
 
-    // Thin accent line above website
-    doc.setDrawColor(...palette.borderColor as [number, number, number])
-      .setLineWidth(0.3)
-    doc.line(coverW * 0.3, coverH - 18, coverW * 0.7, coverH - 18)
+    // Cliente
+    doc.setFontSize(labelSize).setFont('helvetica', 'normal').setTextColor(...labelColor)
+    doc.text('Cliente', fieldX, coverH * 0.455)
+    doc.setFontSize(valueSize).setFont('helvetica', 'bold').setTextColor(...valueColor)
+    doc.text(offer.customer?.company_name || '-', fieldX, coverH * 0.479)
+
+    // Referencia
+    doc.setFontSize(labelSize).setFont('helvetica', 'normal').setTextColor(...labelColor)
+    doc.text('Referencia', fieldX, coverH * 0.535)
+    doc.setFontSize(valueSize).setFont('helvetica', 'bold').setTextColor(...valueColor)
+    doc.text(offer.title || '-', fieldX, coverH * 0.559)
+
+    // Nº Oferta
+    doc.setFontSize(labelSize).setFont('helvetica', 'normal').setTextColor(...labelColor)
+    doc.text('Nº Oferta', fieldX, coverH * 0.615)
+    doc.setFontSize(valueSize).setFont('helvetica', 'bold').setTextColor(...valueColor)
+    doc.text(offerNum, fieldX, coverH * 0.639)
 
     // Now add a new page for the offer content
     doc.addPage()
