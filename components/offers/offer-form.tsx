@@ -92,6 +92,20 @@ function ProductSearchInput({
   const [highlightedIndex, setHighlightedIndex] = useState(-1)
   const [dropdownRect, setDropdownRect] = useState<DOMRect | null>(null)
 
+  // Recalculate dropdown position on scroll/resize
+  useEffect(() => {
+    if (!isOpen) return
+    const update = () => {
+      if (inputRef.current) setDropdownRect(inputRef.current.getBoundingClientRect())
+    }
+    window.addEventListener('scroll', update, true)
+    window.addEventListener('resize', update)
+    return () => {
+      window.removeEventListener('scroll', update, true)
+      window.removeEventListener('resize', update)
+    }
+  }, [isOpen])
+
   // Reset highlighted index when filtered results change
   useEffect(() => {
     setHighlightedIndex(-1)
@@ -146,7 +160,7 @@ function ProductSearchInput({
   }
 
   return (
-    <div className="relative">
+    <div className="relative" ref={containerRef}>
       {selectedProduct ? (
         <div className="flex items-center gap-1">
           <div className="flex-1 h-7 px-2 py-1 border border-input rounded-md bg-background text-xs truncate">
@@ -171,18 +185,18 @@ function ProductSearchInput({
             onChange={(e) => {
               setSearchTerm(e.target.value)
               setIsOpen(true)
-              if (containerRef.current) setDropdownRect(containerRef.current.getBoundingClientRect())
+              if (inputRef.current) setDropdownRect(inputRef.current.getBoundingClientRect())
             }}
             onFocus={() => {
               setIsOpen(true)
-              if (containerRef.current) setDropdownRect(containerRef.current.getBoundingClientRect())
+              if (inputRef.current) setDropdownRect(inputRef.current.getBoundingClientRect())
             }}
             onKeyDown={handleKeyDown}
             placeholder="Buscar por referencia o descripción..."
             className="h-7 text-xs"
             disabled={disabled}
           />
-          {isOpen && filteredProducts.length > 0 && dropdownRect && ReactDOM.createPortal(
+          {isOpen && filteredProducts.length > 0 && dropdownRect && typeof document !== 'undefined' && ReactDOM.createPortal(
             <>
               <div
                 className="fixed inset-0 z-[9998]"
@@ -191,8 +205,8 @@ function ProductSearchInput({
               <div
                 className="fixed z-[9999] bg-popover border border-border rounded-md shadow-xl overflow-y-auto"
                 style={{
-                  top: dropdownRect.bottom + window.scrollY + 2,
-                  left: dropdownRect.left + window.scrollX,
+                  top: dropdownRect.bottom + 2,
+                  left: dropdownRect.left,
                   width: dropdownRect.width,
                   maxHeight: '240px',
                 }}
