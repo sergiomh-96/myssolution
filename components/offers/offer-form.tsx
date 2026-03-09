@@ -60,7 +60,7 @@ function ProductSearchInput({
 
   // Update selected product when value changes
   useEffect(() => {
-    const product = products.find(p => p.id === value)
+    const product = products.find(p => String(p.id) === String(value))
     setSelectedProduct(product || null)
     if (product) {
       setSearchTerm('')
@@ -821,7 +821,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
   }
 
   const handleProductSelect = (index: number, productId: string) => {
-    const product = products.find(p => p.id === productId)
+    const product = products.find(p => String(p.id) === String(productId))
     if (!product) return
 
     const newItems = [...items]
