@@ -138,7 +138,7 @@ export function CalcularLarguerosDialog({ items, onAddItem }: Props) {
         addLog(`  ${lp.referencia} (${entry.tipo}): ${entry.unidades} uds → múltiplo 12: ${multiplo12}`, 'ok')
       }
 
-      setRows(result)
+      setRows(result.sort((a, b) => a.referencia.localeCompare(b.referencia)))
     } catch (e: any) {
       addLog(`Error inesperado: ${e?.message}`, 'warn')
     } finally {
