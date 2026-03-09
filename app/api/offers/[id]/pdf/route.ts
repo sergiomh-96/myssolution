@@ -286,24 +286,6 @@ export async function GET(
       `€${unitPrice}`,
       `€${priceType === 'neto' ? netoTotal : pvpTotal}`,
     ]
-    }
-    if (item.type === 'section_header') {
-      return [
-        { content: item.description || '', colSpan: 5, styles: { fontStyle: 'bold' as const, textColor: navyText, fillColor: navyBg } },
-      ]
-    }
-    if (item.type === 'note') {
-      return [
-        { content: item.description || '', colSpan: 5, styles: { fontStyle: 'italic' as const, textColor: yellowText, fillColor: yellowBg } },
-      ]
-    }
-    return [
-      item.product?.referencia || '-',
-      item.description || item.product?.descripcion || '-',
-      String(item.quantity ?? 1),
-      `€${unitPrice}`,
-      `€${priceValue}`,
-    ]
   })
 
   const total = offerItems
