@@ -139,30 +139,44 @@ export default async function OfferDetailPage({ params }: PageProps) {
                       <th className="px-4 py-2 text-left text-xs font-bold text-foreground">Referencia</th>
                       <th className="px-4 py-2 text-left text-xs font-bold text-foreground">Descripción</th>
                       <th className="px-4 py-2 text-center text-xs font-bold text-foreground">Cantidad</th>
-                      <th className="px-4 py-2 text-right text-xs font-bold text-foreground">Neto</th>
+                      <th className="px-4 py-2 text-center text-xs font-bold text-foreground">PVP</th>
+                      <th className="px-4 py-2 text-center text-xs font-bold text-foreground">Descuento (%)</th>
+                      <th className="px-4 py-2 text-center text-xs font-bold text-foreground">Neto</th>
                       <th className="px-4 py-2 text-right text-xs font-bold text-foreground">Neto Total</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {items.map((item, idx) => (
-                      <tr key={item.id} className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                        <td className="px-4 py-3 text-xs text-foreground font-medium">
-                          {item.product?.referencia || '-'}
-                        </td>
-                        <td className="px-4 py-3 text-xs text-foreground">
-                          {item.description || item.product?.descripcion || '-'}
-                        </td>
-                        <td className="px-4 py-3 text-xs text-center text-foreground">{item.quantity}</td>
-                        <td className="px-4 py-3 text-xs text-right text-foreground">
-                          €{(item.pvp || 0).toFixed(2)}
-                        </td>
-                        <td className="px-4 py-3 text-xs text-right font-bold text-foreground">
-                          €{((item.neto_total2 || 0) / Math.max(item.quantity || 1, 1)).toFixed(2)}
-                        </td>
-                      </tr>
-                    ))}
+                    {items.map((item, idx) => {
+                      // Calculate total discount: 1-((1-D1/100)*(1-D2/100))
+                      const d1 = (item.discount1 || 0) / 100
+                      const d2 = (item.discount2 || 0) / 100
+                      const totalDiscount = (1 - (1 - d1) * (1 - d2)) * 100
+                      return (
+                        <tr key={item.id} className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                          <td className="px-4 py-3 text-xs text-foreground font-medium">
+                            {item.product?.referencia || '-'}
+                          </td>
+                          <td className="px-4 py-3 text-xs text-foreground">
+                            {item.description || item.product?.descripcion || '-'}
+                          </td>
+                          <td className="px-4 py-3 text-xs text-center text-foreground">{item.quantity}</td>
+                          <td className="px-4 py-3 text-xs text-center text-foreground">
+                            €{(item.pvp || 0).toFixed(2)}
+                          </td>
+                          <td className="px-4 py-3 text-xs text-center text-foreground">
+                            {totalDiscount.toFixed(2)}
+                          </td>
+                          <td className="px-4 py-3 text-xs text-center text-foreground">
+                            €{((item.neto_total2 || 0) / Math.max(item.quantity || 1, 1)).toFixed(2)}
+                          </td>
+                          <td className="px-4 py-3 text-xs text-right font-bold text-foreground">
+                            €{(item.neto_total2 || 0).toFixed(2)}
+                          </td>
+                        </tr>
+                      )
+                    })}
                     <tr className="bg-gray-100 border-t-2 border-gray-300 font-bold">
-                      <td colSpan={4} className="px-4 py-3 text-right text-sm text-foreground">
+                      <td colSpan={6} className="px-4 py-3 text-right text-sm text-foreground">
                         TOTAL:
                       </td>
                       <td className="px-4 py-3 text-right text-sm text-foreground">
