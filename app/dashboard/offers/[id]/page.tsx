@@ -55,7 +55,12 @@ export default async function OfferDetailPage({ params }: PageProps) {
             <p className="text-muted-foreground mt-1">{offer.title}</p>
           </div>
           <div className="flex gap-2">
-            <GeneratePdfButton offerId={id} offerNumber={offer.offer_number} />
+            <GeneratePdfButton 
+              offerId={id} 
+              offerNumber={offer.offer_number}
+              customerName={offer.customer?.company_name}
+              offerTitle={offer.title}
+            />
             <DuplicateOfferButton offerId={id} />
             <Button asChild>
               <Link href={`/dashboard/offers/${offer.id}/edit`}>

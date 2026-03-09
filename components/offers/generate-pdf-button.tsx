@@ -16,6 +16,8 @@ import {
 interface GeneratePdfButtonProps {
   offerId: string
   offerNumber: number
+  customerName?: string
+  offerTitle?: string
 }
 
 type Company = 'mysair' | 'agfri'
@@ -29,7 +31,7 @@ const PDF_OPTIONS: Array<{ label: string; company: Company; priceType: PriceType
   { label: 'Oferta NETO (AGFRI)', company: 'agfri', priceType: 'neto' },
 ]
 
-export function GeneratePdfButton({ offerId, offerNumber }: GeneratePdfButtonProps) {
+export function GeneratePdfButton({ offerId, offerNumber, customerName = '', offerTitle = '' }: GeneratePdfButtonProps) {
   const [loading, setLoading] = useState(false)
 
   const handleGeneratePdf = async (company: Company, priceType: PriceType) => {
@@ -44,10 +46,13 @@ export function GeneratePdfButton({ offerId, offerNumber }: GeneratePdfButtonPro
 
       const blob = await response.blob()
       const url = URL.createObjectURL(blob)
-      const year = new Date().getFullYear()
-      const suffix = company === 'agfri' ? '_AGFRI' : ''
-      const type = priceType === 'neto' ? '_NETO' : priceType === 'all' ? '_COMPLETO' : '_PVP'
-      const filename = `oferta-${year}-${String(offerNumber).padStart(4, '0')}${suffix}${type}.pdf`
+      
+      // Construir nombre del archivo: nº oferta + cliente + título + tipo precio
+      const offerNum = String(offerNumber).padStart(4, '0')
+      const client = customerName ? customerName.replace(/[^\w\s-]/g, '').trim() : 'Cliente'
+      const title = offerTitle ? offerTitle.replace(/[^\w\s-]/g, '').trim() : 'Oferta'
+      const type = priceType === 'neto' ? 'Neto' : priceType === 'all' ? 'Completo' : 'PVP'
+      const filename = `${offerNum}-${client}-${title}-${type}.pdf`
       
       // Crear enlace con atributo download para mostrar diálogo "Guardar como"
       const a = document.createElement('a')
