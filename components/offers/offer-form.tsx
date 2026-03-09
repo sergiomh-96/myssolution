@@ -895,8 +895,11 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
   }
 
   const addItemByProductId = (productId: string, quantity: number) => {
-    const product = products.find(p => p.id === productId)
-    if (!product) return
+    const product = products.find(p => String(p.id) === String(productId))
+    if (!product) {
+      console.log('[v0] addItemByProductId: product not found for id', productId, 'available ids:', products.map(p => p.id).slice(0, 5))
+      return
+    }
     const precioFromTarifa = getPrecioForProduct(product.id)
     let automaticDiscount = 0
     if (currentCustomer) {
@@ -906,13 +909,13 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
     }
     const newItem = {
       ...createEmptyItem('article'),
-      product_id: productId,
+      product_id: String(productId),
       description: `${product.referencia} - ${product.modelo_nombre || product.descripcion || ''}`,
       pvp: precioFromTarifa !== null ? precioFromTarifa : 0,
       quantity,
       discount1: automaticDiscount,
     }
-    setItems([...items, calculateItemTotals(newItem)])
+    setItems(prev => [...prev, calculateItemTotals(newItem)])
   }
 
   const addExternalItem = () => {

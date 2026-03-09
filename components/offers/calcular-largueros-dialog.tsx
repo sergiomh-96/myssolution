@@ -68,14 +68,14 @@ export function CalcularLarguerosDialog({ items, onAddItem }: Props) {
       addLog(`Productos cargados: ${productData?.length ?? 0}`)
 
       const prodMap: Record<string, { referencia: string; larguero_largo: string | null; larguero_alto: string | null }> = {}
-      productData?.forEach(p => { prodMap[p.id] = p })
+      productData?.forEach(p => { prodMap[String(p.id)] = p })
 
       // Accumulate totals keyed by larguero referencia string
       const totals: Record<string, { referencia: string; tipo: 'largo' | 'alto'; unidades: number }> = {}
 
       for (const item of items) {
         if (!item.product_id) continue
-        const prod = prodMap[item.product_id]
+        const prod = prodMap[String(item.product_id)]
         if (!prod) { addLog(`  Producto id=${item.product_id} no encontrado`, 'warn'); continue }
 
         const qty = item.quantity || 1
