@@ -12,7 +12,6 @@ import {
   Headphones, 
   MessageSquare, 
   Settings, 
-  Building2,
   BarChart3,
   Package,
   UserCog,
