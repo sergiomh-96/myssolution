@@ -1890,6 +1890,8 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
           <GeneratePdfButton 
             offerId={savedOfferId || offer?.id || ''} 
             offerNumber={offer?.offer_number || 0}
+            customerName={offer?.customer?.company_name || currentCustomer?.company_name}
+            offerTitle={offer?.title}
           />
         </div>
         <div className="flex gap-2">

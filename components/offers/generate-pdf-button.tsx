@@ -58,7 +58,6 @@ export function GeneratePdfButton({ offerId, offerNumber, customerName = '', off
         ? offerTitle.replace(/[^\w\s\-ñáéíóúÑÁÉÍÓÚ]/g, '').trim().replace(/\s+/g, '-') 
         : 'Oferta'
       const type = priceType === 'neto' ? 'Neto' : priceType === 'all' ? 'Completo' : 'PVP'
-      console.log('[v0] PDF filename:', { year, offerNum, client, title, type, customerName, offerTitle })
       const filename = `${year}-${offerNum}-${client}-${title}-${type}.pdf`
       
       // Crear enlace con atributo download para mostrar diálogo "Guardar como"
