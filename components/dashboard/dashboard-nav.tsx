@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import type { Profile } from '@/lib/types/database'
@@ -98,14 +99,15 @@ export function DashboardNav({ profile, onNavigate }: DashboardNavProps) {
   return (
     <aside className="w-64 border-r border-border bg-card flex flex-col">
       <div className="p-6 border-b border-border">
-        <Link href="/dashboard" className="flex items-center gap-3">
-          <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary">
-            <Building2 className="w-6 h-6 text-primary-foreground" />
-          </div>
-          <div>
-            <h1 className="text-lg font-semibold text-foreground">MYSSolution</h1>
-            <p className="text-xs text-muted-foreground">Business CRM</p>
-          </div>
+        <Link href="/dashboard" className="flex items-center gap-2">
+          <Image 
+            src="/images/myssolution-logo.png" 
+            alt="MYS Solution" 
+            width={140}
+            height={40}
+            priority
+            className="h-10 w-auto"
+          />
         </Link>
       </div>
       

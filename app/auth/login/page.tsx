@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
@@ -8,7 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Building2, Loader2, Eye, EyeOff } from 'lucide-react'
+import { Loader2, Eye, EyeOff } from 'lucide-react'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -49,12 +50,16 @@ export default function LoginPage() {
       <Card className="w-full max-w-md shadow-lg">
         <CardHeader className="space-y-3 text-center">
           <div className="flex justify-center">
-            <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-primary">
-              <Building2 className="w-7 h-7 text-primary-foreground" />
-            </div>
+            <Image 
+              src="/images/myssolution-logo.png" 
+              alt="MYS Solution" 
+              width={180}
+              height={50}
+              priority
+              className="h-12 w-auto"
+            />
           </div>
-          <CardTitle className="text-2xl font-semibold">Welcome to MYSSolution</CardTitle>
-          <CardDescription>Sign in to your CRM account</CardDescription>
+          <CardDescription className="text-base mt-2">Sign in to your CRM account</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">
