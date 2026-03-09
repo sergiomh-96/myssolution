@@ -13,7 +13,7 @@ export async function GET(
   const { id } = await params
   const url = new URL(req.url)
   const company = (url.searchParams.get('company') || 'mysair') as 'mysair' | 'agfri'
-  const priceType = (url.searchParams.get('priceType') || 'pvp') as 'pvp' | 'neto'
+  const priceType = (url.searchParams.get('priceType') || 'pvp') as 'pvp' | 'neto' | 'all'
 
   const supabase = await createClient()
 
@@ -211,7 +211,7 @@ export async function GET(
   writeField(colMid, ry, 'PLAZO DE ENTREGA', 'A consultar')
   hr(ry + 5.5, colMid, pageW - marginR)
   ry += 9
-  const priceLabel = priceType === 'neto' ? 'NETO' : 'PVP'
+  const priceLabel = priceType === 'neto' ? 'NETO' : priceType === 'all' ? 'PVP + DESCUENTO + NETO' : 'PVP'
   writeField(colMid, ry, 'PRECIO', priceLabel, true)
 
   const tableTop = ruleY + 47
@@ -227,26 +227,65 @@ export async function GET(
   const yellowText: [number, number, number] = [120, 90, 10]
 
   // ---- Articles table ----
-  const priceColumn = priceType === 'neto' ? 'neto_total2' : 'pvp_total'
-  const priceHeader = priceType === 'neto' ? 'Neto Total' : 'PVP Total'
+  const priceHeader = priceType === 'neto' ? 'Neto Total' : priceType === 'all' ? 'PVP Total' : 'PVP Total'
+  const descuentoHeader = priceType === 'all' ? 'Descuento' : ''
+  const netoHeader = priceType === 'all' ? 'Neto Total' : ''
 
   const tableRows = offerItems.map((item) => {
-    const priceValue = priceType === 'neto' 
-      ? Number(item.neto_total2 || 0).toFixed(2)
-      : Number(item.pvp_total || 0).toFixed(2)
-
-    // Calculate unit price: if neto, show neto_unit = neto_total2 / quantity
+    const pvpTotal = Number(item.pvp_total || 0).toFixed(2)
+    const netoTotal = Number(item.neto_total2 || 0).toFixed(2)
+    const descuento = item.type === 'article' ? (item.discount1 || 0).toFixed(2) : '-'
     const unitPrice = priceType === 'neto'
       ? (Number(item.neto_total2 || 0) / Math.max(Number(item.quantity || 1), 1)).toFixed(2)
+      : priceType === 'all'
+      ? Number(item.pvp || 0).toFixed(2)
       : Number(item.pvp || 0).toFixed(2)
 
     if (item.type === 'summary') {
+      if (priceType === 'all') {
+        return [
+          { content: item.description || 'Resumen', colSpan: 3, styles: { fontStyle: 'bold' as const, textColor: navyText, fillColor: navyBg } },
+          { content: '', styles: { textColor: navyText, fillColor: navyBg } },
+          { content: '', styles: { textColor: navyText, fillColor: navyBg } },
+          { content: `€${netoTotal}`, styles: { fontStyle: 'bold' as const, halign: 'right' as const, textColor: navyText, fillColor: navyBg } },
+        ]
+      }
       return [
         { content: item.description || 'Resumen', colSpan: 2, styles: { fontStyle: 'bold' as const, textColor: navyText, fillColor: navyBg } },
         { content: '', styles: { textColor: navyText, fillColor: navyBg } },
         { content: '', styles: { textColor: navyText, fillColor: navyBg } },
-        { content: `€${priceValue}`, styles: { fontStyle: 'bold' as const, halign: 'right' as const, textColor: navyText, fillColor: navyBg } },
+        { content: `€${priceType === 'neto' ? netoTotal : pvpTotal}`, styles: { fontStyle: 'bold' as const, halign: 'right' as const, textColor: navyText, fillColor: navyBg } },
       ]
+    }
+    if (item.type === 'section_header') {
+      return [
+        { content: item.description || '', colSpan: priceType === 'all' ? 6 : 5, styles: { fontStyle: 'bold' as const, textColor: navyText, fillColor: navyBg } },
+      ]
+    }
+    if (item.type === 'note') {
+      return [
+        { content: item.description || '', colSpan: priceType === 'all' ? 6 : 5, styles: { fontStyle: 'italic' as const, textColor: yellowText, fillColor: yellowBg } },
+      ]
+    }
+    
+    if (priceType === 'all') {
+      return [
+        item.product?.referencia || '-',
+        item.description || item.product?.descripcion || '-',
+        String(item.quantity ?? 1),
+        `€${unitPrice}`,
+        `${descuento}%`,
+        `€${netoTotal}`,
+      ]
+    }
+    
+    return [
+      item.product?.referencia || '-',
+      item.description || item.product?.descripcion || '-',
+      String(item.quantity ?? 1),
+      `€${unitPrice}`,
+      `€${priceType === 'neto' ? netoTotal : pvpTotal}`,
+    ]
     }
     if (item.type === 'section_header') {
       return [
@@ -274,12 +313,20 @@ export async function GET(
       return s + value
     }, 0)
 
+  const tableHead = priceType === 'all'
+    ? ['Referencia', 'Observaciones', 'Cantidad', 'PVP', 'Descuento', 'Neto Total']
+    : ['Referencia', 'Observaciones', 'Cantidad', priceType === 'neto' ? 'Neto' : 'PVP', priceHeader]
+
+  const tableFoot = priceType === 'all'
+    ? [['', '', '', '', { content: 'TOTAL:', halign: 'center' }, { content: `€${total.toFixed(2)}`, halign: 'center' }]]
+    : [['', '', '', { content: 'TOTAL:', halign: 'center' }, { content: `€${total.toFixed(2)}`, halign: 'center' }]]
+
   autoTable(doc, {
     startY: tableTop,
     margin: { left: marginL, right: marginR },
-    head: [['Referencia', 'Observaciones', 'Cantidad', priceType === 'neto' ? 'Neto' : 'PVP', priceHeader]],
+    head: [tableHead],
     body: tableRows,
-    foot: [['', '', '', { content: 'TOTAL:', halign: 'center' }, { content: `€${total.toFixed(2)}`, halign: 'center' }]],
+    foot: tableFoot,
     styles: {
       fontSize: 7.5,
       cellPadding: { top: 2.5, bottom: 2.5, left: 3, right: 3 },
@@ -302,7 +349,14 @@ export async function GET(
       fontSize: 8.5,
       lineWidth: 0,
     },
-    columnStyles: {
+    columnStyles: priceType === 'all' ? {
+      0: { cellWidth: 28, halign: 'left', fontStyle: 'bold', headHalign: 'left' },
+      1: { cellWidth: 'auto', halign: 'left', headHalign: 'left' },
+      2: { cellWidth: 16, halign: 'center' },
+      3: { cellWidth: 18, halign: 'center' },
+      4: { cellWidth: 16, halign: 'center' },
+      5: { cellWidth: 20, halign: 'center', fontStyle: 'bold', headHalign: 'center' },
+    } : {
       0: { cellWidth: 32, halign: 'left', fontStyle: 'bold', headHalign: 'left' },
       1: { cellWidth: 'auto', halign: 'left', headHalign: 'left' },
       2: { cellWidth: 18, halign: 'center' },

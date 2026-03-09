@@ -19,11 +19,12 @@ interface GeneratePdfButtonProps {
 }
 
 type Company = 'mysair' | 'agfri'
-type PriceType = 'pvp' | 'neto'
+type PriceType = 'pvp' | 'neto' | 'all'
 
 const PDF_OPTIONS: Array<{ label: string; company: Company; priceType: PriceType }> = [
   { label: 'Oferta PVP (MYSAIR)', company: 'mysair', priceType: 'pvp' },
   { label: 'Oferta NETO (MYSAIR)', company: 'mysair', priceType: 'neto' },
+  { label: 'Oferta PVP+DESCUENTO+NETO (MYSAIR)', company: 'mysair', priceType: 'all' },
   { label: 'Oferta PVP (AGFRI)', company: 'agfri', priceType: 'pvp' },
   { label: 'Oferta NETO (AGFRI)', company: 'agfri', priceType: 'neto' },
 ]
@@ -46,7 +47,7 @@ export function GeneratePdfButton({ offerId, offerNumber }: GeneratePdfButtonPro
       const a = document.createElement('a')
       const year = new Date().getFullYear()
       const suffix = company === 'agfri' ? '_AGFRI' : ''
-      const type = priceType === 'neto' ? '_NETO' : '_PVP'
+      const type = priceType === 'neto' ? '_NETO' : priceType === 'all' ? '_COMPLETO' : '_PVP'
       a.href = url
       a.download = `oferta-${year}-${String(offerNumber).padStart(4, '0')}${suffix}${type}.pdf`
       document.body.appendChild(a)
