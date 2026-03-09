@@ -303,11 +303,11 @@ export async function GET(
       lineWidth: 0,
     },
     columnStyles: {
-      0: { cellWidth: 32, halign: 'left', fontStyle: 'bold' },
+      0: { cellWidth: 32, halign: 'left', fontStyle: 'bold', headHalign: 'left' },
       1: { cellWidth: 'auto', halign: 'left', headHalign: 'left' },
       2: { cellWidth: 18, halign: 'center' },
       3: { cellWidth: 22, halign: 'center' },
-      4: { cellWidth: 26, halign: 'center', fontStyle: 'bold' },
+      4: { cellWidth: 26, halign: 'center', fontStyle: 'bold', headHalign: 'center' },
     },
     alternateRowStyles: { fillColor: palette.rowAlt },
     showFoot: 'lastPage',
@@ -321,7 +321,7 @@ export async function GET(
   if (descriptionText) {
     const descY = finalY + 7
     doc.setFontSize(7).setFont('helvetica', 'bold').setTextColor(...palette.textMuted)
-    doc.text('DESCRIPCIÓN', marginL, descY)
+    doc.text('OBSERVACIONES', marginL, descY)
     doc.setFontSize(8).setFont('helvetica', 'normal').setTextColor(...palette.textDark)
     const lines = doc.splitTextToSize(descriptionText, pageW - marginL - marginR)
     doc.text(lines, marginL, descY + 4.5)
