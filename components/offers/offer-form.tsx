@@ -70,20 +70,20 @@ function ProductSearchInput({
   // Filter products by search term, prioritizing referencia matches
   const filteredProducts = searchTerm.trim()
     ? products.filter(p => 
-        p.referencia.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.descripcion.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        p.referencia?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        p.descripcion?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (p.modelo_nombre && p.modelo_nombre.toLowerCase().includes(searchTerm.toLowerCase()))
       )
       .sort((a, b) => {
-        const aRefMatch = a.referencia.toLowerCase().includes(searchTerm.toLowerCase())
-        const bRefMatch = b.referencia.toLowerCase().includes(searchTerm.toLowerCase())
+        const aRefMatch = a.referencia?.toLowerCase().includes(searchTerm.toLowerCase())
+        const bRefMatch = b.referencia?.toLowerCase().includes(searchTerm.toLowerCase())
         
         // Priorize referencia matches first
         if (aRefMatch && !bRefMatch) return -1
         if (!aRefMatch && bRefMatch) return 1
         
         // Then sort alphabetically
-        return a.referencia.localeCompare(b.referencia)
+        return (a.referencia || '').localeCompare(b.referencia || '')
       })
       .slice(0, 10)
     : []
@@ -1823,11 +1823,19 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
           <ImportItemsDialog offerId={offer.id} onSuccess={() => loadOfferItems()} />
         )}
         <CalcularLarguerosDialog
-          items={items.map(i => ({
-            product_id: i.product_id || '',
-            quantity: i.quantity || 1,
-            product: products.find(p => p.id === i.product_id) as any,
-          }))}
+          items={items.filter(i => i.type === 'article' && i.product_id).map(i => {
+            const product = products.find(p => p.id === i.product_id)
+            return {
+              product_id: i.product_id || '',
+              quantity: i.quantity || 1,
+              product: product ? {
+                referencia: product.referencia || '',
+                descripcion: product.descripcion || '',
+                larguero_largo: product.larguero_largo || null,
+                larguero_alto: product.larguero_alto || null,
+              } : undefined,
+            }
+          })}
           onAddItem={addItemByProductId}
         />
       </div>
