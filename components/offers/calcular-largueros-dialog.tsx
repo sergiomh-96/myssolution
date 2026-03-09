@@ -45,112 +45,99 @@ export function CalcularLarguerosDialog({ items, onAddItem }: CalcularLarguerosD
     try {
       const supabase = createClient()
 
-      // 1. Collect all product_ids from offer items (only articles with products)
-      const productIds = items
-        .filter(i => i.product_id && i.product?.larguero_largo != null || i.product?.larguero_alto != null)
-        .map(i => i.product_id)
-
-      if (productIds.length === 0) {
-        // Load products fresh from DB
-        const itemProductIds = items.filter(i => i.product_id).map(i => i.product_id)
-        if (itemProductIds.length === 0) { setRows([]); setLoading(false); return }
-
-        const { data: prods } = await supabase
-          .from('products')
-          .select('id, referencia, descripcion, larguero_largo, larguero_alto')
-          .in('id', itemProductIds)
-
-        const prodMap: Record<string, { larguero_largo: number | null, larguero_alto: number | null, referencia: string }> = {}
-        for (const p of prods || []) prodMap[p.id] = p
-
-        // Recalculate totals by mm
-        const totalsByMm: Record<number, { tipo: 'largo' | 'alto', unidades: number }> = {}
-        for (const item of items) {
-          if (!item.product_id) continue
-          const prod = prodMap[item.product_id]
-          if (!prod) continue
-          const qty = item.quantity || 1
-          if (prod.larguero_largo) {
-            const mm = prod.larguero_largo
-            if (!totalsByMm[mm]) totalsByMm[mm] = { tipo: 'largo', unidades: 0 }
-            totalsByMm[mm].unidades += qty * 2
-          }
-          if (prod.larguero_alto) {
-            const mm = prod.larguero_alto
-            // Use a combined key for largo vs alto
-            const key = mm + 0.001 // distinguish alto from largo at same mm
-            if (!totalsByMm[key]) totalsByMm[key] = { tipo: 'alto', unidades: 0 }
-            totalsByMm[key].unidades += qty * 2
-          }
-        }
-
-        await buildRows(supabase, totalsByMm)
-      } else {
-        // Recalculate using existing product data in items
-        const totalsByKey: Record<string, { mm: number, tipo: 'largo' | 'alto', unidades: number }> = {}
-        for (const item of items) {
-          if (!item.product_id || !item.product) continue
-          const qty = item.quantity || 1
-          if (item.product.larguero_largo) {
-            const key = `largo_${item.product.larguero_largo}`
-            if (!totalsByKey[key]) totalsByKey[key] = { mm: item.product.larguero_largo, tipo: 'largo', unidades: 0 }
-            totalsByKey[key].unidades += qty * 2
-          }
-          if (item.product.larguero_alto) {
-            const key = `alto_${item.product.larguero_alto}`
-            if (!totalsByKey[key]) totalsByKey[key] = { mm: item.product.larguero_alto, tipo: 'alto', unidades: 0 }
-            totalsByKey[key].unidades += qty * 2
-          }
-        }
-        await buildRowsFromKeys(supabase, totalsByKey)
+      // 1. Get product_ids from items
+      const itemProductIds = items.filter(i => i.product_id).map(i => i.product_id)
+      if (itemProductIds.length === 0) {
+        setRows([])
+        setLoading(false)
+        return
       }
+
+      // 2. Load all products from DB with larguero fields
+      const { data: productData } = await supabase
+        .from('products')
+        .select('id, referencia, descripcion, larguero_largo, larguero_alto')
+        .in('id', itemProductIds)
+
+      const prodMap: Record<string, any> = {}
+      productData?.forEach(p => { prodMap[p.id] = p })
+
+      // 3. Calculate totals by mm and tipo
+      const totalsByKey: Record<string, { mm: number; tipo: 'largo' | 'alto'; unidades: number }> = {}
+
+      for (const item of items) {
+        if (!item.product_id) continue
+        const prod = prodMap[item.product_id]
+        if (!prod) continue
+
+        const qty = item.quantity || 1
+
+        // Each unit uses 2x larguero_largo and 2x larguero_alto
+        if (prod.larguero_largo && prod.larguero_largo > 0) {
+          const key = `largo_${prod.larguero_largo}`
+          if (!totalsByKey[key]) {
+            totalsByKey[key] = { mm: prod.larguero_largo, tipo: 'largo', unidades: 0 }
+          }
+          totalsByKey[key].unidades += qty * 2
+          console.log(`[v0] Added ${qty * 2} uds of MA45 ${prod.larguero_largo} (largo)`)
+        }
+
+        if (prod.larguero_alto && prod.larguero_alto > 0) {
+          const key = `alto_${prod.larguero_alto}`
+          if (!totalsByKey[key]) {
+            totalsByKey[key] = { mm: prod.larguero_alto, tipo: 'alto', unidades: 0 }
+          }
+          totalsByKey[key].unidades += qty * 2
+          console.log(`[v0] Added ${qty * 2} uds of MA45 ${prod.larguero_alto} (alto)`)
+        }
+      }
+
+      if (Object.keys(totalsByKey).length === 0) {
+        console.log('[v0] No largueros found - no products have larguero fields')
+        setRows([])
+        setLoading(false)
+        return
+      }
+
+      // 4. Find MA45 products for each mm
+      const mmSizes = Object.values(totalsByKey).map(v => v.mm)
+      const { data: largueroProds } = await supabase
+        .from('products')
+        .select('id, referencia, descripcion, pvp')
+        .ilike('referencia', 'MA45%')
+
+      console.log(`[v0] Found ${largueroProds?.length || 0} MA45 products`)
+
+      const result: LargueroRow[] = []
+      for (const entry of Object.values(totalsByKey)) {
+        const { mm, tipo, unidades } = entry
+        const ma45Ref = `MA45 ${mm}`
+        const largueroProduct = largueroProds?.find(
+          p => p.referencia.trim().toUpperCase() === ma45Ref.toUpperCase()
+        )
+
+        if (!largueroProduct) {
+          console.log(`[v0] MA45 ${mm} not found in products`)
+          continue
+        }
+
+        const multiplo12 = Math.ceil(unidades / 12) * 12
+        result.push({
+          largueroProduct,
+          mmSize: mm,
+          tipo,
+          unidadesNecesarias: unidades,
+          multiplo12,
+        })
+      }
+
+      console.log(`[v0] Final rows count: ${result.length}`)
+      setRows(result)
     } catch (e) {
-      console.error('Error calculando largueros:', e)
+      console.error('[v0] Error calculando largueros:', e)
     } finally {
       setLoading(false)
     }
-  }
-
-  const buildRows = async (supabase: ReturnType<typeof createClient>, totalsByMm: Record<number, { tipo: 'largo' | 'alto', unidades: number }>) => {
-    const mmValues = Object.keys(totalsByMm).map(Number)
-    if (mmValues.length === 0) { setRows([]); return }
-
-    const { data: largueroProds } = await supabase
-      .from('products')
-      .select('id, referencia, descripcion, pvp')
-      .ilike('referencia', 'MA45%')
-
-    const result: LargueroRow[] = []
-    for (const mmKey of mmValues) {
-      const { tipo, unidades } = totalsByMm[mmKey]
-      const mm = Math.round(mmKey)
-      const ma45Ref = `MA45 ${mm}`
-      const lp = largueroProds?.find(p => p.referencia.trim().toUpperCase() === ma45Ref.toUpperCase())
-      if (!lp) continue
-      const multiplo12 = Math.ceil(unidades / 12) * 12
-      result.push({ largueroProduct: lp, mmSize: mm, tipo, unidadesNecesarias: unidades, multiplo12 })
-    }
-    setRows(result)
-  }
-
-  const buildRowsFromKeys = async (supabase: ReturnType<typeof createClient>, totalsByKey: Record<string, { mm: number, tipo: 'largo' | 'alto', unidades: number }>) => {
-    const entries = Object.values(totalsByKey)
-    if (entries.length === 0) { setRows([]); return }
-
-    const { data: largueroProds } = await supabase
-      .from('products')
-      .select('id, referencia, descripcion, pvp')
-      .ilike('referencia', 'MA45%')
-
-    const result: LargueroRow[] = []
-    for (const { mm, tipo, unidades } of entries) {
-      const ma45Ref = `MA45 ${mm}`
-      const lp = largueroProds?.find(p => p.referencia.trim().toUpperCase() === ma45Ref.toUpperCase())
-      if (!lp) continue
-      const multiplo12 = Math.ceil(unidades / 12) * 12
-      result.push({ largueroProduct: lp, mmSize: mm, tipo, unidadesNecesarias: unidades, multiplo12 })
-    }
-    setRows(result)
   }
 
   const handleOpen = () => {
