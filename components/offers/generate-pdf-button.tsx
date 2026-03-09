@@ -47,12 +47,19 @@ export function GeneratePdfButton({ offerId, offerNumber, customerName = '', off
       const blob = await response.blob()
       const url = URL.createObjectURL(blob)
       
-      // Construir nombre del archivo: nº oferta + cliente + título + tipo precio
+      // Construir nombre del archivo: 2026-nº oferta + cliente + título + tipo precio
+      const year = new Date().getFullYear()
       const offerNum = String(offerNumber).padStart(4, '0')
-      const client = customerName ? customerName.replace(/[^\w\s-]/g, '').trim() : 'Cliente'
-      const title = offerTitle ? offerTitle.replace(/[^\w\s-]/g, '').trim() : 'Oferta'
+      // Sanitizar nombres: mantener letras, números, espacios y guiones. Reemplazar espacios con guiones
+      const client = customerName 
+        ? customerName.replace(/[^\w\s\-ñáéíóúÑÁÉÍÓÚ]/g, '').trim().replace(/\s+/g, '-') 
+        : 'Cliente'
+      const title = offerTitle 
+        ? offerTitle.replace(/[^\w\s\-ñáéíóúÑÁÉÍÓÚ]/g, '').trim().replace(/\s+/g, '-') 
+        : 'Oferta'
       const type = priceType === 'neto' ? 'Neto' : priceType === 'all' ? 'Completo' : 'PVP'
-      const filename = `${offerNum}-${client}-${title}-${type}.pdf`
+      console.log('[v0] PDF filename:', { year, offerNum, client, title, type, customerName, offerTitle })
+      const filename = `${year}-${offerNum}-${client}-${title}-${type}.pdf`
       
       // Crear enlace con atributo download para mostrar diálogo "Guardar como"
       const a = document.createElement('a')
