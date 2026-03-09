@@ -189,35 +189,35 @@ export function CalcularLarguerosDialog({ items, onAddItem }: Props) {
 
           {/* Results table */}
           {!loading && rows.length > 0 && (
-            <table className="w-full text-xs mt-1 border-collapse">
+            <table className="w-full text-xs mt-4 border-collapse">
               <thead>
                 <tr className="bg-muted text-left">
                   <th className="px-3 py-2 font-semibold">Referencia</th>
-                  <th className="px-3 py-2 font-semibold">Tipo</th>
-                  <th className="px-3 py-2 font-semibold text-center">Necesarias</th>
+                  <th className="px-3 py-2 font-semibold text-center">Cantidad</th>
                   <th className="px-3 py-2 font-semibold text-center">Múltiplo ×12</th>
-                  <th className="px-3 py-2 font-semibold text-center">Añadir</th>
+                  <th className="px-3 py-2 font-semibold text-center">Acción</th>
                 </tr>
               </thead>
               <tbody>
                 {rows.map((row, i) => (
                   <tr key={i} className="border-t border-border hover:bg-muted/40">
                     <td className="px-3 py-2 font-medium">{row.referencia}</td>
-                    <td className="px-3 py-2 text-muted-foreground capitalize">{row.tipo}</td>
-                    <td className="px-3 py-2 text-center font-semibold">{row.unidadesNecesarias}</td>
+                    <td className="px-3 py-2 text-center">{row.unidadesNecesarias}</td>
                     <td className="px-3 py-2 text-center font-semibold text-primary">{row.multiplo12}</td>
                     <td className="px-3 py-2">
                       <div className="flex gap-1 justify-center">
                         <Button type="button" size="sm" variant="outline"
-                          className="h-6 px-2 text-[10px]"
+                          className="h-6 px-2.5 text-[10px]"
                           onClick={() => onAddItem(row.productId, row.unidadesNecesarias)}>
-                          <Plus className="w-2.5 h-2.5 mr-0.5" />{row.unidadesNecesarias} uds
+                          <Plus className="w-2.5 h-2.5 mr-0.5" />
+                          Añadir
                         </Button>
                         {row.multiplo12 !== row.unidadesNecesarias && (
                           <Button type="button" size="sm" variant="default"
-                            className="h-6 px-2 text-[10px]"
+                            className="h-6 px-2.5 text-[10px]"
                             onClick={() => onAddItem(row.productId, row.multiplo12)}>
-                            <Plus className="w-2.5 h-2.5 mr-0.5" />{row.multiplo12} ×12
+                            <Plus className="w-2.5 h-2.5 mr-0.5" />
+                            Añadir
                           </Button>
                         )}
                       </div>
