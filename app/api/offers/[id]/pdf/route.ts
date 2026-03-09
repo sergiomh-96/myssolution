@@ -277,9 +277,9 @@ export async function GET(
   autoTable(doc, {
     startY: tableTop,
     margin: { left: marginL, right: marginR },
-    head: [['Referencia', 'Descripción', 'Cantidad', priceType === 'neto' ? 'Neto' : 'PVP', priceHeader]],
+    head: [['Referencia', 'Observaciones', 'Cantidad', priceType === 'neto' ? 'Neto' : 'PVP', priceHeader]],
     body: tableRows,
-    foot: [['', '', '', 'TOTAL:', `€${total.toFixed(2)}`]],
+    foot: [['', '', '', { content: 'TOTAL:', halign: 'center' }, { content: `€${total.toFixed(2)}`, halign: 'center' }]],
     styles: {
       fontSize: 7.5,
       cellPadding: { top: 2.5, bottom: 2.5, left: 3, right: 3 },
@@ -303,7 +303,7 @@ export async function GET(
       lineWidth: 0,
     },
     columnStyles: {
-      0: { cellWidth: 32, halign: 'center', fontStyle: 'bold' },
+      0: { cellWidth: 32, halign: 'left', fontStyle: 'bold' },
       1: { cellWidth: 'auto', halign: 'left', headHalign: 'left' },
       2: { cellWidth: 18, halign: 'center' },
       3: { cellWidth: 22, halign: 'center' },
