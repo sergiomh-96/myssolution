@@ -296,8 +296,8 @@ export async function GET(
     }, 0)
 
   const tableHead = priceType === 'all'
-    ? ['Referencia', 'Observaciones', 'Cantidad', 'PVP', 'Descuento', 'Neto Total']
-    : ['Referencia', 'Observaciones', 'Cantidad', priceType === 'neto' ? 'Neto' : 'PVP', priceHeader]
+    ? ['Referencia', 'Observaciones', 'Cant.', 'PVP', 'Desc%', 'Neto Total']
+    : ['Referencia', 'Observaciones', 'Cant.', priceType === 'neto' ? 'Neto' : 'PVP', priceHeader]
 
   const tableFoot = priceType === 'all'
     ? [['', '', '', '', { content: 'TOTAL:', halign: 'center' }, { content: `€${total.toFixed(2)}`, halign: 'center' }]]
