@@ -50,16 +50,16 @@ export default function LoginPage() {
       <Card className="w-full max-w-md shadow-lg">
         <CardHeader className="space-y-3 text-center">
           <div className="flex justify-center">
-            <Image 
-              src="/images/myssolution-logo.png" 
-              alt="MYS Solution" 
+            <Image
+              src="/images/myssolution-logo.png"
+              alt="MYS Solution"
               width={180}
               height={50}
               priority
               className="h-12 w-auto"
             />
           </div>
-          <CardDescription className="text-base mt-2">Sign in to your CRM account</CardDescription>
+          <CardDescription className="text-base mt-2">Inicia sesión con tu email/contraseña</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">
@@ -68,7 +68,7 @@ export default function LoginPage() {
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
-            
+
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -81,7 +81,7 @@ export default function LoginPage() {
                 disabled={loading}
               />
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
               <div className="relative">

@@ -1,7 +1,7 @@
 -- Add offer_number column to offers table
 ALTER TABLE offers ADD COLUMN offer_number bigint;
 
--- Create a sequence for offer numbering per user
+-- Create a sequence for offer numbering (global)
 CREATE SEQUENCE offer_number_seq;
 
 -- Create a function to auto-generate offer_number on insert
@@ -10,11 +10,10 @@ RETURNS TRIGGER AS $$
 DECLARE
   next_number bigint;
 BEGIN
-  -- Get the count of offers created by this user in the current year
-  SELECT COUNT(*) + 1 INTO next_number
+  -- Get the maximum offer_number globally and add 1
+  SELECT COALESCE(MAX(offer_number), 0) + 1 INTO next_number
   FROM offers
-  WHERE created_by = NEW.created_by
-  AND EXTRACT(YEAR FROM created_at) = EXTRACT(YEAR FROM NOW());
+  WHERE offer_number IS NOT NULL;
   
   NEW.offer_number := next_number;
   RETURN NEW;
@@ -26,3 +25,4 @@ CREATE TRIGGER trigger_generate_offer_number
 BEFORE INSERT ON offers
 FOR EACH ROW
 EXECUTE FUNCTION generate_offer_number();
+
