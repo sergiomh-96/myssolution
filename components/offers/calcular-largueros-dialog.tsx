@@ -36,6 +36,7 @@ export function CalcularLarguerosDialog({ items, onAddItem }: Props) {
   const [loading, setLoading] = useState(false)
   const [rows, setRows] = useState<LargueroRow[]>([])
   const [log, setLog] = useState<LogEntry[]>([])
+  const [showLog, setShowLog] = useState(false)
 
   const calcular = async () => {
     setLoading(true)
@@ -172,60 +173,88 @@ export function CalcularLarguerosDialog({ items, onAddItem }: Props) {
             <div className="text-sm text-muted-foreground py-6 text-center">Calculando...</div>
           )}
 
-          {/* Process log */}
+          {/* Process log - Hidden by default */}
           {!loading && log.length > 0 && (
-            <div className="bg-muted rounded-md p-3 text-[11px] font-mono space-y-0.5 max-h-44 overflow-y-auto">
-              {log.map((entry, i) => (
-                <div key={i} className={
-                  entry.type === 'ok' ? 'text-green-700 dark:text-green-400' :
-                  entry.type === 'warn' ? 'text-orange-600 dark:text-orange-400' :
-                  'text-muted-foreground'
-                }>
-                  {entry.type === 'ok' ? '✓' : entry.type === 'warn' ? '⚠' : '·'} {entry.msg}
+            <div className="space-y-2">
+              <Button type="button" variant="ghost" size="sm" className="text-xs h-7"
+                onClick={() => setShowLog(!showLog)}>
+                {showLog ? 'Ocultar' : 'Mostrar'} información del cálculo
+              </Button>
+              {showLog && (
+                <div className="bg-muted rounded-md p-3 text-[11px] font-mono space-y-0.5 max-h-44 overflow-y-auto">
+                  {log.map((entry, i) => (
+                    <div key={i} className={
+                      entry.type === 'ok' ? 'text-green-700 dark:text-green-400' :
+                      entry.type === 'warn' ? 'text-orange-600 dark:text-orange-400' :
+                      'text-muted-foreground'
+                    }>
+                      {entry.type === 'ok' ? '✓' : entry.type === 'warn' ? '⚠' : '·'} {entry.msg}
+                    </div>
+                  ))}
                 </div>
-              ))}
+              )}
             </div>
           )}
 
           {/* Results table */}
           {!loading && rows.length > 0 && (
-            <table className="w-full text-xs mt-4 border-collapse">
-              <thead>
-                <tr className="bg-muted text-left">
-                  <th className="px-3 py-2 font-semibold">Referencia</th>
-                  <th className="px-3 py-2 font-semibold text-center">Cantidad</th>
-                  <th className="px-3 py-2 font-semibold text-center">Múltiplo ×12</th>
-                  <th className="px-3 py-2 font-semibold text-center">Acción</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((row, i) => (
-                  <tr key={i} className="border-t border-border hover:bg-muted/40">
-                    <td className="px-3 py-2 font-medium">{row.referencia}</td>
-                    <td className="px-3 py-2 text-center">{row.unidadesNecesarias}</td>
-                    <td className="px-3 py-2 text-center font-semibold text-primary">{row.multiplo12}</td>
-                    <td className="px-3 py-2">
-                      <div className="flex gap-1 justify-center">
-                        <Button type="button" size="sm" variant="outline"
-                          className="h-6 px-2.5 text-[10px]"
-                          onClick={() => onAddItem(row.productId, row.unidadesNecesarias)}>
-                          <Plus className="w-2.5 h-2.5 mr-0.5" />
-                          Añadir
-                        </Button>
-                        {row.multiplo12 !== row.unidadesNecesarias && (
-                          <Button type="button" size="sm" variant="default"
-                            className="h-6 px-2.5 text-[10px]"
-                            onClick={() => onAddItem(row.productId, row.multiplo12)}>
-                            <Plus className="w-2.5 h-2.5 mr-0.5" />
-                            Añadir
-                          </Button>
-                        )}
-                      </div>
-                    </td>
+            <>
+              <table className="w-full text-xs mt-4 border-collapse">
+                <thead>
+                  <tr className="bg-muted text-left">
+                    <th className="px-3 py-2 font-semibold">Referencia</th>
+                    <th className="px-3 py-2 font-semibold text-center">Cantidad</th>
+                    <th className="px-3 py-2 font-semibold text-center">Múltiplo ×12</th>
+                    <th className="px-3 py-2 font-semibold text-center">Acción</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {rows.map((row, i) => (
+                    <tr key={i} className="border-t border-border hover:bg-muted/40">
+                      <td className="px-3 py-2 font-medium">{row.referencia}</td>
+                      <td className="px-3 py-2 text-center">{row.unidadesNecesarias}</td>
+                      <td className="px-3 py-2 text-center font-semibold text-primary">{row.multiplo12}</td>
+                      <td className="px-3 py-2">
+                        <div className="flex gap-1 justify-center">
+                          <Button type="button" size="sm" variant="outline"
+                            className="h-6 px-2.5 text-[10px]"
+                            onClick={() => onAddItem(row.productId, row.unidadesNecesarias)}>
+                            <Plus className="w-2.5 h-2.5 mr-0.5" />
+                            Unitario
+                          </Button>
+                          {row.multiplo12 !== row.unidadesNecesarias && (
+                            <Button type="button" size="sm" variant="default"
+                              className="h-6 px-2.5 text-[10px]"
+                              onClick={() => onAddItem(row.productId, row.multiplo12)}>
+                              <Plus className="w-2.5 h-2.5 mr-0.5" />
+                              Múltiplo
+                            </Button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              {/* Add all buttons */}
+              <div className="flex gap-2 mt-4 pt-3 border-t border-border">
+                <Button type="button" size="sm" variant="outline" className="flex-1 h-8 text-xs"
+                  onClick={() => {
+                    rows.forEach(row => onAddItem(row.productId, row.unidadesNecesarias))
+                  }}>
+                  <Plus className="w-3 h-3 mr-1" />
+                  Añadir todo Unitario
+                </Button>
+                <Button type="button" size="sm" variant="default" className="flex-1 h-8 text-xs"
+                  onClick={() => {
+                    rows.forEach(row => onAddItem(row.productId, row.multiplo12))
+                  }}>
+                  <Plus className="w-3 h-3 mr-1" />
+                  Añadir todo Múltiplo
+                </Button>
+              </div>
+            </>
           )}
 
           {!loading && rows.length === 0 && log.length > 0 && (
