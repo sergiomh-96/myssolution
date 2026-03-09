@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Copy, Loader2, Plus, X, CheckCircle, ChevronDown, Check, Search, Eye, FileText, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react'
 import { DuplicateOfferButton } from './duplicate-offer-button'
+import { CalcularLarguerosDialog } from './calcular-largueros-dialog'
 import { GeneratePdfButton } from './generate-pdf-button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { ImportItemsDialog } from './import-items'
@@ -533,7 +534,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
 
       // ── Phase 2: enrich with full columns + load tarifas/settings in parallel
       const [fullProducts, tarifasResponse, settingsResponse] = await Promise.all([
-        fetchAllProducts('id, referencia, descripcion, modelo_nombre, familia'),
+        fetchAllProducts('id, referencia, descripcion, modelo_nombre, familia, larguero_largo, larguero_alto'),
         supabase.from('tarifas').select('id_tarifa, nombre').order('nombre'),
         supabase.from('app_settings').select('default_tarifa_id').eq('id', 1).single(),
       ])
@@ -891,6 +892,27 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
 
   const addItem = () => {
     setItems([...items, createEmptyItem('article')])
+  }
+
+  const addItemByProductId = (productId: string, quantity: number) => {
+    const product = products.find(p => p.id === productId)
+    if (!product) return
+    const precioFromTarifa = getPrecioForProduct(product.id)
+    let automaticDiscount = 0
+    if (currentCustomer) {
+      if (product.familia === 'SISTEMAS') automaticDiscount = currentCustomer.descuento_sistemas || 0
+      else if (product.familia === 'DIFUSIÓN') automaticDiscount = currentCustomer.descuento_difusion || 0
+      else if (product.familia === 'MYSAir') automaticDiscount = currentCustomer.descuento_agfri || 0
+    }
+    const newItem = {
+      ...createEmptyItem('article'),
+      product_id: productId,
+      description: `${product.referencia} - ${product.modelo_nombre || product.descripcion || ''}`,
+      pvp: precioFromTarifa !== null ? precioFromTarifa : 0,
+      quantity,
+      discount1: automaticDiscount,
+    }
+    setItems([...items, calculateItemTotals(newItem)])
   }
 
   const addExternalItem = () => {
@@ -1800,6 +1822,14 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
         {offer?.id && (
           <ImportItemsDialog offerId={offer.id} onSuccess={() => loadOfferItems()} />
         )}
+        <CalcularLarguerosDialog
+          items={items.map(i => ({
+            product_id: i.product_id || '',
+            quantity: i.quantity || 1,
+            product: products.find(p => p.id === i.product_id) as any,
+          }))}
+          onAddItem={addItemByProductId}
+        />
       </div>
 
       <div className="flex justify-between gap-2">
