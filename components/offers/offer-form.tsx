@@ -896,21 +896,19 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
 
   const addItemByProductId = (productId: string, quantity: number) => {
     const product = products.find(p => String(p.id) === String(productId))
-    if (!product) {
-      console.log('[v0] addItemByProductId: product not found for id', productId, 'available ids:', products.map(p => p.id).slice(0, 5))
-      return
-    }
-    const precioFromTarifa = getPrecioForProduct(product.id)
+    
+    const precioFromTarifa = product ? getPrecioForProduct(product.id) : null
     let automaticDiscount = 0
-    if (currentCustomer) {
+    if (product && currentCustomer) {
       if (product.familia === 'SISTEMAS') automaticDiscount = currentCustomer.descuento_sistemas || 0
       else if (product.familia === 'DIFUSIÓN') automaticDiscount = currentCustomer.descuento_difusion || 0
       else if (product.familia === 'MYSAir') automaticDiscount = currentCustomer.descuento_agfri || 0
     }
+    
     const newItem = {
       ...createEmptyItem('article'),
       product_id: String(productId),
-      description: `${product.referencia} - ${product.modelo_nombre || product.descripcion || ''}`,
+      description: product ? `${product.referencia} - ${product.modelo_nombre || product.descripcion || ''}` : '',
       pvp: precioFromTarifa !== null ? precioFromTarifa : 0,
       quantity,
       discount1: automaticDiscount,

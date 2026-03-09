@@ -254,6 +254,12 @@ export function CalcularLarguerosDialog({ items, onAddItem }: Props) {
                   Añadir todo Múltiplo
                 </Button>
               </div>
+
+              {/* Close button */}
+              <Button type="button" size="sm" variant="ghost" className="w-full h-8 text-xs mt-2"
+                onClick={() => setOpen(false)}>
+                Cerrar
+              </Button>
             </>
           )}
 
