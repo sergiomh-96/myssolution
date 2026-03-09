@@ -44,16 +44,28 @@ export function GeneratePdfButton({ offerId, offerNumber }: GeneratePdfButtonPro
 
       const blob = await response.blob()
       const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
+      
+      // Crear enlace pero sin descarga automática para mostrar diálogo de guardado
       const year = new Date().getFullYear()
       const suffix = company === 'agfri' ? '_AGFRI' : ''
       const type = priceType === 'neto' ? '_NETO' : priceType === 'all' ? '_COMPLETO' : '_PVP'
-      a.href = url
-      a.download = `oferta-${year}-${String(offerNumber).padStart(4, '0')}${suffix}${type}.pdf`
-      document.body.appendChild(a)
-      a.click()
-      a.remove()
-      URL.revokeObjectURL(url)
+      const filename = `oferta-${year}-${String(offerNumber).padStart(4, '0')}${suffix}${type}.pdf`
+      
+      // Abrir en nueva pestaña para que el navegador muestre diálogo "Guardar como"
+      const link = window.open(url, '_blank')
+      
+      // Si no se puede abrir en nueva pestaña, descargar directamente
+      if (!link) {
+        const a = document.createElement('a')
+        a.href = url
+        a.download = filename
+        document.body.appendChild(a)
+        a.click()
+        a.remove()
+      }
+      
+      // Limpiar URL después de 30 segundos
+      setTimeout(() => URL.revokeObjectURL(url), 30000)
 
       toast.success('PDF generado correctamente')
     } catch (err) {
