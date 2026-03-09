@@ -303,8 +303,8 @@ export async function GET(
       lineWidth: 0,
     },
     columnStyles: {
-      0: { cellWidth: 32, fontStyle: 'bold' },
-      1: { cellWidth: 'auto' },
+      0: { cellWidth: 32, halign: 'center', fontStyle: 'bold' },
+      1: { cellWidth: 'auto', halign: 'left' },
       2: { cellWidth: 18, halign: 'center' },
       3: { cellWidth: 22, halign: 'center' },
       4: { cellWidth: 26, halign: 'center', fontStyle: 'bold' },

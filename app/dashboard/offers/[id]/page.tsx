@@ -151,26 +151,44 @@ export default async function OfferDetailPage({ params }: PageProps) {
                       const d1 = (item.discount1 || 0) / 100
                       const d2 = (item.discount2 || 0) / 100
                       const totalDiscount = (1 - (1 - d1) * (1 - d2)) * 100
+
+                      // Determine row styling based on item type
+                      let rowClass = 'border-t border-border'
+                      let textClass = 'text-foreground'
+                      
+                      if (item.type === 'section_header') {
+                        rowClass += ' bg-[#1a2e4a]'
+                        textClass = 'text-white'
+                      } else if (item.type === 'note') {
+                        rowClass += ' bg-yellow-100'
+                        textClass = 'text-yellow-900'
+                      } else if (item.type === 'summary') {
+                        rowClass += ' bg-[#1a2e4a] font-semibold'
+                        textClass = 'text-white'
+                      } else {
+                        rowClass += idx % 2 === 0 ? ' bg-white' : ' bg-gray-50'
+                      }
+
                       return (
-                        <tr key={item.id} className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                          <td className="px-4 py-3 text-xs text-foreground font-medium">
-                            {item.product?.referencia || '-'}
+                        <tr key={item.id} className={rowClass}>
+                          <td className={`px-4 py-3 text-xs font-medium ${textClass}`}>
+                            {item.product?.referencia || item.description || '-'}
                           </td>
-                          <td className="px-4 py-3 text-xs text-foreground">
+                          <td className={`px-4 py-3 text-xs ${textClass}`}>
                             {item.description || item.product?.descripcion || '-'}
                           </td>
-                          <td className="px-4 py-3 text-xs text-center text-foreground">{item.quantity}</td>
-                          <td className="px-4 py-3 text-xs text-center text-foreground">
-                            €{(item.pvp || 0).toFixed(2)}
+                          <td className={`px-4 py-3 text-xs text-center ${textClass}`}>{item.quantity || '-'}</td>
+                          <td className={`px-4 py-3 text-xs text-center ${textClass}`}>
+                            {item.pvp ? `€${(item.pvp || 0).toFixed(2)}` : '-'}
                           </td>
-                          <td className="px-4 py-3 text-xs text-center text-foreground">
-                            {totalDiscount.toFixed(2)}
+                          <td className={`px-4 py-3 text-xs text-center ${textClass}`}>
+                            {item.type === 'article' ? totalDiscount.toFixed(2) : '-'}
                           </td>
-                          <td className="px-4 py-3 text-xs text-center text-foreground">
-                            €{((item.neto_total2 || 0) / Math.max(item.quantity || 1, 1)).toFixed(2)}
+                          <td className={`px-4 py-3 text-xs text-center ${textClass}`}>
+                            {item.type === 'article' ? `€${((item.neto_total2 || 0) / Math.max(item.quantity || 1, 1)).toFixed(2)}` : '-'}
                           </td>
-                          <td className="px-4 py-3 text-xs text-right font-bold text-foreground">
-                            €{(item.neto_total2 || 0).toFixed(2)}
+                          <td className={`px-4 py-3 text-xs text-right font-bold ${textClass}`}>
+                            {item.neto_total2 ? `€${(item.neto_total2 || 0).toFixed(2)}` : '-'}
                           </td>
                         </tr>
                       )
