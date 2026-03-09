@@ -292,7 +292,7 @@ export async function GET(
       textColor: palette.textDark,
       fontStyle: 'bold',
       fontSize: 8,
-      halign: 'left',
+      halign: 'center',
       lineWidth: 0,
     },
     footStyles: {
@@ -304,7 +304,7 @@ export async function GET(
     },
     columnStyles: {
       0: { cellWidth: 32, halign: 'center', fontStyle: 'bold' },
-      1: { cellWidth: 'auto', halign: 'left' },
+      1: { cellWidth: 'auto', halign: 'left', headHalign: 'left' },
       2: { cellWidth: 18, halign: 'center' },
       3: { cellWidth: 22, halign: 'center' },
       4: { cellWidth: 26, halign: 'center', fontStyle: 'bold' },
