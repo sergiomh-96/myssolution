@@ -57,7 +57,7 @@ export function CalcularLarguerosDialog({ items, onAddItem }: Props) {
       const { data: productData, error } = await supabase
         .from('products')
         .select('id, referencia, larguero_largo, larguero_alto')
-        .in('id', productIds)
+        .in('id', productIds.map(id => Number(id)))
 
       if (error) {
         addLog(`Error cargando productos: ${error.message}`, 'warn')
@@ -111,10 +111,12 @@ export function CalcularLarguerosDialog({ items, onAddItem }: Props) {
       const largueroRefs = totalEntries.map(e => e.referencia)
       addLog(`Buscando en BD: ${largueroRefs.join(', ')}`)
 
-      const { data: largueroProds } = await supabase
+      const { data: largueroProds, error: largueroError } = await supabase
         .from('products')
-        .select('id, referencia, descripcion, pvp')
+        .select('id, referencia, descripcion')
         .in('referencia', largueroRefs)
+
+      if (largueroError) addLog(`Error buscando MA45: ${largueroError.message}`, 'warn')
 
       addLog(`Productos MA45 encontrados en BD: ${largueroProds?.length ?? 0}`)
 
@@ -124,13 +126,13 @@ export function CalcularLarguerosDialog({ items, onAddItem }: Props) {
         if (!lp) { addLog(`  "${entry.referencia}" no encontrado en productos`, 'warn'); continue }
         const multiplo12 = Math.ceil(entry.unidades / 12) * 12
         result.push({
-          productId: lp.id,
+          productId: String(lp.id),
           referencia: lp.referencia,
           descripcion: lp.descripcion || '',
           tipo: entry.tipo,
           unidadesNecesarias: entry.unidades,
           multiplo12,
-          pvp: lp.pvp || 0,
+          pvp: 0,
         })
         addLog(`  ${lp.referencia} (${entry.tipo}): ${entry.unidades} uds → múltiplo 12: ${multiplo12}`, 'ok')
       }
