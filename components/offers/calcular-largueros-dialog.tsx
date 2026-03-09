@@ -138,7 +138,11 @@ export function CalcularLarguerosDialog({ items, onAddItem }: Props) {
         addLog(`  ${lp.referencia} (${entry.tipo}): ${entry.unidades} uds → múltiplo 12: ${multiplo12}`, 'ok')
       }
 
-      setRows(result.sort((a, b) => a.referencia.localeCompare(b.referencia)))
+      setRows(result.sort((a, b) => {
+        const numA = parseInt(a.referencia.split(' ')[1]) || 0
+        const numB = parseInt(b.referencia.split(' ')[1]) || 0
+        return numA - numB
+      }))
     } catch (e: any) {
       addLog(`Error inesperado: ${e?.message}`, 'warn')
     } finally {
