@@ -1483,6 +1483,10 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <Label className="text-xs">Artículos de la Oferta</Label>
+          <Button type="button" variant="outline" size="sm" onClick={addItem} disabled={loading} className="h-7 text-xs">
+            <Plus className="w-3 h-3 mr-1" />
+            Añadir Línea
+          </Button>
         </div>
 
         <div className="border border-border rounded-lg overflow-x-auto">
@@ -1800,10 +1804,6 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
       </div>
 
       <div className="flex gap-1 justify-start py-3 border-b border-border">
-        <Button type="button" variant="outline" size="sm" onClick={addItem} disabled={loading} className="h-7 text-xs">
-          <Plus className="w-3 h-3 mr-1" />
-          Añadir Artículo
-        </Button>
         <Button type="button" variant="outline" size="sm" onClick={addExternalItem} disabled={loading} className="h-7 text-xs">
           <Plus className="w-3 h-3 mr-1" />
           Añadir Artículo Externo
