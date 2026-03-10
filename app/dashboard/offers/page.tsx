@@ -45,7 +45,7 @@ export default async function OffersPage() {
   const { data: offers, error } = await query
 
   // Calculate totals for each offer
-  const offersWithTotals = (filteredOffers || []).map(offer => {
+  const offersWithTotals = (offers || []).map(offer => {
     const items = (offer.items as any[] | undefined) || []
     const pvpTotal = items.reduce((sum, item) => sum + (Number(item.pvp_total) || 0), 0)
     const netoTotal = items.reduce((sum, item) => sum + (Number(item.neto_total2) || 0), 0)
