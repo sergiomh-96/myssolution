@@ -1138,6 +1138,9 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
       setSavedOfferId(offerId)
       setLoading(false)
       
+      // Refresh the offers list
+      router.refresh()
+      
       // Reset success message after 2 seconds
       setTimeout(() => {
         setSuccess(false)
