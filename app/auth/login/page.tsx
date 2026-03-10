@@ -50,14 +50,16 @@ export default function LoginPage() {
       <Card className="w-full max-w-md shadow-lg">
         <CardHeader className="space-y-3 text-center">
           <div className="flex justify-center">
-            <Image
-              src="/images/myssolution-logo.png"
-              alt="MYS Solution"
-              width={180}
-              height={50}
-              priority
-              className="h-12 w-auto"
-            />
+            <div className="w-48">
+              <Image
+                src="/images/myssolution-logo.png"
+                alt="MYS Solution"
+                width={240}
+                height={80}
+                priority
+                style={{ width: '100%', height: 'auto' }}
+              />
+            </div>
           </div>
           <CardDescription className="text-base mt-2">Inicia sesión con tu email/contraseña</CardDescription>
         </CardHeader>
