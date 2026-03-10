@@ -26,7 +26,8 @@ export default async function OffersPage() {
       customer:customers!customer_id(id, company_name),
       created_by_profile:profiles!created_by(full_name, email),
       approved_by_profile:profiles!approved_by(full_name),
-      assignments:offer_assignments(user_id)
+      assignments:offer_assignments(user_id),
+      items:offer_items(pvp_total, neto_total2)
     `)
     .eq('visible', true)
     .order('created_at', { ascending: false })
@@ -43,14 +44,17 @@ export default async function OffersPage() {
 
   const { data: offers, error } = await query
 
-  // Filter offers: admins see all, others see created by user + assigned to user
-  const filteredOffers = profile.role === 'admin' 
-    ? offers || []
-    : offers?.filter(offer => {
-        const isCreatedByUser = offer.created_by === profile.id
-        const isAssignedToUser = (offer.assignments || []).some((a: any) => a.user_id === profile.id)
-        return isCreatedByUser || isAssignedToUser
-      }) || []
+  // Calculate totals for each offer
+  const offersWithTotals = (filteredOffers || []).map(offer => {
+    const items = (offer.items as any[] | undefined) || []
+    const pvpTotal = items.reduce((sum, item) => sum + (Number(item.pvp_total) || 0), 0)
+    const netoTotal = items.reduce((sum, item) => sum + (Number(item.neto_total2) || 0), 0)
+    return {
+      ...offer,
+      pvp_total: pvpTotal,
+      neto_total: netoTotal
+    }
+  })
 
   return (
     <div className="space-y-6">
@@ -72,7 +76,7 @@ export default async function OffersPage() {
       {error ? (
         <div className="text-destructive">Error cargando ofertas: {error.message}</div>
       ) : (
-        <OffersTable offers={filteredOffers} userRole={profile.role} userId={profile.id} />
+        <OffersTable offers={offersWithTotals} userRole={profile.role} userId={profile.id} />
       )}
     </div>
   )
