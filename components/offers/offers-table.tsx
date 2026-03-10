@@ -37,6 +37,8 @@ import { DuplicateOfferButton } from './duplicate-offer-button'
 interface OffersTableProps {
   offers: (Omit<Offer, 'total_amount' | 'currency'> & {
     amount: number
+    pvp_total?: number
+    neto_total?: number
     customer: { id: number; company_name: string } | null
     created_by_profile: { full_name: string | null; email: string | null } | null
     approved_by_profile: { full_name: string | null } | null
@@ -177,7 +179,8 @@ export function OffersTable({ offers: initialOffers, userRole, userId }: OffersT
                   <TableHead>Nº Oferta</TableHead>
                   <TableHead>Título</TableHead>
                   <TableHead>Cliente</TableHead>
-                  <TableHead>Importe</TableHead>
+                  <TableHead>PVP Total</TableHead>
+                  <TableHead>Neto Total</TableHead>
                   <TableHead>Estado</TableHead>
                   {userRole !== 'sales_rep' && <TableHead>Creado por</TableHead>}
                   <TableHead>Fecha</TableHead>
@@ -207,7 +210,12 @@ export function OffersTable({ offers: initialOffers, userRole, userId }: OffersT
                     </TableCell>
                     <TableCell>
                       <span className="font-medium text-foreground">
-                        €{(offer.amount || 0).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        €{(offer.pvp_total || 0).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <span className="font-medium text-foreground">
+                        €{(offer.neto_total || 0).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </span>
                     </TableCell>
                     <TableCell>
