@@ -1138,13 +1138,10 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
       setSavedOfferId(offerId)
       setLoading(false)
       
-      // Refresh the offers list
-      router.refresh()
-      
-      // Reset success message after 2 seconds
+      // Redirect to offers page after 1.5 seconds to show success message
       setTimeout(() => {
-        setSuccess(false)
-      }, 2000)
+        router.push('/dashboard/offers')
+      }, 1500)
     } catch (err) {
       setSuccess(false)
       setError(err instanceof Error ? err.message : 'Error al guardar la oferta')
