@@ -99,16 +99,14 @@ export function DashboardNav({ profile, onNavigate }: DashboardNavProps) {
     <aside className="w-64 border-r border-border bg-card flex flex-col">
       <div className="p-6 border-b border-border">
         <Link href="/dashboard" className="flex items-center gap-2">
-          <div className="w-32">
-            <Image 
-              src="/images/myssolution-logo.png" 
-              alt="MYS Solution" 
-              width={200}
-              height={60}
-              priority
-              style={{ width: '100%', height: 'auto' }}
-            />
-          </div>
+          <Image 
+            src="/images/myssolution-logo.png" 
+            alt="MYS Solution" 
+            width={140}
+            height={40}
+            priority
+            className="h-10 w-auto"
+          />
         </Link>
       </div>
       
