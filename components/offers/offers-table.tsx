@@ -178,7 +178,7 @@ export function OffersTable({ offers: initialOffers, userRole, userId }: OffersT
                 <TableHeader className="sticky top-0 bg-background z-10">
                   <TableRow className="h-9">
                     <TableHead className="min-w-[70px] px-2 py-1 sticky left-0 bg-background z-20 text-xs font-medium">Acciones</TableHead>
-                    <TableHead className="min-w-[80px] px-2 py-1 text-xs font-medium">Nº Oferta</TableHead>
+                    <TableHead className="min-w-[80px] px-2 py-1 sticky left-[70px] bg-background z-20 text-xs font-medium">Nº Oferta</TableHead>
                     <TableHead className="min-w-[100px] px-2 py-1 text-xs font-medium">Título</TableHead>
                     <TableHead className="min-w-[90px] px-2 py-1 text-xs font-medium">Cliente</TableHead>
                     <TableHead className="min-w-[85px] px-2 py-1 text-xs font-medium">PVP</TableHead>
@@ -204,7 +204,7 @@ export function OffersTable({ offers: initialOffers, userRole, userId }: OffersT
                           </Button>
                         </div>
                       </TableCell>
-                      <TableCell className="min-w-[80px] px-2 py-1 text-xs">
+                      <TableCell className="min-w-[80px] px-2 py-1 text-xs sticky left-[70px] bg-background z-5">
                         <div className="flex items-center gap-1">
                           <span className="font-medium text-foreground">
                             {formatOfferNumber(offer.offer_number, new Date(offer.created_at).getFullYear())}
