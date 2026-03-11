@@ -172,101 +172,103 @@ export function OffersTable({ offers: initialOffers, userRole, userId }: OffersT
               : 'No hay ofertas todavía'}
           </div>
         ) : (
-          <div className="border border-border rounded-lg overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nº Oferta</TableHead>
-                  <TableHead>Título</TableHead>
-                  <TableHead>Cliente</TableHead>
-                  <TableHead>PVP Total</TableHead>
-                  <TableHead>Neto Total</TableHead>
-                  <TableHead>Estado</TableHead>
-                  {userRole !== 'sales_rep' && <TableHead>Creado por</TableHead>}
-                  <TableHead>Fecha</TableHead>
-                  <TableHead className="text-right">Acciones</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredOffers.map((offer) => (
-                  <TableRow key={offer.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium text-foreground">
-                          {formatOfferNumber(offer.offer_number, new Date(offer.created_at).getFullYear())}
-                        </span>
-                        {(offer.assignments || []).some((a: any) => a.user_id === userId) && (
-                          <Forward className="h-4 w-4 text-info" title="Oferta asignada a ti" />
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <p className="font-medium text-foreground">{offer.title}</p>
-                    </TableCell>
-                    <TableCell>
-                      <span className="text-sm text-foreground">
-                        {offer.customer?.company_name || 'Desconocido'}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <span className="font-medium text-foreground">
-                        €{(offer.pvp_total || 0).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <span className="font-medium text-foreground">
-                        €{(offer.neto_total || 0).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className={statusColors[offer.status]}>
-                        {offer.status}
-                      </Badge>
-                    </TableCell>
-                    {userRole !== 'sales_rep' && (
-                      <TableCell>
-                        <div className="flex flex-col">
-                          <span className="text-sm font-medium text-foreground">
-                            {offer.created_by_profile?.full_name || 'Desconocido'}
-                          </span>
-                          <span className="text-xs text-muted-foreground">
-                            {offer.created_by_profile?.email || ''}
-                          </span>
+          <div className="border border-border rounded-lg overflow-hidden flex flex-col max-h-[calc(100vh-300px)]">
+            <div className="overflow-x-auto overflow-y-auto flex-1">
+              <Table>
+                <TableHeader className="sticky top-0 bg-background z-10">
+                  <TableRow>
+                    <TableHead className="min-w-[120px]">Acciones</TableHead>
+                    <TableHead className="min-w-[120px]">Nº Oferta</TableHead>
+                    <TableHead className="min-w-[150px]">Título</TableHead>
+                    <TableHead className="min-w-[140px]">Cliente</TableHead>
+                    <TableHead className="min-w-[120px]">PVP Total</TableHead>
+                    <TableHead className="min-w-[120px]">Neto Total</TableHead>
+                    <TableHead className="min-w-[100px]">Estado</TableHead>
+                    {userRole !== 'sales_rep' && <TableHead className="min-w-[140px]">Creado por</TableHead>}
+                    <TableHead className="min-w-[130px]">Fecha</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredOffers.map((offer) => (
+                    <TableRow key={offer.id}>
+                      <TableCell className="sticky left-0 bg-background z-5">
+                        <div className="flex items-center gap-1">
+                          <Button asChild variant="ghost" size="sm" className="h-7 px-2">
+                            <Link href={`/dashboard/offers/${offer.id}`}>Ver</Link>
+                          </Button>
+                          <Button asChild variant="ghost" size="sm" className="h-7 px-2">
+                            <Link href={`/dashboard/offers/${offer.id}/edit`}>
+                              <Edit className="h-3.5 w-3.5" />
+                            </Link>
+                          </Button>
+                          <DuplicateOfferButton offerId={offer.id as string} size="sm" variant="ghost" showLabel={false} />
+                          {(userRole === 'admin' || userRole === 'manager' || offer.created_by === userId) && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-destructive hover:text-destructive hover:bg-destructive/10 h-7 px-2"
+                              onClick={() => setDeleteTarget({ id: offer.id, title: offer.title })}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
                         </div>
                       </TableCell>
-                    )}
-                    <TableCell>
-                      <span className="text-sm text-muted-foreground">
-                        {formattedDates[offer.id] || 'hace poco'}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <Button asChild variant="ghost" size="sm">
-                          <Link href={`/dashboard/offers/${offer.id}`}>Ver</Link>
-                        </Button>
-                        <Button asChild variant="ghost" size="sm">
-                          <Link href={`/dashboard/offers/${offer.id}/edit`}>
-                            <Edit className="h-4 w-4" />
-                          </Link>
-                        </Button>
-                        <DuplicateOfferButton offerId={offer.id as string} size="sm" variant="ghost" />
-                        {(userRole === 'admin' || userRole === 'manager' || offer.created_by === userId) && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                            onClick={() => setDeleteTarget({ id: offer.id, title: offer.title })}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                      <TableCell className="min-w-[120px]">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium text-foreground text-sm">
+                            {formatOfferNumber(offer.offer_number, new Date(offer.created_at).getFullYear())}
+                          </span>
+                          {(offer.assignments || []).some((a: any) => a.user_id === userId) && (
+                            <Forward className="h-4 w-4 text-info flex-shrink-0" title="Oferta asignada a ti" />
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="min-w-[150px]">
+                        <p className="font-medium text-foreground text-sm">{offer.title}</p>
+                      </TableCell>
+                      <TableCell className="min-w-[140px]">
+                        <span className="text-sm text-foreground">
+                          {offer.customer?.company_name || 'Desconocido'}
+                        </span>
+                      </TableCell>
+                      <TableCell className="min-w-[120px]">
+                        <span className="font-medium text-foreground text-sm">
+                          €{(offer.pvp_total || 0).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </span>
+                      </TableCell>
+                      <TableCell className="min-w-[120px]">
+                        <span className="font-medium text-foreground text-sm">
+                          €{(offer.neto_total || 0).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </span>
+                      </TableCell>
+                      <TableCell className="min-w-[100px]">
+                        <Badge variant="outline" className={statusColors[offer.status]}>
+                          {offer.status}
+                        </Badge>
+                      </TableCell>
+                      {userRole !== 'sales_rep' && (
+                        <TableCell className="min-w-[140px]">
+                          <div className="flex flex-col">
+                            <span className="text-sm font-medium text-foreground">
+                              {offer.created_by_profile?.full_name || 'Desconocido'}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              {offer.created_by_profile?.email || ''}
+                            </span>
+                          </div>
+                        </TableCell>
+                      )}
+                      <TableCell className="min-w-[130px]">
+                        <span className="text-sm text-muted-foreground">
+                          {formattedDates[offer.id] || 'hace poco'}
+                        </span>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           </div>
         )}
       </CardContent>
