@@ -1629,17 +1629,6 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
               {items.map((item, index) => {
                 const isDragOver = dragOverIndex === index
                 const dragRowClass = isDragOver ? 'outline outline-2 outline-primary outline-offset-[-2px]' : ''
-                const dragHandle = (
-                  <td className="px-1 py-1 w-6 cursor-grab active:cursor-grabbing select-none"
-                    draggable
-                    onDragStart={() => handleDragStart(index)}
-                    onDragEnd={handleDragEnd}
-                  >
-                    <GripVertical className="w-3.5 h-3.5 text-muted-foreground/50 hover:text-muted-foreground" />
-                  </td>
-                )
-
-                // Section Header Row
                 if (item.type === 'section_header') {
                   return (
                     <tr key={item.id}
@@ -1647,7 +1636,13 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
                       onDragOver={(e) => handleDragOver(e, index)}
                       onDrop={(e) => handleDrop(e, index)}
                     >
-                      {dragHandle}
+                      <td className="px-1 py-1 w-6 cursor-grab active:cursor-grabbing select-none"
+                        draggable
+                        onDragStart={() => handleDragStart(index)}
+                        onDragEnd={handleDragEnd}
+                      >
+                        <GripVertical className="w-3.5 h-3.5 text-muted-foreground/50 hover:text-muted-foreground" />
+                      </td>
                       <td colSpan={9} className="px-2 py-2">
                         <Input
                           value={item.description}
@@ -1681,7 +1676,13 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
                       onDragOver={(e) => handleDragOver(e, index)}
                       onDrop={(e) => handleDrop(e, index)}
                     >
-                      {dragHandle}
+                      <td className="px-1 py-1 w-6 cursor-grab active:cursor-grabbing select-none"
+                        draggable
+                        onDragStart={() => handleDragStart(index)}
+                        onDragEnd={handleDragEnd}
+                      >
+                        <GripVertical className="w-3.5 h-3.5 text-muted-foreground/50 hover:text-muted-foreground" />
+                      </td>
                       <td colSpan={9} className="px-2 py-2">
                         <Input
                           value={item.description}
