@@ -1716,7 +1716,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
                       onDragOver={(e) => handleDragOver(e, index)}
                       onDrop={(e) => handleDrop(e, index)}
                     >
-                      {dragHandle}
+                      <td className="px-1 py-1 w-6 cursor-grab active:cursor-grabbing select-none" draggable onDragStart={() => handleDragStart(index)} onDragEnd={handleDragEnd}><GripVertical className="w-3.5 h-3.5 text-muted-foreground/50 hover:text-muted-foreground" /></td>
                       <td colSpan={4} className="px-2 py-1.5 text-xs text-white italic">
                         {item.description || 'Resumen'}
                       </td>
@@ -1754,7 +1754,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
                       onDragOver={(e) => handleDragOver(e, index)}
                       onDrop={(e) => handleDrop(e, index)}
                     >
-                      {dragHandle}
+                      <td className="px-1 py-1 w-6 cursor-grab active:cursor-grabbing select-none" draggable onDragStart={() => handleDragStart(index)} onDragEnd={handleDragEnd}><GripVertical className="w-3.5 h-3.5 text-muted-foreground/50 hover:text-muted-foreground" /></td>
                       <td className="px-2 py-1">
                         <Input
                           value={item.external_ref ?? ''}
@@ -1854,7 +1854,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
                     onDragOver={(e) => handleDragOver(e, index)}
                     onDrop={(e) => handleDrop(e, index)}
                   >
-                    {dragHandle}
+                    <td className="px-1 py-1 w-6 cursor-grab active:cursor-grabbing select-none" draggable onDragStart={() => handleDragStart(index)} onDragEnd={handleDragEnd}><GripVertical className="w-3.5 h-3.5 text-muted-foreground/50 hover:text-muted-foreground" /></td>
                     <td className="px-2 py-1">
                       <ProductSearchInput
                         value={item.product_id || ''}
