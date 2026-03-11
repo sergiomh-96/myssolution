@@ -1605,26 +1605,52 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
 
         <div className="border border-border rounded-lg overflow-hidden flex flex-col">
           <div className="overflow-x-auto">
-            <table className="w-full text-xs table-fixed">
+            <table className="w-full text-xs" style={{ tableLayout: 'fixed' }}>
+              <colgroup>
+                <col style={{ width: '1.5rem' }} />
+                <col style={{ width: '225px' }} />
+                <col style={{ width: '350px' }} />
+                <col style={{ width: '6rem' }} />
+                <col style={{ width: '7rem' }} />
+                <col style={{ width: '7rem' }} />
+                <col style={{ width: '7rem' }} />
+                <col style={{ width: '7rem' }} />
+                <col style={{ width: '8rem' }} />
+                <col style={{ width: '8rem' }} />
+                <col style={{ width: '3rem' }} />
+              </colgroup>
               <thead className="bg-muted/50 sticky top-0 z-10">
               <tr>
-                <th className="px-1 py-1 w-6"></th>
-                <th className="px-2 py-1 text-left font-medium text-xs w-[225px]">Artículo</th>
-                <th className="px-2 py-1 text-left font-medium text-xs w-[350px]">Descripción</th>
-                <th className="px-2 py-1 text-right font-medium text-xs w-24">Cantidad</th>
-                <th className="px-2 py-1 text-right font-medium text-xs w-28">PVP</th>
-                <th className="px-2 py-1 text-right font-medium text-xs w-28">PVP Total</th>
-                <th className="px-2 py-1 text-right font-medium text-xs w-28">Desc. 1 (%)</th>
-                <th className="px-2 py-1 text-right font-medium text-xs w-28">Desc. 2 (%)</th>
-                <th className="px-2 py-1 text-right font-medium text-xs w-32">Neto Total 1</th>
-                <th className="px-2 py-1 text-right font-medium text-xs w-32">Neto Total 2</th>
-                <th className="px-2 py-1 text-center font-medium text-xs w-12"></th>
+                <th className="px-1 py-1"></th>
+                <th className="px-2 py-1 text-left font-medium text-xs">Artículo</th>
+                <th className="px-2 py-1 text-left font-medium text-xs">Descripción</th>
+                <th className="px-2 py-1 text-right font-medium text-xs">Cantidad</th>
+                <th className="px-2 py-1 text-right font-medium text-xs">PVP</th>
+                <th className="px-2 py-1 text-right font-medium text-xs">PVP Total</th>
+                <th className="px-2 py-1 text-right font-medium text-xs">Desc. 1 (%)</th>
+                <th className="px-2 py-1 text-right font-medium text-xs">Desc. 2 (%)</th>
+                <th className="px-2 py-1 text-right font-medium text-xs">Neto Total 1</th>
+                <th className="px-2 py-1 text-right font-medium text-xs">Neto Total 2</th>
+                <th className="px-2 py-1 text-center font-medium text-xs"></th>
               </tr>
             </thead>
             </table>
           </div>
           <div className="overflow-y-auto" style={{ maxHeight: 'calc(2.5rem * 10)' }}>
-            <table className="w-full text-xs table-fixed">
+            <table className="w-full text-xs" style={{ tableLayout: 'fixed' }}>
+              <colgroup>
+                <col style={{ width: '1.5rem' }} />
+                <col style={{ width: '225px' }} />
+                <col style={{ width: '350px' }} />
+                <col style={{ width: '6rem' }} />
+                <col style={{ width: '7rem' }} />
+                <col style={{ width: '7rem' }} />
+                <col style={{ width: '7rem' }} />
+                <col style={{ width: '7rem' }} />
+                <col style={{ width: '8rem' }} />
+                <col style={{ width: '8rem' }} />
+                <col style={{ width: '3rem' }} />
+              </colgroup>
               <tbody>
               {items.map((item, index) => {
                 const isDragOver = dragOverIndex === index
