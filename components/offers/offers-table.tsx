@@ -27,8 +27,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { Search, Edit, Forward, Trash2, Copy } from 'lucide-react'
 import type { Offer, UserRole } from '@/lib/types/database'
-import { formatDistanceToNow } from 'date-fns'
-import { es } from 'date-fns/locale'
+import { format } from 'date-fns'
 import { formatOfferNumber } from '@/lib/utils/offer'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
@@ -100,12 +99,9 @@ export function OffersTable({ offers: initialOffers, userRole, userId }: OffersT
     
     offersList.forEach((offer) => {
       try {
-        dates[offer.id] = formatDistanceToNow(new Date(offer.created_at), {
-          addSuffix: true,
-          locale: es,
-        })
+        dates[offer.id] = format(new Date(offer.created_at), 'dd/MMM/yy')
       } catch (error) {
-        dates[offer.id] = 'hace poco'
+        dates[offer.id] = ''
       }
     })
     
@@ -251,7 +247,7 @@ export function OffersTable({ offers: initialOffers, userRole, userId }: OffersT
                       )}
                       <TableCell className="min-w-[80px] px-2 py-1 text-xs">
                         <span className="text-muted-foreground">
-                          {formattedDates[offer.id] || 'hace poco'}
+                          {formattedDates[offer.id] || format(new Date(offer.created_at), 'dd/MMM/yy')}
                         </span>
                       </TableCell>
                       <TableCell className="px-1 py-1 sticky right-0 bg-background z-5 min-w-[70px]">
