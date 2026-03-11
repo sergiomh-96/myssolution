@@ -1621,12 +1621,11 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
                 <th className="px-2 py-1 text-center font-medium text-xs w-12"></th>
               </tr>
             </thead>
-          </table>
+            </table>
           </div>
           <div className="overflow-y-auto" style={{ maxHeight: 'calc(2.5rem * 10)' }}>
             <table className="w-full text-xs table-fixed">
               <tbody>
-              {items.map((item, index) => {
                 const isDragOver = dragOverIndex === index
                 const dragRowClass = isDragOver ? 'outline outline-2 outline-primary outline-offset-[-2px]' : ''
                 const dragHandle = (
