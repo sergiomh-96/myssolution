@@ -473,17 +473,8 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
       }
 
       if (offerItems && offerItems.length > 0) {
-        // Load items — for external items, strip the "REF — " prefix from description if present
-        const loadedItems = (offerItems as OfferItem[]).map(item => {
-          if (item.type === 'external' && item.external_ref && item.description) {
-            const prefix = `${item.external_ref} — `
-            const cleanDescription = item.description.startsWith(prefix)
-              ? item.description.slice(prefix.length)
-              : item.description
-            return { ...item, description: cleanDescription }
-          }
-          return item
-        })
+        // Load items
+        const loadedItems = offerItems as OfferItem[]
         const itemsToSet = loadedItems.length >= 5 
           ? loadedItems 
           : [
@@ -1156,9 +1147,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
               type: item.type,
               product_id: item.product_id ? Number(item.product_id) : null,
               external_ref: item.type === 'external' ? (item.external_ref || null) : null,
-              description: item.type === 'external'
-                ? [item.external_ref, item.description].filter(Boolean).join(' — ')
-                : (item.description || null),
+              description: item.description || null,
               quantity: item.type === 'summary' ? 0 : (parseInt(String(item.quantity)) || 0),
               pvp: parseFloat(String(item.pvp)) || 0,
               pvp_total: parseFloat(String(item.pvp_total)) || 0,
@@ -1207,9 +1196,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
               type: item.type,
               product_id: item.product_id ? Number(item.product_id) : null,
               external_ref: item.type === 'external' ? (item.external_ref || null) : null,
-              description: item.type === 'external'
-                ? [item.external_ref, item.description].filter(Boolean).join(' — ')
-                : (item.description || null),
+              description: item.description || null,
               quantity: item.type === 'summary' ? 0 : (parseInt(String(item.quantity)) || 0),
               pvp: parseFloat(String(item.pvp)) || 0,
               pvp_total: parseFloat(String(item.pvp_total)) || 0,

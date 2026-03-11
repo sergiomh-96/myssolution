@@ -177,7 +177,7 @@ export default async function OfferDetailPage({ params }: PageProps) {
                       return (
                         <tr key={item.id} className={rowClass}>
                           <td className={`px-4 py-3 text-xs font-medium ${textClass}`}>
-                            {item.product?.referencia || item.description || '-'}
+                            {item.product?.referencia || item.external_ref || '-'}
                           </td>
                           <td className={`px-4 py-3 text-xs ${textClass}`}>
                             {item.description || item.product?.descripcion || '-'}
