@@ -1496,7 +1496,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
           <table className="w-full text-xs table-fixed">
             <thead className="bg-muted/50">
               <tr>
-                <th className="px-2 py-1 text-left font-medium text-xs w-[180px]">Artículo</th>
+                <th className="px-2 py-1 text-left font-medium text-xs w-[225px]">Artículo</th>
                 <th className="px-2 py-1 text-left font-medium text-xs w-[350px]">Descripción</th>
                 <th className="px-2 py-1 text-right font-medium text-xs w-24">Cantidad</th>
                 <th className="px-2 py-1 text-right font-medium text-xs w-28">PVP</th>
