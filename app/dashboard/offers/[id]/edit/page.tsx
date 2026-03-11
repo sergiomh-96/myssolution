@@ -73,6 +73,19 @@ export default async function EditOfferPage({ params }: PageProps) {
     customers = allCustomers
   }
 
+  // Ensure the current offer's customer is included in the list
+  if (offer.customer_id && !customers.find(c => String(c.id) === String(offer.customer_id))) {
+    const { data: currentCustomer } = await supabase
+      .from('customers')
+      .select('id, company_name, status')
+      .eq('id', offer.customer_id)
+      .single()
+    
+    if (currentCustomer) {
+      customers = [currentCustomer, ...customers]
+    }
+  }
+
   return (
     <div className="max-w-[1800px] mx-auto space-y-6 px-4">
       <div className="flex items-center gap-4">
