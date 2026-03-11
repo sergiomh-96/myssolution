@@ -2000,6 +2000,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
           onAddItem={addItemByProductId}
         />
       </div>
+      </div>
 
       <div className="flex justify-between gap-2">
         <div className="flex gap-2">
