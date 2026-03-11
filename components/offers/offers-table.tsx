@@ -176,7 +176,7 @@ export function OffersTable({ offers: initialOffers, userRole, userId }: OffersT
                     <TableHead className="min-w-[70px] px-2 py-1 sticky left-0 bg-background z-20 text-xs font-medium">Acciones</TableHead>
                     <TableHead className="min-w-[80px] px-2 py-1 sticky left-[70px] bg-background z-20 text-xs font-medium">Nº Oferta</TableHead>
                     <TableHead className="min-w-[100px] px-2 py-1 text-xs font-medium">Título</TableHead>
-                    <TableHead className="min-w-[90px] px-2 py-1 text-xs font-medium">Cliente</TableHead>
+                    <TableHead className="min-w-[54px] px-2 py-1 text-xs font-medium">Cliente</TableHead>
                     <TableHead className="min-w-[85px] px-2 py-1 text-xs font-medium">PVP</TableHead>
                     <TableHead className="min-w-[85px] px-2 py-1 text-xs font-medium">Neto</TableHead>
                     <TableHead className="min-w-[70px] px-2 py-1 text-xs font-medium">Estado</TableHead>
@@ -213,7 +213,7 @@ export function OffersTable({ offers: initialOffers, userRole, userId }: OffersT
                       <TableCell className="min-w-[100px] px-2 py-1 text-xs truncate">
                         <p className="font-medium text-foreground truncate">{offer.title}</p>
                       </TableCell>
-                      <TableCell className="min-w-[90px] px-2 py-1 text-xs truncate">
+                      <TableCell className="min-w-[54px] px-2 py-1 text-xs truncate">
                         <span className="truncate">
                           {offer.customer?.company_name || 'Desconocido'}
                         </span>
