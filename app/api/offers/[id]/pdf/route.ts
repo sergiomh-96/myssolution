@@ -270,7 +270,7 @@ export async function GET(
     
     if (priceType === 'all') {
       return [
-        item.product?.referencia || '-',
+        item.product?.referencia || item.external_ref || '-',
         item.description || item.product?.descripcion || '-',
         String(item.quantity ?? 1),
         `€${unitPrice}`,
@@ -280,7 +280,7 @@ export async function GET(
     }
     
     return [
-      item.product?.referencia || '-',
+      item.product?.referencia || item.external_ref || '-',
       item.description || item.product?.descripcion || '-',
       String(item.quantity ?? 1),
       `€${unitPrice}`,
@@ -289,7 +289,7 @@ export async function GET(
   })
 
   const total = offerItems
-    .filter(i => i.type === 'article' || !i.type)
+    .filter(i => i.type === 'article' || i.type === 'external' || !i.type)
     .reduce((s, i) => {
       const value = priceType === 'neto' ? Number(i.neto_total2 || 0) : Number(i.pvp_total || 0)
       return s + value
