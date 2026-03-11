@@ -1948,7 +1948,6 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
             </tbody>
             </table>
           </div>
-          </div>
           <table className="w-full text-xs table-fixed border-t border-border">
             <tfoot className="bg-muted/30">
               <tr>
@@ -1963,7 +1962,6 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
             </tfoot>
           </table>
         </div>
-      </div>
 
       <div className="flex gap-1 justify-start py-3 border-b border-border">
         <Button type="button" variant="outline" size="sm" onClick={addExternalItem} disabled={loading} className="h-7 text-xs">
