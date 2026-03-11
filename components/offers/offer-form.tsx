@@ -1037,6 +1037,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
               offer_id: offerId,
               type: item.type,
               product_id: item.product_id ? Number(item.product_id) : null,
+              external_ref: item.type === 'external' ? (item.external_ref || null) : null,
               description: item.type === 'external'
                 ? [item.external_ref, item.description].filter(Boolean).join(' — ')
                 : (item.description || null),
@@ -1087,6 +1088,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
               offer_id: offerId,
               type: item.type,
               product_id: item.product_id ? Number(item.product_id) : null,
+              external_ref: item.type === 'external' ? (item.external_ref || null) : null,
               description: item.type === 'external'
                 ? [item.external_ref, item.description].filter(Boolean).join(' — ')
                 : (item.description || null),
