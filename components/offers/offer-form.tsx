@@ -258,7 +258,18 @@ function CustomerSearchInput({
 
   // Update selected customer when value changes
   useEffect(() => {
-    const customer = customers.find(c => String(c.id) === String(value))
+    const valueStr = String(value)
+    
+    // Handle free-text customers
+    if (valueStr.startsWith('free:')) {
+      const customerName = valueStr.substring(5)
+      setSelectedCustomer({ id: valueStr, company_name: customerName })
+      setSearchTerm('')
+      return
+    }
+    
+    // Handle regular customers
+    const customer = customers.find(c => String(c.id) === valueStr)
     setSelectedCustomer(customer || null)
     if (customer) {
       setSearchTerm('')
