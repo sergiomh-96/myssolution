@@ -1604,7 +1604,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
         </div>
 
         <div className="border border-border rounded-lg overflow-hidden flex flex-col">
-          <div className="overflow-x-auto">
+          <div>
             <table className="w-full text-xs" style={{ tableLayout: 'fixed' }}>
               <colgroup>
                 <col style={{ width: '1.5rem' }} />
