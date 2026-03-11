@@ -177,7 +177,7 @@ export function OffersTable({ offers: initialOffers, userRole, userId }: OffersT
               <Table>
                 <TableHeader className="sticky top-0 bg-background z-10">
                   <TableRow>
-                    <TableHead className="min-w-[120px]">Acciones</TableHead>
+                    <TableHead className="min-w-[100px] sticky left-0 bg-background z-20">Acciones</TableHead>
                     <TableHead className="min-w-[120px]">Nº Oferta</TableHead>
                     <TableHead className="min-w-[150px]">Título</TableHead>
                     <TableHead className="min-w-[140px]">Cliente</TableHead>
@@ -186,6 +186,7 @@ export function OffersTable({ offers: initialOffers, userRole, userId }: OffersT
                     <TableHead className="min-w-[100px]">Estado</TableHead>
                     {userRole !== 'sales_rep' && <TableHead className="min-w-[140px]">Creado por</TableHead>}
                     <TableHead className="min-w-[130px]">Fecha</TableHead>
+                    <TableHead className="min-w-[140px] sticky right-0 bg-background z-20">Más</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -201,17 +202,6 @@ export function OffersTable({ offers: initialOffers, userRole, userId }: OffersT
                               <Edit className="h-3.5 w-3.5" />
                             </Link>
                           </Button>
-                          <DuplicateOfferButton offerId={offer.id as string} size="sm" variant="ghost" showLabel={false} />
-                          {(userRole === 'admin' || userRole === 'manager' || offer.created_by === userId) && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-destructive hover:text-destructive hover:bg-destructive/10 h-7 px-2"
-                              onClick={() => setDeleteTarget({ id: offer.id, title: offer.title })}
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </Button>
-                          )}
                         </div>
                       </TableCell>
                       <TableCell className="min-w-[120px]">
@@ -263,6 +253,21 @@ export function OffersTable({ offers: initialOffers, userRole, userId }: OffersT
                         <span className="text-sm text-muted-foreground">
                           {formattedDates[offer.id] || 'hace poco'}
                         </span>
+                      </TableCell>
+                      <TableCell className="sticky right-0 bg-background z-5 min-w-[140px]">
+                        <div className="flex items-center justify-end gap-1">
+                          <DuplicateOfferButton offerId={offer.id as string} size="sm" variant="ghost" showLabel={false} />
+                          {(userRole === 'admin' || userRole === 'manager' || offer.created_by === userId) && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-destructive hover:text-destructive hover:bg-destructive/10 h-7 px-2"
+                              onClick={() => setDeleteTarget({ id: offer.id, title: offer.title })}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
