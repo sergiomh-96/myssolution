@@ -629,12 +629,22 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
 
       try {
         const supabase = createClient()
+        const customerIdStr = String(formData.customer_id)
+        
+        // Skip loading if it's a free-text customer (not yet created/assigned a numeric ID)
+        if (customerIdStr.startsWith('free:')) {
+          setContactList([])
+          setCurrentCustomer(null)
+          return
+        }
+
+        const customerId = parseInt(customerIdStr)
         
         // Load contacts
         const { data: contacts, error: contactsError } = await supabase
           .from('clients_contacts')
           .select('*')
-          .eq('customer_id', formData.customer_id)
+          .eq('customer_id', customerId)
           .order('nombre')
 
         if (contactsError) {
@@ -649,7 +659,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
         const { data: customerData, error: customerError } = await supabase
           .from('customers')
           .select('*')
-          .eq('id', formData.customer_id)
+          .eq('id', customerId)
           .single()
 
         if (customerError) {
