@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Copy, Loader2, Plus, X, CheckCircle, ChevronDown, Check, Search, Eye, FileText, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Copy, Loader2, Plus, X, CheckCircle, ChevronDown, Check, Search, Eye, FileText, AlertCircle, ChevronLeft, ChevronRight, GripVertical } from 'lucide-react'
 import { DuplicateOfferButton } from './duplicate-offer-button'
 import { CalcularLarguerosDialog } from './calcular-largueros-dialog'
 import { GeneratePdfButton } from './generate-pdf-button'
@@ -1010,6 +1010,39 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
     }
   }
 
+  // Drag & drop state
+  const dragIndexRef = useRef<number | null>(null)
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null)
+
+  const handleDragStart = (index: number) => {
+    dragIndexRef.current = index
+  }
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault()
+    setDragOverIndex(index)
+  }
+
+  const handleDrop = (e: React.DragEvent, dropIndex: number) => {
+    e.preventDefault()
+    const dragIndex = dragIndexRef.current
+    if (dragIndex === null || dragIndex === dropIndex) {
+      setDragOverIndex(null)
+      return
+    }
+    const newItems = [...items]
+    const [dragged] = newItems.splice(dragIndex, 1)
+    newItems.splice(dropIndex, 0, dragged)
+    setItems(recalculateSummaries(newItems))
+    dragIndexRef.current = null
+    setDragOverIndex(null)
+  }
+
+  const handleDragEnd = () => {
+    dragIndexRef.current = null
+    setDragOverIndex(null)
+  }
+
   // Totals: exclude summary rows from global totals
   const totalAmount = items.reduce((sum, item) => item.type !== 'summary' ? sum + (item.neto_total2 || 0) : sum, 0)
   const totalPVP = items.reduce((sum, item) => item.type !== 'summary' ? sum + (item.pvp_total || 0) : sum, 0)
@@ -1578,6 +1611,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
           <table className="w-full text-xs table-fixed">
             <thead className="bg-muted/50">
               <tr>
+                <th className="px-1 py-1 w-6"></th>
                 <th className="px-2 py-1 text-left font-medium text-xs w-[225px]">Artículo</th>
                 <th className="px-2 py-1 text-left font-medium text-xs w-[350px]">Descripción</th>
                 <th className="px-2 py-1 text-right font-medium text-xs w-24">Cantidad</th>
@@ -1592,10 +1626,27 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
             </thead>
             <tbody>
               {items.map((item, index) => {
+                const isDragOver = dragOverIndex === index
+                const dragRowClass = isDragOver ? 'outline outline-2 outline-primary outline-offset-[-2px]' : ''
+                const dragHandle = (
+                  <td className="px-1 py-1 w-6 cursor-grab active:cursor-grabbing select-none"
+                    draggable
+                    onDragStart={() => handleDragStart(index)}
+                    onDragEnd={handleDragEnd}
+                  >
+                    <GripVertical className="w-3.5 h-3.5 text-muted-foreground/50 hover:text-muted-foreground" />
+                  </td>
+                )
+
                 // Section Header Row
                 if (item.type === 'section_header') {
                   return (
-                    <tr key={item.id} className="border-t border-border bg-[#1a2e4a]">
+                    <tr key={item.id}
+                      className={`border-t border-border bg-[#1a2e4a] ${dragRowClass}`}
+                      onDragOver={(e) => handleDragOver(e, index)}
+                      onDrop={(e) => handleDrop(e, index)}
+                    >
+                      {dragHandle}
                       <td colSpan={9} className="px-2 py-2">
                         <Input
                           value={item.description}
@@ -1624,7 +1675,12 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
                 // Note Row
                 if (item.type === 'note') {
                   return (
-                    <tr key={item.id} className="border-t border-border bg-yellow-100">
+                    <tr key={item.id}
+                      className={`border-t border-border bg-yellow-100 ${dragRowClass}`}
+                      onDragOver={(e) => handleDragOver(e, index)}
+                      onDrop={(e) => handleDrop(e, index)}
+                    >
+                      {dragHandle}
                       <td colSpan={9} className="px-2 py-2">
                         <Input
                           value={item.description}
@@ -1653,7 +1709,12 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
                 // Summary Row
                 if (item.type === 'summary') {
                   return (
-                    <tr key={item.id} className="border-t-2 border-border bg-[#1a2e4a] font-semibold">
+                    <tr key={item.id}
+                      className={`border-t-2 border-border bg-[#1a2e4a] font-semibold ${dragRowClass}`}
+                      onDragOver={(e) => handleDragOver(e, index)}
+                      onDrop={(e) => handleDrop(e, index)}
+                    >
+                      {dragHandle}
                       <td colSpan={4} className="px-2 py-1.5 text-xs text-white italic">
                         {item.description || 'Resumen'}
                       </td>
@@ -1686,7 +1747,12 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
                 // External Article Row — free-text reference, no product lookup
                 if (item.type === 'external') {
                   return (
-                    <tr key={item.id} className="border-t border-border hover:bg-muted/20">
+                    <tr key={item.id}
+                      className={`border-t border-border hover:bg-muted/20 ${dragRowClass}`}
+                      onDragOver={(e) => handleDragOver(e, index)}
+                      onDrop={(e) => handleDrop(e, index)}
+                    >
+                      {dragHandle}
                       <td className="px-2 py-1">
                         <Input
                           value={item.external_ref ?? ''}
@@ -1781,7 +1847,12 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
 
                 // Article Row (regular)
                 return (
-                  <tr key={item.id} className="border-t border-border hover:bg-muted/20">
+                  <tr key={item.id}
+                    className={`border-t border-border hover:bg-muted/20 ${dragOverIndex === index ? 'outline outline-2 outline-primary outline-offset-[-2px]' : ''}`}
+                    onDragOver={(e) => handleDragOver(e, index)}
+                    onDrop={(e) => handleDrop(e, index)}
+                  >
+                    {dragHandle}
                     <td className="px-2 py-1">
                       <ProductSearchInput
                         value={item.product_id || ''}
