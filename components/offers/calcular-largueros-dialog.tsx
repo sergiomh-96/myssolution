@@ -122,20 +122,38 @@ export function CalcularLarguerosDialog({ items, onAddItem }: Props) {
       addLog(`Productos MA45 encontrados en BD: ${largueroProds?.length ?? 0}`)
 
       const result: LargueroRow[] = []
+      const grouped: Record<string, LargueroRow> = {}
+      
       for (const entry of totalEntries) {
         const lp = largueroProds?.find(p => p.referencia === entry.referencia)
         if (!lp) { addLog(`  "${entry.referencia}" no encontrado en productos`, 'warn'); continue }
-        const multiplo12 = Math.ceil(entry.unidades / 12) * 12
-        result.push({
-          productId: String(lp.id),
-          referencia: lp.referencia,
-          descripcion: lp.descripcion || '',
-          tipo: entry.tipo,
-          unidadesNecesarias: entry.unidades,
-          multiplo12,
-          pvp: 0,
-        })
-        addLog(`  ${lp.referencia} (${entry.tipo}): ${entry.unidades} uds → múltiplo 12: ${multiplo12}`, 'ok')
+        
+        const key = `${lp.id}_${entry.tipo}`
+        
+        if (grouped[key]) {
+          // Reference already exists, accumulate units
+          grouped[key].unidadesNecesarias += entry.unidades
+          addLog(`  ${lp.referencia} (${entry.tipo}): +${entry.unidades} uds (total acumulado: ${grouped[key].unidadesNecesarias})`, 'ok')
+        } else {
+          // New reference, create entry
+          grouped[key] = {
+            productId: String(lp.id),
+            referencia: lp.referencia,
+            descripcion: lp.descripcion || '',
+            tipo: entry.tipo,
+            unidadesNecesarias: entry.unidades,
+            multiplo12: 0,
+            pvp: 0,
+          }
+          addLog(`  ${lp.referencia} (${entry.tipo}): ${entry.unidades} uds`, 'ok')
+        }
+      }
+      
+      // Calculate multiplos on grouped totals
+      for (const row of Object.values(grouped)) {
+        row.multiplo12 = Math.ceil(row.unidadesNecesarias / 12) * 12
+        addLog(`  ${row.referencia}: ${row.unidadesNecesarias} uds → múltiplo 12: ${row.multiplo12}`, 'ok')
+        result.push(row)
       }
 
       setRows(result.sort((a, b) => {
