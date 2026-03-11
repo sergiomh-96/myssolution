@@ -1626,6 +1626,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
           <div className="overflow-y-auto" style={{ maxHeight: 'calc(2.5rem * 10)' }}>
             <table className="w-full text-xs table-fixed">
               <tbody>
+              {items.map((item, index) => {
                 const isDragOver = dragOverIndex === index
                 const dragRowClass = isDragOver ? 'outline outline-2 outline-primary outline-offset-[-2px]' : ''
                 const dragHandle = (
