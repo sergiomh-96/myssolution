@@ -1603,9 +1603,10 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
           </Button>
         </div>
 
-        <div className="border border-border rounded-lg overflow-x-auto">
-          <table className="w-full text-xs table-fixed">
-            <thead className="bg-muted/50">
+        <div className="border border-border rounded-lg overflow-hidden flex flex-col">
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs table-fixed">
+              <thead className="bg-muted/50 sticky top-0 z-10">
               <tr>
                 <th className="px-1 py-1 w-6"></th>
                 <th className="px-2 py-1 text-left font-medium text-xs w-[225px]">Artículo</th>
@@ -1620,7 +1621,11 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
                 <th className="px-2 py-1 text-center font-medium text-xs w-12"></th>
               </tr>
             </thead>
-            <tbody>
+          </table>
+          </div>
+          <div className="overflow-y-auto" style={{ maxHeight: 'calc(2.5rem * 10)' }}>
+            <table className="w-full text-xs table-fixed">
+              <tbody>
               {items.map((item, index) => {
                 const isDragOver = dragOverIndex === index
                 const dragRowClass = isDragOver ? 'outline outline-2 outline-primary outline-offset-[-2px]' : ''
@@ -1940,7 +1945,11 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
                 )
               })}
             </tbody>
-            <tfoot className="border-t-2 border-border bg-muted/30">
+            </table>
+          </div>
+          </div>
+          <table className="w-full text-xs table-fixed border-t border-border">
+            <tfoot className="bg-muted/30">
               <tr>
                 <td colSpan={7}></td>
                 <td className="px-2 py-1 text-right font-semibold text-xs">
