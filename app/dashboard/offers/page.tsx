@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { requireProfile } from '@/lib/auth'
 import { OffersTable } from '@/components/offers/offers-table'
+import { ExportExcelButton } from '@/components/offers/export-excel-button'
 import { Button } from '@/components/ui/button'
 import { Plus } from 'lucide-react'
 import Link from 'next/link'
@@ -65,12 +66,15 @@ export default async function OffersPage() {
             Gestiona propuestas comerciales y presupuestos
           </p>
         </div>
-        <Button asChild>
-          <Link href="/dashboard/offers/new">
-            <Plus className="w-4 h-4 mr-2" />
-            Crear Oferta
-          </Link>
-        </Button>
+        <div className="flex gap-2">
+          <ExportExcelButton offers={offersWithTotals} />
+          <Button asChild>
+            <Link href="/dashboard/offers/new">
+              <Plus className="w-4 h-4 mr-2" />
+              Crear Oferta
+            </Link>
+          </Button>
+        </div>
       </div>
 
       {error ? (
