@@ -44,11 +44,11 @@ export default async function OffersPage() {
 
   const { data: offers, error } = await query
 
-  // Calculate totals for each offer
+  // Calculate totals for each offer (rounded to 2 decimals)
   const offersWithTotals = (offers || []).map(offer => {
     const items = (offer.items as any[] | undefined) || []
-    const pvpTotal = items.reduce((sum, item) => sum + (Number(item.pvp_total) || 0), 0)
-    const netoTotal = items.reduce((sum, item) => sum + (Number(item.neto_total2) || 0), 0)
+    const pvpTotal = Math.round(items.reduce((sum, item) => sum + (Number(item.pvp_total) || 0), 0) * 100) / 100
+    const netoTotal = Math.round(items.reduce((sum, item) => sum + (Number(item.neto_total2) || 0), 0) * 100) / 100
     return {
       ...offer,
       pvp_total: pvpTotal,
