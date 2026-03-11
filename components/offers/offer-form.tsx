@@ -258,7 +258,9 @@ function CustomerSearchInput({
 
   // Update selected customer when value changes
   useEffect(() => {
+    console.log('[v0] CustomerSearchInput: value changed', { value, customersCount: customers.length })
     const customer = customers.find(c => String(c.id) === String(value))
+    console.log('[v0] Found customer:', customer)
     setSelectedCustomer(customer || null)
     if (customer) {
       setSearchTerm('')
@@ -1008,9 +1010,13 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
       
       if (formData.customer_id) {
         const customerIdStr = String(formData.customer_id)
+        console.log('[v0] Processing customer_id:', { customerIdStr, hasFreePrefx: customerIdStr.startsWith('free:') })
+        
         if (customerIdStr.startsWith('free:')) {
           // Extract the free-text customer name
           customerName = customerIdStr.substring(5)
+          console.log('[v0] Creating free-text customer:', customerName)
+          
           // Try to find or create a customer with this name
           const { data: existingCustomer } = await supabase
             .from('customers')
@@ -1020,6 +1026,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
           
           if (existingCustomer) {
             customerId = existingCustomer.id
+            console.log('[v0] Found existing customer:', customerId)
           } else {
             // Create a new customer with the free-text name
             const { data: newCustomer, error: createError } = await supabase
@@ -1031,11 +1038,16 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
               .select('id')
               .single()
             
-            if (createError) throw createError
+            if (createError) {
+              console.error('[v0] Error creating customer:', createError)
+              throw createError
+            }
             customerId = newCustomer.id
+            console.log('[v0] Created new customer:', customerId)
           }
         } else {
           customerId = parseInt(customerIdStr)
+          console.log('[v0] Using existing customer ID:', customerId)
         }
       }
 
@@ -1190,6 +1202,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
       setError(null)
       setSavedOfferId(offerId)
       setLoading(false)
+      console.log('[v0] Offer saved successfully:', { offerId, customerId: formData.customer_id })
       
       // Refresh the offers list
       router.refresh()
