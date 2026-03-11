@@ -173,98 +173,98 @@ export function OffersTable({ offers: initialOffers, userRole, userId }: OffersT
           </div>
         ) : (
           <div className="border border-border rounded-lg overflow-hidden flex flex-col max-h-[calc(100vh-300px)]">
-            <div className="overflow-x-auto overflow-y-auto flex-1">
-              <Table>
+            <div className="overflow-y-auto flex-1">
+              <Table className="text-xs">
                 <TableHeader className="sticky top-0 bg-background z-10">
-                  <TableRow>
-                    <TableHead className="min-w-[100px] sticky left-0 bg-background z-20">Acciones</TableHead>
-                    <TableHead className="min-w-[120px]">Nº Oferta</TableHead>
-                    <TableHead className="min-w-[150px]">Título</TableHead>
-                    <TableHead className="min-w-[140px]">Cliente</TableHead>
-                    <TableHead className="min-w-[120px]">PVP Total</TableHead>
-                    <TableHead className="min-w-[120px]">Neto Total</TableHead>
-                    <TableHead className="min-w-[100px]">Estado</TableHead>
-                    {userRole !== 'sales_rep' && <TableHead className="min-w-[140px]">Creado por</TableHead>}
-                    <TableHead className="min-w-[130px]">Fecha</TableHead>
-                    <TableHead className="min-w-[140px] sticky right-0 bg-background z-20">Más</TableHead>
+                  <TableRow className="h-9">
+                    <TableHead className="min-w-[70px] px-2 py-1 sticky left-0 bg-background z-20 text-xs font-medium">Acciones</TableHead>
+                    <TableHead className="min-w-[80px] px-2 py-1 text-xs font-medium">Nº Oferta</TableHead>
+                    <TableHead className="min-w-[100px] px-2 py-1 text-xs font-medium">Título</TableHead>
+                    <TableHead className="min-w-[90px] px-2 py-1 text-xs font-medium">Cliente</TableHead>
+                    <TableHead className="min-w-[85px] px-2 py-1 text-xs font-medium">PVP</TableHead>
+                    <TableHead className="min-w-[85px] px-2 py-1 text-xs font-medium">Neto</TableHead>
+                    <TableHead className="min-w-[70px] px-2 py-1 text-xs font-medium">Estado</TableHead>
+                    {userRole !== 'sales_rep' && <TableHead className="min-w-[100px] px-2 py-1 text-xs font-medium">Creado por</TableHead>}
+                    <TableHead className="min-w-[80px] px-2 py-1 text-xs font-medium">Fecha</TableHead>
+                    <TableHead className="min-w-[70px] px-2 py-1 sticky right-0 bg-background z-20 text-xs font-medium">Más</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredOffers.map((offer) => (
-                    <TableRow key={offer.id}>
-                      <TableCell className="sticky left-0 bg-background z-5">
-                        <div className="flex items-center gap-1">
-                          <Button asChild variant="ghost" size="sm" className="h-7 px-2">
+                    <TableRow key={offer.id} className="h-8">
+                      <TableCell className="px-1 py-1 sticky left-0 bg-background z-5">
+                        <div className="flex items-center gap-0.5">
+                          <Button asChild variant="ghost" size="sm" className="h-6 px-1 text-xs">
                             <Link href={`/dashboard/offers/${offer.id}`}>Ver</Link>
                           </Button>
-                          <Button asChild variant="ghost" size="sm" className="h-7 px-2">
+                          <Button asChild variant="ghost" size="sm" className="h-6 px-1">
                             <Link href={`/dashboard/offers/${offer.id}/edit`}>
-                              <Edit className="h-3.5 w-3.5" />
+                              <Edit className="h-3 w-3" />
                             </Link>
                           </Button>
                         </div>
                       </TableCell>
-                      <TableCell className="min-w-[120px]">
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium text-foreground text-sm">
+                      <TableCell className="min-w-[80px] px-2 py-1 text-xs">
+                        <div className="flex items-center gap-1">
+                          <span className="font-medium text-foreground">
                             {formatOfferNumber(offer.offer_number, new Date(offer.created_at).getFullYear())}
                           </span>
                           {(offer.assignments || []).some((a: any) => a.user_id === userId) && (
-                            <Forward className="h-4 w-4 text-info flex-shrink-0" title="Oferta asignada a ti" />
+                            <Forward className="h-3 w-3 text-info flex-shrink-0" title="Oferta asignada a ti" />
                           )}
                         </div>
                       </TableCell>
-                      <TableCell className="min-w-[150px]">
-                        <p className="font-medium text-foreground text-sm">{offer.title}</p>
+                      <TableCell className="min-w-[100px] px-2 py-1 text-xs truncate">
+                        <p className="font-medium text-foreground truncate">{offer.title}</p>
                       </TableCell>
-                      <TableCell className="min-w-[140px]">
-                        <span className="text-sm text-foreground">
+                      <TableCell className="min-w-[90px] px-2 py-1 text-xs truncate">
+                        <span className="truncate">
                           {offer.customer?.company_name || 'Desconocido'}
                         </span>
                       </TableCell>
-                      <TableCell className="min-w-[120px]">
-                        <span className="font-medium text-foreground text-sm">
+                      <TableCell className="min-w-[85px] px-2 py-1 text-xs">
+                        <span className="font-medium text-foreground">
                           €{(offer.pvp_total || 0).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </span>
                       </TableCell>
-                      <TableCell className="min-w-[120px]">
-                        <span className="font-medium text-foreground text-sm">
+                      <TableCell className="min-w-[85px] px-2 py-1 text-xs">
+                        <span className="font-medium text-foreground">
                           €{(offer.neto_total || 0).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </span>
                       </TableCell>
-                      <TableCell className="min-w-[100px]">
-                        <Badge variant="outline" className={statusColors[offer.status]}>
+                      <TableCell className="min-w-[70px] px-2 py-1 text-xs">
+                        <Badge variant="outline" className={`text-xs ${statusColors[offer.status]}`}>
                           {offer.status}
                         </Badge>
                       </TableCell>
                       {userRole !== 'sales_rep' && (
-                        <TableCell className="min-w-[140px]">
-                          <div className="flex flex-col">
-                            <span className="text-sm font-medium text-foreground">
+                        <TableCell className="min-w-[100px] px-2 py-1 text-xs">
+                          <div className="flex flex-col gap-0.5">
+                            <span className="text-xs font-medium text-foreground truncate">
                               {offer.created_by_profile?.full_name || 'Desconocido'}
                             </span>
-                            <span className="text-xs text-muted-foreground">
+                            <span className="text-xs text-muted-foreground truncate">
                               {offer.created_by_profile?.email || ''}
                             </span>
                           </div>
                         </TableCell>
                       )}
-                      <TableCell className="min-w-[130px]">
-                        <span className="text-sm text-muted-foreground">
+                      <TableCell className="min-w-[80px] px-2 py-1 text-xs">
+                        <span className="text-muted-foreground">
                           {formattedDates[offer.id] || 'hace poco'}
                         </span>
                       </TableCell>
-                      <TableCell className="sticky right-0 bg-background z-5 min-w-[140px]">
-                        <div className="flex items-center justify-end gap-1">
+                      <TableCell className="px-1 py-1 sticky right-0 bg-background z-5 min-w-[70px]">
+                        <div className="flex items-center justify-end gap-0.5">
                           <DuplicateOfferButton offerId={offer.id as string} size="sm" variant="ghost" showLabel={false} />
                           {(userRole === 'admin' || userRole === 'manager' || offer.created_by === userId) && (
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="text-destructive hover:text-destructive hover:bg-destructive/10 h-7 px-2"
+                              className="text-destructive hover:text-destructive hover:bg-destructive/10 h-6 px-1"
                               onClick={() => setDeleteTarget({ id: offer.id, title: offer.title })}
                             >
-                              <Trash2 className="h-3.5 w-3.5" />
+                              <Trash2 className="h-3 w-3" />
                             </Button>
                           )}
                         </div>
