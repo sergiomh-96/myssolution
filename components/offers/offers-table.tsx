@@ -173,7 +173,7 @@ export function OffersTable({ offers: initialOffers, userRole, userId }: OffersT
           </div>
         ) : (
           <div className="border border-border rounded-lg overflow-hidden flex flex-col max-h-[calc(100vh-300px)]">
-            <div className="overflow-y-auto flex-1">
+            <div className="overflow-x-auto overflow-y-auto flex-1">
               <Table className="text-xs">
                 <TableHeader className="sticky top-0 bg-background z-10">
                   <TableRow className="h-9">
