@@ -279,6 +279,14 @@ function CustomerSearchInput({
     setIsOpen(false)
   }
 
+  const handleFreeText = () => {
+    // Store the free text as a string with a special prefix to identify it's not a real customer ID
+    onSelect(`free:${searchTerm}`)
+    setSelectedCustomer({ id: `free:${searchTerm}`, company_name: searchTerm })
+    setSearchTerm('')
+    setIsOpen(false)
+  }
+
   const handleClear = () => {
     onSelect('')
     setSelectedCustomer(null)
@@ -337,8 +345,14 @@ function CustomerSearchInput({
                 </div>
               )}
               {filteredCustomers.length === 0 && (
-                <div className="absolute top-full left-0 right-0 mt-1 border border-input rounded-md bg-background px-3 py-2 text-xs text-muted-foreground">
-                  No se encontraron clientes
+                <div className="absolute top-full left-0 right-0 mt-1 border border-input rounded-md bg-background shadow-lg z-10">
+                  <button
+                    type="button"
+                    onClick={handleFreeText}
+                    className="w-full text-left px-3 py-2 hover:bg-accent text-sm text-foreground"
+                  >
+                    Usar "{searchTerm}" como cliente libre
+                  </button>
                 </div>
               )}
             </>
@@ -988,11 +1002,48 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
     try {
       const supabase = createClient()
 
+      // Handle free-text customer
+      let customerId: number | null = null
+      let customerName: string | null = null
+      
+      if (formData.customer_id) {
+        const customerIdStr = String(formData.customer_id)
+        if (customerIdStr.startsWith('free:')) {
+          // Extract the free-text customer name
+          customerName = customerIdStr.substring(5)
+          // Try to find or create a customer with this name
+          const { data: existingCustomer } = await supabase
+            .from('customers')
+            .select('id')
+            .eq('company_name', customerName)
+            .single()
+          
+          if (existingCustomer) {
+            customerId = existingCustomer.id
+          } else {
+            // Create a new customer with the free-text name
+            const { data: newCustomer, error: createError } = await supabase
+              .from('customers')
+              .insert({
+                company_name: customerName,
+                created_by: currentUserId,
+              })
+              .select('id')
+              .single()
+            
+            if (createError) throw createError
+            customerId = newCustomer.id
+          }
+        } else {
+          customerId = parseInt(customerIdStr)
+        }
+      }
+
       const offerData = {
         title: formData.title,
         description: formData.description,
         notas_internas: formData.notas_internas,
-        customer_id: formData.customer_id ? parseInt(String(formData.customer_id)) : null,
+        customer_id: customerId,
         contact_id: formData.contact_id ? parseInt(String(formData.contact_id)) : null,
         tarifa_id: formData.tarifa_id ? parseInt(String(formData.tarifa_id)) : null,
         status: formData.status,
