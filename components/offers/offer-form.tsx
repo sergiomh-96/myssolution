@@ -1238,11 +1238,12 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
             amount: totalAmount,
           })
           .select()
+          .single()
 
         if (insertError) throw insertError
-        if (!newOfferData || newOfferData.length === 0) throw new Error('Failed to create offer')
+        if (!newOfferData) throw new Error('Failed to create offer')
 
-        offerId = newOfferData[0].id
+        offerId = newOfferData.id
 
         // Insert offer items
         if (items.length > 0) {
@@ -1308,9 +1309,6 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
       setSavedOfferId(offerId)
       setUnsavedChanges(false)
       setLoading(false)
-      
-      // Refresh the offers list
-      router.refresh()
       
       // Reset success message after 2 seconds
       setTimeout(() => {
