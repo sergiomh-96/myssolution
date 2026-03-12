@@ -48,13 +48,10 @@ interface OffersTableProps {
 }
 
 const statusColors = {
-  draft: 'bg-muted text-muted-foreground border-border',
-  pending: 'bg-warning/10 text-warning-foreground border-warning/20',
-  approved: 'bg-success/10 text-success border-success/20',
-  rejected: 'bg-destructive/10 text-destructive border-destructive/20',
-  sent: 'bg-info/10 text-info border-info/20',
-  accepted: 'bg-success/10 text-success border-success/20',
-  declined: 'bg-destructive/10 text-destructive border-destructive/20',
+  borrador: 'bg-muted text-muted-foreground border-border',
+  enviada: 'bg-info/10 text-info border-info/20',
+  aceptada: 'bg-success/10 text-success border-success/20',
+  rechazada: 'bg-destructive/10 text-destructive border-destructive/20',
 }
 
 export function OffersTable({ offers: initialOffers, userRole, userId }: OffersTableProps) {
@@ -153,13 +150,10 @@ export function OffersTable({ offers: initialOffers, userRole, userId }: OffersT
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos los estados</SelectItem>
-              <SelectItem value="draft">Draft</SelectItem>
-              <SelectItem value="pending">Pendiente</SelectItem>
-              <SelectItem value="approved">Aprobada</SelectItem>
-              <SelectItem value="rejected">Rechazada</SelectItem>
-              <SelectItem value="sent">Enviada</SelectItem>
-              <SelectItem value="accepted">Aceptada</SelectItem>
-              <SelectItem value="declined">Declinada</SelectItem>
+              <SelectItem value="borrador">Borrador</SelectItem>
+              <SelectItem value="enviada">Enviada</SelectItem>
+              <SelectItem value="aceptada">Aceptada</SelectItem>
+              <SelectItem value="rechazada">Rechazada</SelectItem>
             </SelectContent>
           </Select>
           <Button

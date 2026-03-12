@@ -512,7 +512,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
     customer_id: offer?.customer_id || null,
     contact_id: offer?.contact_id || null,
     tarifa_id: offer?.tarifa_id || null,
-    status: (offer?.status || 'draft') as OfferStatus,
+    status: (offer?.status || 'borrador') as OfferStatus,
     valid_until: offer?.valid_until ? offer.valid_until.split('T')[0] : addDays(new Date().toISOString().split('T')[0], 30),
   })
 
@@ -1438,17 +1438,10 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="draft">Borrador</SelectItem>
-              <SelectItem value="pending">Pendiente</SelectItem>
-              {(currentUserRole === 'admin' || currentUserRole === 'manager') && (
-                <>
-                  <SelectItem value="approved">Aprobada</SelectItem>
-                  <SelectItem value="rejected">Rechazada</SelectItem>
-                </>
-              )}
-              <SelectItem value="sent">Enviada</SelectItem>
-              <SelectItem value="accepted">Aceptada</SelectItem>
-              <SelectItem value="declined">Declinada</SelectItem>
+              <SelectItem value="borrador">Borrador</SelectItem>
+              <SelectItem value="enviada">Enviada</SelectItem>
+              <SelectItem value="aceptada">Aceptada</SelectItem>
+              <SelectItem value="rechazada">Rechazada</SelectItem>
             </SelectContent>
           </Select>
         </div>

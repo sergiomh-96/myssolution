@@ -7,7 +7,7 @@ CREATE TYPE user_role AS ENUM ('admin', 'manager', 'sales_rep', 'support_agent',
 CREATE TYPE customer_status AS ENUM ('prospect', 'active', 'inactive');
 
 -- Offer statuses
-CREATE TYPE offer_status AS ENUM ('draft', 'pending', 'approved', 'rejected', 'expired');
+CREATE TYPE offer_status AS ENUM ('borrador', 'enviada', 'aceptada', 'rechazada');
 
 -- Technical request priorities
 CREATE TYPE request_priority AS ENUM ('low', 'medium', 'high', 'urgent');
