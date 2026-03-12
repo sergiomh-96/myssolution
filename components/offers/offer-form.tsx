@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
 import { Copy, Loader2, Plus, X, CheckCircle, ChevronDown, Check, Search, Eye, FileText, AlertCircle, ChevronLeft, ChevronRight, GripVertical } from 'lucide-react'
 import { DuplicateOfferButton } from './duplicate-offer-button'
 import { CalcularLarguerosDialog } from './calcular-largueros-dialog'
@@ -393,6 +394,9 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
   const [currentCustomer, setCurrentCustomer] = useState<any>(null)
   const [users, setUsers] = useState<any[]>([])
   const [assignedUserIds, setAssignedUserIds] = useState<string[]>([])
+  const [unsavedChanges, setUnsavedChanges] = useState(false)
+  const [showExitDialog, setShowExitDialog] = useState(false)
+  const [pendingNavigation, setPendingNavigation] = useState<string | null>(null)
 
   const existingItems: OfferItem[] = []
 
@@ -828,6 +832,56 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
     }
   }, [savedOfferId, success])
 
+  // Handle unsaved changes when leaving the page
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (unsavedChanges) {
+        e.preventDefault()
+        e.returnValue = ''
+      }
+    }
+
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+  }, [unsavedChanges])
+
+  // Mark changes as unsaved when form data changes
+  useEffect(() => {
+    if (!loading && !success) {
+      setUnsavedChanges(true)
+    }
+  }, [items])
+
+  const handleNavigation = (path: string) => {
+    if (unsavedChanges && !loading) {
+      setPendingNavigation(path)
+      setShowExitDialog(true)
+    } else {
+      router.push(path)
+    }
+  }
+
+  const handleSaveAndExit = async () => {
+    setShowExitDialog(false)
+    // Trigger save by setting callback
+    if (pendingNavigation && savedOfferId) {
+      callbackRef.current = () => {
+        router.push(pendingNavigation)
+      }
+      // The save will trigger through handleSaveOffer
+      const saveButton = document.querySelector('[data-save-button]') as HTMLButtonElement
+      if (saveButton) saveButton.click()
+    } else {
+      router.push(pendingNavigation || '/dashboard/offers')
+    }
+  }
+
+  const handleExitWithoutSave = () => {
+    setShowExitDialog(false)
+    setUnsavedChanges(false)
+    router.push(pendingNavigation || '/dashboard/offers')
+  }
+
   const getPrecioForProduct = (productId: number): number | null => {
     const precio = precios.find(p => p.id_producto === productId)
     return precio ? precio.precio : null
@@ -1252,6 +1306,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
       setSuccess(true)
       setError(null)
       setSavedOfferId(offerId)
+      setUnsavedChanges(false)
       setLoading(false)
       
       // Refresh the offers list
@@ -1303,7 +1358,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
               type="button"
               variant="outline"
               size="sm"
-              onClick={() => previousOfferId && router.push(`/dashboard/offers/${previousOfferId}/edit`)}
+                onClick={() => previousOfferId && handleNavigation(`/dashboard/offers/${previousOfferId}/edit`)}
               disabled={!previousOfferId || loading}
               className="h-9 w-9 p-0"
               title="Oferta anterior"
@@ -1314,7 +1369,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
               type="button"
               variant="outline"
               size="sm"
-              onClick={() => nextOfferId && router.push(`/dashboard/offers/${nextOfferId}/edit`)}
+                onClick={() => nextOfferId && handleNavigation(`/dashboard/offers/${nextOfferId}/edit`)}
               disabled={!nextOfferId || loading}
               className="h-9 w-9 p-0"
               title="Oferta siguiente"
@@ -2073,7 +2128,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
           <Button 
             type="button" 
             variant="default"
-            onClick={() => router.push('/dashboard/offers/new')} 
+            onClick={() => handleNavigation('/dashboard/offers/new')} 
             disabled={loading} 
             className="h-8 text-xs"
           >
@@ -2122,15 +2177,35 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
           />
         </div>
         <div className="flex gap-2">
-          <Button type="button" variant="outline" onClick={() => router.push('/dashboard/offers')} disabled={loading} className="h-8 text-xs">
+          <Button type="button" variant="outline" onClick={() => handleNavigation('/dashboard/offers')} disabled={loading} className="h-8 text-xs">
             Cancelar
           </Button>
-          <Button type="submit" disabled={loading} className="h-8 text-xs">
+          <Button type="submit" disabled={loading} className="h-8 text-xs" data-save-button>
             {loading && <Loader2 className="mr-2 h-3 w-3 animate-spin" />}
             {offer ? 'Actualizar Oferta' : 'Guardar'}
           </Button>
         </div>
       </div>
     </form>
+
+    {/* Exit confirmation dialog */}
+    <AlertDialog open={showExitDialog} onOpenChange={setShowExitDialog}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Cambios sin guardar</AlertDialogTitle>
+          <AlertDialogDescription>
+            Tienes cambios sin guardar en esta oferta. ¿Qué deseas hacer?
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={handleExitWithoutSave}>
+            Salir sin guardar
+          </AlertDialogCancel>
+          <AlertDialogAction onClick={handleSaveAndExit}>
+            Guardar y salir
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   )
 }
