@@ -1049,6 +1049,14 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
   const totalPVP = items.reduce((sum, item) => item.type !== 'summary' ? sum + (item.pvp_total || 0) : sum, 0)
   const totalNeto = items.reduce((sum, item) => item.type !== 'summary' ? sum + (item.neto_total2 || 0) : sum, 0)
 
+  // Calculate warnings for articles
+  const articlesWithoutCost = items.filter(item => 
+    item.type === 'article' && (item.pvp === undefined || item.pvp === 0 || item.pvp === null)
+  )
+  const articlesWithoutDiscount = items.filter(item => 
+    item.type === 'article' && (item.discount1 === undefined || item.discount1 === 0 || item.discount1 === null)
+  )
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
@@ -1999,6 +2007,26 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
               </tr>
             </tfoot>
           </table>
+        </div>
+
+        {/* Warnings for articles */}
+        <div className="space-y-2 mt-3">
+          {articlesWithoutCost.length > 0 && (
+            <div className="flex items-start gap-2 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+              <AlertCircle className="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0" />
+              <div className="text-sm text-yellow-800">
+                <span className="font-semibold">{articlesWithoutCost.length} artículo(s) sin coste</span> - Añade un precio PVP a los artículos para calcular totales correctamente
+              </div>
+            </div>
+          )}
+          {articlesWithoutDiscount.length > 0 && (
+            <div className="flex items-start gap-2 p-3 bg-orange-50 border border-orange-200 rounded-md">
+              <AlertCircle className="w-4 h-4 text-orange-600 mt-0.5 flex-shrink-0" />
+              <div className="text-sm text-orange-800">
+                <span className="font-semibold">{articlesWithoutDiscount.length} artículo(s) sin descuento</span> - Estos artículos no tienen descuento aplicado
+              </div>
+            </div>
+          )}
         </div>
 
       <div className="flex gap-1 justify-start py-3 border-b border-border">
