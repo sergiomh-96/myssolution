@@ -1324,6 +1324,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
   }
 
   return (
+    <>
     <form onSubmit={handleSubmit} className="space-y-4">
       {error && (
         <Alert variant="destructive">
@@ -2200,5 +2201,6 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
+    </>
   )
 }
