@@ -25,7 +25,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import { Search, Edit, Forward, Trash2, Copy } from 'lucide-react'
+import { Search, Edit, Forward, Trash2, Copy, Check } from 'lucide-react'
 import type { Offer, UserRole } from '@/lib/types/database'
 import { format } from 'date-fns'
 import { formatOfferNumber } from '@/lib/utils/offer'
@@ -62,6 +62,7 @@ export function OffersTable({ offers: initialOffers, userRole, userId }: OffersT
   const [offersList, setOffersList] = useState(initialOffers)
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
+  const [onlyMyOffers, setOnlyMyOffers] = useState(false)
   const [mounted, setMounted] = useState(false)
   const [formattedDates, setFormattedDates] = useState<Record<string | number, string>>({})
   const [deleteTarget, setDeleteTarget] = useState<{ id: string | number; title: string } | null>(null)
@@ -115,8 +116,10 @@ export function OffersTable({ offers: initialOffers, userRole, userId }: OffersT
       offer.customer?.company_name.toLowerCase().includes(search)
 
     const matchesStatus = statusFilter === 'all' || offer.status === statusFilter
+    
+    const matchesUser = !onlyMyOffers || offer.created_by === userId
 
-    return matchesSearch && matchesStatus
+    return matchesSearch && matchesStatus && matchesUser
   })
 
   if (!mounted) {
@@ -159,6 +162,15 @@ export function OffersTable({ offers: initialOffers, userRole, userId }: OffersT
               <SelectItem value="declined">Declinada</SelectItem>
             </SelectContent>
           </Select>
+          <Button
+            variant={onlyMyOffers ? "default" : "outline"}
+            size="sm"
+            onClick={() => setOnlyMyOffers(!onlyMyOffers)}
+            className="w-full md:w-auto"
+          >
+            <Check className={`w-4 h-4 mr-2 ${onlyMyOffers ? 'opacity-100' : 'opacity-0'}`} />
+            Ver solo mis ofertas
+          </Button>
         </div>
 
         {filteredOffers.length === 0 ? (
