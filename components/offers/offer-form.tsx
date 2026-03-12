@@ -1671,9 +1671,6 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
               <Plus className="w-3 h-3 mr-1" />
               Añadir Línea
             </Button>
-            <Button type="button" variant="outline" size="sm" onClick={() => window.open('https://docs.google.com/spreadsheets/d/12fjRD3s82M38YtwH0XkJe4iHUTR6S9WG/edit?usp=sharing&ouid=105945344502741152620&rtpof=true&sd=true', '_blank')} className="h-7 text-xs">
-              Calcular precio articulo
-            </Button>
           </div>
         </div>
 
@@ -2089,6 +2086,9 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
         <Button type="button" variant="outline" size="sm" onClick={addExternalItem} disabled={loading} className="h-7 text-xs">
           <Plus className="w-3 h-3 mr-1" />
           Añadir Artículo Externo
+        </Button>
+        <Button type="button" variant="outline" size="sm" onClick={() => window.open('https://docs.google.com/spreadsheets/d/12fjRD3s82M38YtwH0XkJe4iHUTR6S9WG/edit?usp=sharing&ouid=105945344502741152620&rtpof=true&sd=true', '_blank')} className="h-7 text-xs">
+          Calcular precio articulo
         </Button>
         <Button type="button" variant="outline" size="sm" onClick={addSectionHeader} disabled={loading} className="h-7 text-xs">
           <Plus className="w-3 h-3 mr-1" />
