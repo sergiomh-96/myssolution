@@ -130,6 +130,7 @@ export function ProductsTable({ products: initialProducts }: ProductsTableProps)
     return sortedProducts.filter(p =>
       p.referencia?.toLowerCase().includes(s) ||
       p.descripcion?.toLowerCase().includes(s) ||
+      p.modelo_nombre?.toLowerCase().includes(s) ||
       p.familia?.toLowerCase().includes(s) ||
       p.subfamilia?.toLowerCase().includes(s)
     )
