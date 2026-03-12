@@ -1943,13 +1943,28 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
                 }
 
                 // Article Row (regular)
+                const hasProblem = (item.type === 'article' && item.product_id) && 
+                  ((item.pvp === undefined || item.pvp === 0 || item.pvp === null) || 
+                   (item.discount1 === undefined || item.discount1 === 0 || item.discount1 === null))
+                const hasCostProblem = (item.type === 'article' && item.product_id) && (item.pvp === undefined || item.pvp === 0 || item.pvp === null)
+                const hasDiscountProblem = (item.type === 'article' && item.product_id) && (item.discount1 === undefined || item.discount1 === 0 || item.discount1 === null)
+                const rowBgClass = hasProblem ? (hasCostProblem && hasDiscountProblem ? 'bg-red-50/60' : hasCostProblem ? 'bg-yellow-50/60' : 'bg-orange-50/60') : ''
                 return (
                   <tr key={item.id}
-                    className={`border-t border-border hover:bg-muted/20 ${dragOverIndex === index ? 'outline outline-2 outline-primary outline-offset-[-2px]' : ''}`}
+                    className={`border-t border-border hover:bg-muted/20 ${rowBgClass} ${dragOverIndex === index ? 'outline outline-2 outline-primary outline-offset-[-2px]' : ''}`}
                     onDragOver={(e) => handleDragOver(e, index)}
                     onDrop={(e) => handleDrop(e, index)}
                   >
-                    <td className="px-1 py-1 w-6 cursor-grab active:cursor-grabbing select-none" draggable onDragStart={() => handleDragStart(index)} onDragEnd={handleDragEnd}><GripVertical className="w-3.5 h-3.5 text-muted-foreground/50 hover:text-muted-foreground" /></td>
+                    <td className="px-1 py-1 w-6 cursor-grab active:cursor-grabbing select-none relative" draggable onDragStart={() => handleDragStart(index)} onDragEnd={handleDragEnd}>
+                      <div className="relative">
+                        <GripVertical className="w-3.5 h-3.5 text-muted-foreground/50 hover:text-muted-foreground" />
+                        {hasProblem && (
+                          <div className="absolute -top-1 -right-1 w-2 h-2 rounded-full" title={`Sin ${hasCostProblem ? 'coste' : ''}${hasCostProblem && hasDiscountProblem ? ' y ' : ''}${hasDiscountProblem ? 'descuento' : ''}`} style={{
+                            backgroundColor: hasCostProblem && hasDiscountProblem ? '#dc2626' : hasCostProblem ? '#eab308' : '#f97316'
+                          }}></div>
+                        )}
+                      </div>
+                    </td>
                     <td className="px-2 py-1">
                       <ProductSearchInput
                         value={item.product_id || ''}
@@ -2056,26 +2071,6 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
               </tr>
             </tfoot>
           </table>
-        </div>
-
-        {/* Warnings for articles */}
-        <div className="space-y-2 mt-3">
-          {articlesWithoutCost.length > 0 && (
-            <div className="flex items-start gap-2 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
-              <AlertCircle className="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0" />
-              <div className="text-sm text-yellow-800">
-                <span className="font-semibold">{articlesWithoutCost.length} artículo(s) sin coste</span> - Añade un precio PVP a los artículos para calcular totales correctamente
-              </div>
-            </div>
-          )}
-          {articlesWithoutDiscount.length > 0 && (
-            <div className="flex items-start gap-2 p-3 bg-orange-50 border border-orange-200 rounded-md">
-              <AlertCircle className="w-4 h-4 text-orange-600 mt-0.5 flex-shrink-0" />
-              <div className="text-sm text-orange-800">
-                <span className="font-semibold">{articlesWithoutDiscount.length} artículo(s) sin descuento</span> - Estos artículos no tienen descuento aplicado
-              </div>
-            </div>
-          )}
         </div>
 
       <div className="flex gap-1 justify-start py-3 border-b border-border">
