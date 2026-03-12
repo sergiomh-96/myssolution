@@ -70,6 +70,7 @@ export default async function NewOfferPage() {
             currentUserId={profile.id}
             currentUserRole={profile.role}
             customers={customers}
+            createdByName={profile.full_name}
           />
         </CardContent>
       </Card>
