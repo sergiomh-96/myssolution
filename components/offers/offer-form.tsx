@@ -2207,8 +2207,9 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
         </div>
       </div>
     </div>
+
     </form>
-    
+
     <AlertDialog open={showExitDialog} onOpenChange={setShowExitDialog}>
       <AlertDialogContent>
         <AlertDialogHeader>
