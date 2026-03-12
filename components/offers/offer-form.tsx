@@ -1105,10 +1105,10 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
 
   // Calculate warnings for articles
   const articlesWithoutCost = items.filter(item => 
-    item.type === 'article' && (item.pvp === undefined || item.pvp === 0 || item.pvp === null)
+    item.type === 'article' && item.product_id && (item.pvp === undefined || item.pvp === 0 || item.pvp === null)
   )
   const articlesWithoutDiscount = items.filter(item => 
-    item.type === 'article' && (item.discount1 === undefined || item.discount1 === 0 || item.discount1 === null)
+    item.type === 'article' && item.product_id && (item.discount1 === undefined || item.discount1 === 0 || item.discount1 === null)
   )
 
   const handleSubmit = async (e: React.FormEvent) => {
