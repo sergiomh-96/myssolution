@@ -1943,27 +1943,14 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
                 }
 
                 // Article Row (regular)
-                const hasProblem = (item.type === 'article' && item.product_id) && 
-                  ((item.pvp === undefined || item.pvp === 0 || item.pvp === null) || 
-                   (item.discount1 === undefined || item.discount1 === 0 || item.discount1 === null))
-                const hasCostProblem = (item.type === 'article' && item.product_id) && (item.pvp === undefined || item.pvp === 0 || item.pvp === null)
-                const hasDiscountProblem = (item.type === 'article' && item.product_id) && (item.discount1 === undefined || item.discount1 === 0 || item.discount1 === null)
-                const rowBgClass = hasProblem ? (hasCostProblem && hasDiscountProblem ? 'bg-red-50/60' : hasCostProblem ? 'bg-yellow-50/60' : 'bg-orange-50/60') : ''
                 return (
                   <tr key={item.id}
-                    className={`border-t border-border hover:bg-muted/20 ${rowBgClass} ${dragOverIndex === index ? 'outline outline-2 outline-primary outline-offset-[-2px]' : ''}`}
+                    className={`border-t border-border hover:bg-muted/20 ${dragOverIndex === index ? 'outline outline-2 outline-primary outline-offset-[-2px]' : ''}`}
                     onDragOver={(e) => handleDragOver(e, index)}
                     onDrop={(e) => handleDrop(e, index)}
                   >
-                    <td className="px-1 py-1 w-6 cursor-grab active:cursor-grabbing select-none relative" draggable onDragStart={() => handleDragStart(index)} onDragEnd={handleDragEnd}>
-                      <div className="relative">
-                        <GripVertical className="w-3.5 h-3.5 text-muted-foreground/50 hover:text-muted-foreground" />
-                        {hasProblem && (
-                          <div className="absolute -top-1 -right-1 w-2 h-2 rounded-full" title={`Sin ${hasCostProblem ? 'coste' : ''}${hasCostProblem && hasDiscountProblem ? ' y ' : ''}${hasDiscountProblem ? 'descuento' : ''}`} style={{
-                            backgroundColor: hasCostProblem && hasDiscountProblem ? '#dc2626' : hasCostProblem ? '#eab308' : '#f97316'
-                          }}></div>
-                        )}
-                      </div>
+                    <td className="px-1 py-1 w-6 cursor-grab active:cursor-grabbing select-none" draggable onDragStart={() => handleDragStart(index)} onDragEnd={handleDragEnd}>
+                      <GripVertical className="w-3.5 h-3.5 text-muted-foreground/50 hover:text-muted-foreground" />
                     </td>
                     <td className="px-2 py-1">
                       <ProductSearchInput
