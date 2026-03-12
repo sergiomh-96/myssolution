@@ -227,7 +227,7 @@ function ProductSearchInput({
                   >
                     <div className="font-medium">{product.referencia}</div>
                     <div className="text-muted-foreground truncate text-[10px]">
-                      {product.descripcion}
+                      {product.modelo_nombre && `${product.modelo_nombre} - `}{product.descripcion}
                     </div>
                   </button>
                 ))}
