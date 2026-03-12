@@ -1118,9 +1118,6 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
 
     try {
       const supabase = createClient()
-      
-      console.log('[v0] currentUserId:', currentUserId)
-      console.log('[v0] currentUserRole:', currentUserRole)
 
       // Handle free-text customer
       let customerId: number | null = null
@@ -1173,10 +1170,6 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
         status: formData.status,
         valid_until: formData.valid_until || null,
       }
-
-      console.log('[v0] offerData being sent:', offerData)
-      console.log('[v0] customerId:', customerId)
-      console.log('[v0] formData.status:', formData.status)
 
       let offerId: string | null = null
 
@@ -1324,7 +1317,6 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
         setSuccess(false)
       }, 2000)
     } catch (err) {
-      console.error('[v0] Error caught:', err)
       setSuccess(false)
       setError(err instanceof Error ? err.message : 'Error al guardar la oferta')
       setLoading(false)
