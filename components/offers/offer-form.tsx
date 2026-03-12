@@ -24,7 +24,8 @@ interface OfferFormProps {
   offer?: Offer
   currentUserId: string
   currentUserRole: UserRole
-  customers: { id: string; company_name: string; status: string }[]
+  customers: Array<{ id: string; company_name: string; status: string }>
+  createdByProfile?: { full_name: string | null }
 }
 
 interface OfferItem {
@@ -374,7 +375,7 @@ function CustomerSearchInput({
   )
 }
 
-export function OfferForm({ offer, currentUserId, currentUserRole, customers }: OfferFormProps) {
+export function OfferForm({ offer, currentUserId, currentUserRole, customers, createdByProfile }: OfferFormProps) {
   const router = useRouter()
   
   // State declarations - all in one place
@@ -1047,6 +1048,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
   const totalAmount = items.reduce((sum, item) => item.type !== 'summary' ? sum + (item.neto_total2 || 0) : sum, 0)
   const totalPVP = items.reduce((sum, item) => item.type !== 'summary' ? sum + (item.pvp_total || 0) : sum, 0)
   const totalNeto = items.reduce((sum, item) => item.type !== 'summary' ? sum + (item.neto_total2 || 0) : sum, 0)
+  const createdByName = createdByProfile?.full_name || (offer && profile ? profile.full_name : 'N/A')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -1317,6 +1319,18 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
 
         {/* empty spacers to push Tarifa to col 4 */}
         <div className="hidden md:block" />
+
+        {/* Creada por */}
+        <div className="space-y-0.5">
+          <Label className="text-xs">Creada por</Label>
+          <Input
+            type="text"
+            value={createdByName}
+            readOnly
+            disabled
+            className="h-9 text-sm bg-muted"
+          />
+        </div>
         <div className="hidden md:block" />
 
         <div className="space-y-0.5">
