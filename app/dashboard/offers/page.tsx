@@ -1,10 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { requireProfile } from '@/lib/auth'
 import { OffersTable } from '@/components/offers/offers-table'
+import { OffersPageHeader } from '@/components/offers/offers-page-header'
 import { ExportExcelButton } from '@/components/offers/export-excel-button'
-import { Button } from '@/components/ui/button'
-import { Plus } from 'lucide-react'
-import Link from 'next/link'
 
 export default async function OffersPage() {
   const profile = await requireProfile()
@@ -59,23 +57,7 @@ export default async function OffersPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-semibold text-foreground">Ofertas</h1>
-          <p className="text-muted-foreground mt-1">
-            Gestiona propuestas comerciales y presupuestos
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <ExportExcelButton offers={offersWithTotals} />
-          <Button asChild>
-            <Link href="/dashboard/offers/new">
-              <Plus className="w-4 h-4 mr-2" />
-              Crear Oferta
-            </Link>
-          </Button>
-        </div>
-      </div>
+      <OffersPageHeader onExportClick={<ExportExcelButton offers={offersWithTotals} />} />
 
       {error ? (
         <div className="text-destructive">Error cargando ofertas: {error.message}</div>
