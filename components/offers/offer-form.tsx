@@ -2142,6 +2142,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
             )}
           </div>
         </div>
+      </div>
 
       <div className="flex justify-between gap-2">
         <div className="flex gap-2">
