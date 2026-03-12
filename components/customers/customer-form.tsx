@@ -12,6 +12,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Loader2, X, Users } from 'lucide-react'
 import type { CustomerStatus, UserRole } from '@/lib/types/database'
+import { ContactsTable } from './contacts-table'
 
 interface Profile {
   id: string
@@ -389,6 +390,11 @@ export function CustomerForm({
           </div>
         )}
       </div>
+
+      {/* Contacts table - only show when editing existing customer */}
+      {customer && customerId && (
+        <ContactsTable customerId={Number(customerId)} customerName={formData.company_name} disabled={loading} />
+      )}
 
       <div className="flex gap-3 pt-2">
         <Button type="submit" disabled={loading}>
