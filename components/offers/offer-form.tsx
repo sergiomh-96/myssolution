@@ -2073,6 +2073,26 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
           </table>
         </div>
 
+        {/* Warnings for articles */}
+        <div className="space-y-2 mt-3">
+          {articlesWithoutCost.length > 0 && (
+            <div className="flex items-start gap-2 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+              <AlertCircle className="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0" />
+              <div className="text-sm text-yellow-800">
+                <span className="font-semibold">{articlesWithoutCost.length} artículo(s) sin coste</span> - Añade un precio PVP a los artículos para calcular totales correctamente
+              </div>
+            </div>
+          )}
+          {articlesWithoutDiscount.length > 0 && (
+            <div className="flex items-start gap-2 p-3 bg-orange-50 border border-orange-200 rounded-md">
+              <AlertCircle className="w-4 h-4 text-orange-600 mt-0.5 flex-shrink-0" />
+              <div className="text-sm text-orange-800">
+                <span className="font-semibold">{articlesWithoutDiscount.length} artículo(s) sin descuento</span> - Estos artículos no tienen descuento aplicado
+              </div>
+            </div>
+          )}
+        </div>
+
       <div className="flex gap-1 justify-start py-3 border-b border-border">
         <Button type="button" variant="outline" size="sm" onClick={addExternalItem} disabled={loading} className="h-7 text-xs">
           <Plus className="w-3 h-3 mr-1" />
