@@ -180,7 +180,7 @@ export function OffersTable({ offers: initialOffers, userRole, userId }: OffersT
                     <TableHead className="min-w-[85px] px-2 py-1 text-xs font-medium">PVP</TableHead>
                     <TableHead className="min-w-[85px] px-2 py-1 text-xs font-medium">Neto</TableHead>
                     <TableHead className="min-w-[70px] px-2 py-1 text-xs font-medium">Estado</TableHead>
-                    {userRole !== 'sales_rep' && <TableHead className="min-w-[100px] px-2 py-1 text-xs font-medium">Creado por</TableHead>}
+                    <TableHead className="min-w-[100px] px-2 py-1 text-xs font-medium">Creado por</TableHead>
                     <TableHead className="min-w-[80px] px-2 py-1 text-xs font-medium">Fecha</TableHead>
                     <TableHead className="min-w-[70px] px-2 py-1 sticky right-0 bg-background z-20 text-xs font-medium">Más</TableHead>
                   </TableRow>
@@ -233,18 +233,16 @@ export function OffersTable({ offers: initialOffers, userRole, userId }: OffersT
                           {offer.status}
                         </Badge>
                       </TableCell>
-                      {userRole !== 'sales_rep' && (
-                        <TableCell className="min-w-[100px] px-2 py-1 text-xs">
-                          <div className="flex flex-col gap-0.5">
-                            <span className="text-xs font-medium text-foreground truncate">
-                              {offer.created_by_profile?.full_name || 'Desconocido'}
-                            </span>
-                            <span className="text-xs text-muted-foreground truncate">
-                              {offer.created_by_profile?.email || ''}
-                            </span>
-                          </div>
-                        </TableCell>
-                      )}
+                      <TableCell className="min-w-[100px] px-2 py-1 text-xs">
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-xs font-medium text-foreground truncate">
+                            {offer.created_by_profile?.full_name || 'Desconocido'}
+                          </span>
+                          <span className="text-xs text-muted-foreground truncate">
+                            {offer.created_by_profile?.email || ''}
+                          </span>
+                        </div>
+                      </TableCell>
                       <TableCell className="min-w-[80px] px-2 py-1 text-xs">
                         <span className="text-muted-foreground">
                           {formattedDates[offer.id] || format(new Date(offer.created_at), 'dd/MMM/yy')}
