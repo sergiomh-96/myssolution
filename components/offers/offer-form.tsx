@@ -2060,7 +2060,6 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
               </tr>
             </tfoot>
           </table>
-        </div>
 
         {/* Warnings for articles */}
         <div className="space-y-2 mt-3">
@@ -2207,6 +2206,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
           </Button>
         </div>
       </div>
+    </div>
     </form>
     
     <AlertDialog open={showExitDialog} onOpenChange={setShowExitDialog}>
