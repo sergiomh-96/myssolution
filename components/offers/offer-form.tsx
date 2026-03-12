@@ -2082,58 +2082,66 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
           )}
         </div>
 
-      {/* Buttons section - organized in 3 rows */}
-      <div className="space-y-2 py-3 border-b border-border">
-        {/* Fila 1: Añadir Secciones */}
-        <div className="flex gap-1 justify-start">
-          <Button type="button" variant="outline" size="sm" onClick={addSectionHeader} disabled={loading} className="h-7 text-xs">
-            <Plus className="w-3 h-3 mr-1" />
-            Añadir Título
-          </Button>
-          <Button type="button" variant="outline" size="sm" onClick={addNote} disabled={loading} className="h-7 text-xs">
-            <Plus className="w-3 h-3 mr-1" />
-            Añadir Anotación
-          </Button>
-          <Button type="button" variant="outline" size="sm" onClick={addSummary} disabled={loading} className="h-7 text-xs">
-            <Plus className="w-3 h-3 mr-1" />
-            Añadir Resumen
-          </Button>
+      {/* Buttons section - organized in 3 columns with headers */}
+      <div className="grid grid-cols-3 gap-6 py-3 border-b border-border">
+        {/* Column 1: Añadir Secciones */}
+        <div className="space-y-2">
+          <h3 className="text-xs font-semibold text-foreground">Añadir Secciones</h3>
+          <div className="space-y-1 flex flex-col">
+            <Button type="button" variant="outline" size="sm" onClick={addSectionHeader} disabled={loading} className="h-7 text-xs justify-start">
+              <Plus className="w-3 h-3 mr-1" />
+              Añadir Título
+            </Button>
+            <Button type="button" variant="outline" size="sm" onClick={addNote} disabled={loading} className="h-7 text-xs justify-start">
+              <Plus className="w-3 h-3 mr-1" />
+              Añadir Anotación
+            </Button>
+            <Button type="button" variant="outline" size="sm" onClick={addSummary} disabled={loading} className="h-7 text-xs justify-start">
+              <Plus className="w-3 h-3 mr-1" />
+              Añadir Resumen
+            </Button>
+          </div>
         </div>
 
-        {/* Fila 2: Añadir artículos fuera de tarifa */}
-        <div className="flex gap-1 justify-start">
-          <Button type="button" variant="outline" size="sm" onClick={addExternalItem} disabled={loading} className="h-7 text-xs">
-            <Plus className="w-3 h-3 mr-1" />
-            Añadir Artículo Externo
-          </Button>
-          <Button type="button" variant="outline" size="sm" onClick={() => window.open('https://docs.google.com/spreadsheets/d/12fjRD3s82M38YtwH0XkJe4iHUTR6S9WG/edit?usp=sharing&ouid=105945344502741152620&rtpof=true&sd=true', '_blank')} className="h-7 text-xs">
-            Calcular precio articulo
-          </Button>
+        {/* Column 2: Añadir artículos fuera de tarifa */}
+        <div className="space-y-2">
+          <h3 className="text-xs font-semibold text-foreground">Añadir articulos fuera de tarifa</h3>
+          <div className="space-y-1 flex flex-col">
+            <Button type="button" variant="outline" size="sm" onClick={addExternalItem} disabled={loading} className="h-7 text-xs justify-start">
+              <Plus className="w-3 h-3 mr-1" />
+              Añadir Artículo Externo
+            </Button>
+            <Button type="button" variant="outline" size="sm" onClick={() => window.open('https://docs.google.com/spreadsheets/d/12fjRD3s82M38YtwH0XkJe4iHUTR6S9WG/edit?usp=sharing&ouid=105945344502741152620&rtpof=true&sd=true', '_blank')} className="h-7 text-xs justify-start">
+              Calcular precio articulo
+            </Button>
+          </div>
         </div>
 
-        {/* Fila 3: Calcular largueros e importar */}
-        <div className="flex gap-1 justify-start">
-          <CalcularLarguerosDialog
-            items={items.filter(i => i.type === 'article' && i.product_id).map(i => {
-              const product = products.find(p => p.id === i.product_id)
-              return {
-                product_id: i.product_id || '',
-                quantity: i.quantity || 1,
-                product: product ? {
-                  referencia: product.referencia || '',
-                  descripcion: product.descripcion || '',
-                  larguero_largo: product.larguero_largo || null,
-                  larguero_alto: product.larguero_alto || null,
-                } : undefined,
-              }
-            })}
-            onAddItem={addItemByProductId}
-          />
-          {offer?.id && (
-            <ImportItemsDialog offerId={offer.id} onSuccess={() => loadOfferItems()} />
-          )}
+        {/* Column 3: Otros */}
+        <div className="space-y-2">
+          <h3 className="text-xs font-semibold text-foreground">Otros</h3>
+          <div className="space-y-1 flex flex-col">
+            <CalcularLarguerosDialog
+              items={items.filter(i => i.type === 'article' && i.product_id).map(i => {
+                const product = products.find(p => p.id === i.product_id)
+                return {
+                  product_id: i.product_id || '',
+                  quantity: i.quantity || 1,
+                  product: product ? {
+                    referencia: product.referencia || '',
+                    descripcion: product.descripcion || '',
+                    larguero_largo: product.larguero_largo || null,
+                    larguero_alto: product.larguero_alto || null,
+                  } : undefined,
+                }
+              })}
+              onAddItem={addItemByProductId}
+            />
+            {offer?.id && (
+              <ImportItemsDialog offerId={offer.id} onSuccess={() => loadOfferItems()} />
+            )}
+          </div>
         </div>
-      </div>
       </div>
 
       <div className="flex justify-between gap-2">
