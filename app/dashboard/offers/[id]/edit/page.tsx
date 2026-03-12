@@ -16,10 +16,10 @@ export default async function EditOfferPage({ params }: PageProps) {
   const profile = await requireProfile()
   const supabase = await createClient()
 
-  // Fetch the offer
+  // Fetch the offer with creator profile
   const { data: offer, error: offerError } = await supabase
     .from('offers')
-    .select('*')
+    .select('*, created_by_profile:profiles!created_by(full_name)')
     .eq('id', id)
     .single()
 
@@ -109,6 +109,7 @@ export default async function EditOfferPage({ params }: PageProps) {
             currentUserId={profile.id}
             currentUserRole={profile.role}
             customers={customers || []}
+            createdByName={offer?.created_by_profile?.full_name}
           />
         </CardContent>
       </Card>

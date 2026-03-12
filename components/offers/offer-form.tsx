@@ -25,6 +25,7 @@ interface OfferFormProps {
   currentUserId: string
   currentUserRole: UserRole
   customers: { id: string; company_name: string; status: string }[]
+  createdByName?: string
 }
 
 interface OfferItem {
@@ -374,7 +375,7 @@ function CustomerSearchInput({
   )
 }
 
-export function OfferForm({ offer, currentUserId, currentUserRole, customers }: OfferFormProps) {
+export function OfferForm({ offer, currentUserId, currentUserRole, customers, createdByName }: OfferFormProps) {
   const router = useRouter()
   
   // State declarations - all in one place
@@ -1315,9 +1316,20 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers }: 
           </div>
         </div>
 
-        {/* empty spacers to push Tarifa to col 4 */}
+        {/* empty spacer to push Tarifa to col 4 */}
         <div className="hidden md:block" />
-        <div className="hidden md:block" />
+
+        {/* Creada por */}
+        <div className="space-y-0.5">
+          <Label className="text-xs">Creada por</Label>
+          <Input
+            type="text"
+            value={createdByName || 'N/A'}
+            readOnly
+            disabled
+            className="h-9 text-sm bg-muted"
+          />
+        </div>
 
         <div className="space-y-0.5">
           <Label htmlFor="tarifa_id" className="text-xs">Tarifa *</Label>
