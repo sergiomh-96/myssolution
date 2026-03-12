@@ -53,7 +53,7 @@ export async function POST(request: Request) {
         currency: offer.currency || 'EUR',
         amount: offer.amount ?? 0,
         visible: true,
-        status: 'draft',
+        status: 'borrador',
         created_by: profile.id,
         contact_id: offer.contact_id || null,
         assigned_to: offer.assigned_to || null,

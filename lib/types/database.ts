@@ -1,6 +1,6 @@
 export type UserRole = 'admin' | 'manager' | 'sales_rep' | 'support_agent' | 'viewer'
 export type CustomerStatus = 'lead' | 'prospect' | 'active' | 'inactive' | 'churned'
-export type OfferStatus = 'draft' | 'pending' | 'approved' | 'rejected' | 'sent' | 'accepted' | 'declined'
+export type OfferStatus = 'borrador' | 'enviada' | 'aceptada' | 'rechazada'
 export type RequestPriority = 'low' | 'medium' | 'high' | 'urgent'
 export type RequestStatus = 'open' | 'in_progress' | 'pending_customer' | 'resolved' | 'closed'
 export type ChannelType = 'direct' | 'group' | 'team'

@@ -17,13 +17,10 @@ export async function OffersChart({ userId }: OffersChartProps) {
   const { data: offers } = await query
 
   const statusCounts = {
-    draft: 0,
-    pending: 0,
-    approved: 0,
-    rejected: 0,
-    sent: 0,
-    accepted: 0,
-    declined: 0,
+    borrador: 0,
+    enviada: 0,
+    aceptada: 0,
+    rechazada: 0,
   }
 
   offers?.forEach((offer) => {
@@ -33,13 +30,10 @@ export async function OffersChart({ userId }: OffersChartProps) {
   })
 
   const chartData = [
-    { name: 'Draft', value: statusCounts.draft },
-    { name: 'Pending', value: statusCounts.pending },
-    { name: 'Approved', value: statusCounts.approved },
-    { name: 'Sent', value: statusCounts.sent },
-    { name: 'Accepted', value: statusCounts.accepted },
-    { name: 'Rejected', value: statusCounts.rejected },
-    { name: 'Declined', value: statusCounts.declined },
+    { name: 'Borrador', value: statusCounts.borrador },
+    { name: 'Enviada', value: statusCounts.enviada },
+    { name: 'Aceptada', value: statusCounts.aceptada },
+    { name: 'Rechazada', value: statusCounts.rechazada },
   ]
 
   return <OffersChartClient data={chartData} />

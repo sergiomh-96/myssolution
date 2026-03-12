@@ -36,10 +36,10 @@ export default async function AnalyticsPage() {
 
   // Offer revenue by status
   const offerRevenue = {
-    accepted: 0,
-    sent: 0,
-    approved: 0,
-    pending: 0,
+    aceptada: 0,
+    enviada: 0,
+    borrador: 0,
+    rechazada: 0,
   }
   offers.data?.forEach(o => {
     if (o.status in offerRevenue) {
