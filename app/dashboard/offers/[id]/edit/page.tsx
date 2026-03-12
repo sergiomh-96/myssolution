@@ -19,10 +19,7 @@ export default async function EditOfferPage({ params }: PageProps) {
   // Fetch the offer
   const { data: offer, error: offerError } = await supabase
     .from('offers')
-    .select(`
-      *,
-      created_by_profile:profiles!created_by(full_name)
-    `)
+    .select('*')
     .eq('id', id)
     .single()
 
@@ -112,7 +109,6 @@ export default async function EditOfferPage({ params }: PageProps) {
             currentUserId={profile.id}
             currentUserRole={profile.role}
             customers={customers || []}
-            createdByProfile={offer.created_by_profile}
           />
         </CardContent>
       </Card>
