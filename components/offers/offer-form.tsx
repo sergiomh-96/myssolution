@@ -1666,10 +1666,15 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <Label className="text-xs">Artículos de la Oferta</Label>
-          <Button type="button" variant="outline" size="sm" onClick={addItem} disabled={loading} className="h-7 text-xs">
-            <Plus className="w-3 h-3 mr-1" />
-            Añadir Línea
-          </Button>
+          <div className="flex gap-2">
+            <Button type="button" variant="outline" size="sm" onClick={addItem} disabled={loading} className="h-7 text-xs">
+              <Plus className="w-3 h-3 mr-1" />
+              Añadir Línea
+            </Button>
+            <Button type="button" variant="outline" size="sm" onClick={() => window.open('https://docs.google.com/spreadsheets/d/12fjRD3s82M38YtwH0XkJe4iHUTR6S9WG/edit?usp=sharing&ouid=105945344502741152620&rtpof=true&sd=true', '_blank')} className="h-7 text-xs">
+              Calcular precio articulo
+            </Button>
+          </div>
         </div>
 
         <div className="border border-border rounded-lg overflow-hidden flex flex-col">
