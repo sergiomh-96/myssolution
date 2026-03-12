@@ -64,6 +64,9 @@ export function CustomerForm({
     status: (customer?.status || 'lead') as CustomerStatus,
     assigned_to: customer?.assigned_to || currentUserId,
     notas_cliente: customer?.notas_cliente || '',
+    descuento_sistemas: customer?.descuento_sistemas || 0,
+    descuento_difusion: customer?.descuento_difusion || 0,
+    descuento_agfri: customer?.descuento_agfri || 0,
   })
 
   const addProfile = () => {
@@ -320,6 +323,60 @@ export function CustomerForm({
           rows={3}
           disabled={loading}
         />
+      </div>
+
+      {/* Discounts section */}
+      <div className="border rounded-lg p-4 space-y-4">
+        <div className="flex items-center gap-2">
+          <Label className="text-base font-semibold">Descuentos</Label>
+          {currentUserRole !== 'admin' && (
+            <span className="text-xs text-muted-foreground ml-1">(solo lectura)</span>
+          )}
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="descuento_sistemas">Descuento Sistemas (%)</Label>
+            <Input
+              id="descuento_sistemas"
+              type="number"
+              min="0"
+              max="100"
+              step="0.01"
+              value={formData.descuento_sistemas}
+              onChange={(e) => setFormData({ ...formData, descuento_sistemas: parseFloat(e.target.value) || 0 })}
+              disabled={loading || currentUserRole !== 'admin'}
+              className={currentUserRole !== 'admin' ? 'bg-muted' : ''}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="descuento_difusion">Descuento Difusión (%)</Label>
+            <Input
+              id="descuento_difusion"
+              type="number"
+              min="0"
+              max="100"
+              step="0.01"
+              value={formData.descuento_difusion}
+              onChange={(e) => setFormData({ ...formData, descuento_difusion: parseFloat(e.target.value) || 0 })}
+              disabled={loading || currentUserRole !== 'admin'}
+              className={currentUserRole !== 'admin' ? 'bg-muted' : ''}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="descuento_agfri">Descuento Agfri (%)</Label>
+            <Input
+              id="descuento_agfri"
+              type="number"
+              min="0"
+              max="100"
+              step="0.01"
+              value={formData.descuento_agfri}
+              onChange={(e) => setFormData({ ...formData, descuento_agfri: parseFloat(e.target.value) || 0 })}
+              disabled={loading || currentUserRole !== 'admin'}
+              className={currentUserRole !== 'admin' ? 'bg-muted' : ''}
+            />
+          </div>
+        </div>
       </div>
 
       {/* Profile assignment section */}

@@ -2183,8 +2183,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
         </div>
       </div>
     </form>
-
-    {/* Exit confirmation dialog */}
+    
     <AlertDialog open={showExitDialog} onOpenChange={setShowExitDialog}>
       <AlertDialogContent>
         <AlertDialogHeader>
