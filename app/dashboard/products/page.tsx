@@ -21,7 +21,7 @@ export default async function ProductsPage() {
   for (let i = 0; ; i += 1000) {
     const { data } = await supabase
       .from('products')
-      .select('id, referencia, descripcion, familia, subfamilia, acabado, fijacion, largo, ancho, status, brand_id, brands(name)')
+      .select('id, referencia, descripcion, modelo_nombre, familia, subfamilia, acabado, fijacion, largo, ancho, status, brand_id, brands(name)')
       .order('referencia', { ascending: true })
       .range(i, i + 999)
     if (!data || data.length === 0) break
