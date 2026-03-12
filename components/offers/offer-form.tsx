@@ -870,7 +870,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
         automaticDiscount = currentCustomer.descuento_sistemas || 0
       } else if (product.familia === 'DIFUSIÓN') {
         automaticDiscount = currentCustomer.descuento_difusion || 0
-      } else if (product.familia === 'MYSAir' || product.familia === 'HERRAMIENTA') {
+      } else if (product.familia === 'HERRAMIENTA') {
         automaticDiscount = currentCustomer.descuento_agfri || 0
       }
     }
