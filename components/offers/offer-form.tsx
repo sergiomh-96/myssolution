@@ -1,0 +1,2212 @@
+'use client'
+
+// CACHE CLEAR: Complete rebuild - contacts renamed to contactList
+import { useState, useEffect, useRef } from 'react'
+import ReactDOM from 'react-dom'
+import { useRouter } from 'next/navigation'
+import { createClient } from '@/lib/supabase/client'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
+import { Copy, Loader2, Plus, X, CheckCircle, ChevronDown, Check, Search, Eye, FileText, AlertCircle, ChevronLeft, ChevronRight, GripVertical } from 'lucide-react'
+import { DuplicateOfferButton } from './duplicate-offer-button'
+import { CalcularLarguerosDialog } from './calcular-largueros-dialog'
+import { GeneratePdfButton } from './generate-pdf-button'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { ImportItemsDialog } from './import-items'
+import type { Offer, OfferStatus, UserRole } from '@/lib/types/database'
+import { formatOfferNumber } from '@/lib/utils/offer'
+
+interface OfferFormProps {
+  offer?: Offer
+  currentUserId: string
+  currentUserRole: UserRole
+  customers: { id: string; company_name: string; status: string }[]
+  createdByName?: string
+}
+
+interface OfferItem {
+  id: string
+  type: 'article' | 'section_header' | 'note' | 'summary' | 'external'
+  product_id: string | null
+  description: string
+  quantity: number
+  pvp: number
+  pvp_total: number
+  discount1: number
+  discount2: number
+  neto_total1: number
+  neto_total2: number
+  external_ref?: string  // Free-text reference for external articles
+}
+
+// Product Search Input Component
+function ProductSearchInput({
+  value,
+  products,
+  onSelect,
+  disabled,
+}: {
+  value: string
+  products: Array<{ id: string; referencia: string; descripcion: string; modelo_nombre?: string }>
+  onSelect: (productId: string) => void
+  disabled?: boolean
+}) {
+  const [searchTerm, setSearchTerm] = useState('')
+  const [isOpen, setIsOpen] = useState(false)
+  const [selectedProduct, setSelectedProduct] = useState<typeof products[0] | null>(null)
+
+  // Update selected product when value changes
+  useEffect(() => {
+    const product = products.find(p => String(p.id) === String(value))
+    setSelectedProduct(product || null)
+    if (product) {
+      setSearchTerm('')
+    }
+  }, [value, products])
+
+  // Filter products by search term, prioritizing referencia matches
+  const filteredProducts = searchTerm.trim()
+    ? products.filter(p => 
+        p.referencia?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        p.descripcion?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (p.modelo_nombre && p.modelo_nombre.toLowerCase().includes(searchTerm.toLowerCase()))
+      )
+      .sort((a, b) => {
+        const aRefMatch = a.referencia?.toLowerCase().includes(searchTerm.toLowerCase())
+        const bRefMatch = b.referencia?.toLowerCase().includes(searchTerm.toLowerCase())
+        
+        // Priorize referencia matches first
+        if (aRefMatch && !bRefMatch) return -1
+        if (!aRefMatch && bRefMatch) return 1
+        
+        // Then sort alphabetically
+        return (a.referencia || '').localeCompare(b.referencia || '')
+      })
+      .slice(0, 10)
+    : []
+
+  const inputRef = useRef<HTMLInputElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [highlightedIndex, setHighlightedIndex] = useState(-1)
+  const [dropdownRect, setDropdownRect] = useState<DOMRect | null>(null)
+
+  // Recalculate dropdown position on scroll/resize
+  useEffect(() => {
+    if (!isOpen) return
+    const update = () => {
+      if (inputRef.current) setDropdownRect(inputRef.current.getBoundingClientRect())
+    }
+    window.addEventListener('scroll', update, true)
+    window.addEventListener('resize', update)
+    return () => {
+      window.removeEventListener('scroll', update, true)
+      window.removeEventListener('resize', update)
+    }
+  }, [isOpen])
+
+  // Reset highlighted index when filtered results change
+  useEffect(() => {
+    setHighlightedIndex(-1)
+  }, [filteredProducts.length, searchTerm])
+
+  const handleProductSelect = (product: typeof products[0]) => {
+    onSelect(product.id)
+    setSelectedProduct(product)
+    setSearchTerm('')
+    setIsOpen(false)
+    setHighlightedIndex(-1)
+  }
+
+  const handleClear = () => {
+    onSelect('')
+    setSelectedProduct(null)
+    setSearchTerm('')
+    setHighlightedIndex(-1)
+    setTimeout(() => inputRef.current?.focus(), 0)
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!isOpen || filteredProducts.length === 0) return
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      setHighlightedIndex(prev => (prev + 1) % filteredProducts.length)
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      setHighlightedIndex(prev => (prev <= 0 ? filteredProducts.length - 1 : prev - 1))
+    } else if (e.key === 'Enter') {
+      e.preventDefault()
+      const idx = highlightedIndex >= 0 ? highlightedIndex : 0
+      handleProductSelect(filteredProducts[idx])
+    } else if (e.key === 'Tab') {
+      // Select first (or highlighted) result and move to next field
+      e.preventDefault()
+      const idx = highlightedIndex >= 0 ? highlightedIndex : 0
+      handleProductSelect(filteredProducts[idx])
+      const focusable = 'input, select, textarea, button, [tabindex]:not([tabindex="-1"])'
+      const all = Array.from(document.querySelectorAll<HTMLElement>(focusable)).filter(
+        el => !el.hasAttribute('disabled') && el.offsetParent !== null
+      )
+      const current = all.indexOf(inputRef.current as HTMLElement)
+      if (current !== -1 && all[current + 1]) {
+        all[current + 1].focus()
+      }
+    } else if (e.key === 'Escape') {
+      setIsOpen(false)
+      setHighlightedIndex(-1)
+    }
+  }
+
+  return (
+    <div className="relative" ref={containerRef}>
+      {selectedProduct ? (
+        <div className="flex items-center gap-1">
+          <div className="flex-1 h-7 px-2 py-1 border border-input rounded-md bg-background text-xs truncate">
+            {selectedProduct.referencia}
+          </div>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="h-7 w-7 p-0"
+            onClick={handleClear}
+            disabled={disabled}
+          >
+            <X className="w-3 h-3" />
+          </Button>
+        </div>
+      ) : (
+        <>
+          <Input
+            ref={inputRef}
+            value={searchTerm}
+            onChange={(e) => {
+              setSearchTerm(e.target.value)
+              setIsOpen(true)
+              if (inputRef.current) setDropdownRect(inputRef.current.getBoundingClientRect())
+            }}
+            onFocus={() => {
+              setIsOpen(true)
+              if (inputRef.current) setDropdownRect(inputRef.current.getBoundingClientRect())
+            }}
+            onKeyDown={handleKeyDown}
+            placeholder="Buscar por referencia o descripción..."
+            className="h-7 text-xs"
+            disabled={disabled}
+          />
+          {isOpen && filteredProducts.length > 0 && dropdownRect && typeof document !== 'undefined' && ReactDOM.createPortal(
+            <>
+              <div
+                className="fixed inset-0 z-[9998]"
+                onClick={() => setIsOpen(false)}
+              />
+              <div
+                className="fixed z-[9999] bg-popover border border-border rounded-md shadow-xl overflow-y-auto"
+                style={{
+                  top: dropdownRect.bottom + 2,
+                  left: dropdownRect.left,
+                  width: dropdownRect.width,
+                  maxHeight: '240px',
+                }}
+              >
+                {filteredProducts.map((product, idx) => (
+                  <button
+                    key={product.id}
+                    type="button"
+                    className={`w-full text-left px-2 py-1.5 text-xs cursor-pointer ${
+                      idx === highlightedIndex
+                        ? 'bg-accent text-accent-foreground'
+                        : 'hover:bg-accent'
+                    }`}
+                    onMouseEnter={() => setHighlightedIndex(idx)}
+                    onClick={() => handleProductSelect(product)}
+                  >
+                    <div className="font-medium">{product.referencia}</div>
+                    <div className="text-muted-foreground truncate text-[10px]">
+                      {product.modelo_nombre && `${product.modelo_nombre} - `}{product.descripcion}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </>,
+            document.body
+          )}
+        </>
+      )}
+    </div>
+  )
+}
+
+// Customer Search Input Component
+function CustomerSearchInput({
+  value,
+  customers,
+  onSelect,
+  disabled,
+}: {
+  value: string | number | null
+  customers: Array<{ id: string | number; company_name: string }>
+  onSelect: (customerId: string | number) => void
+  disabled?: boolean
+}) {
+  const [searchTerm, setSearchTerm] = useState('')
+  const [isOpen, setIsOpen] = useState(false)
+  const [selectedCustomer, setSelectedCustomer] = useState<typeof customers[0] | null>(null)
+
+  // Update selected customer when value changes
+  useEffect(() => {
+    const valueStr = String(value)
+    
+    // Handle free-text customers
+    if (valueStr.startsWith('free:')) {
+      const customerName = valueStr.substring(5)
+      setSelectedCustomer({ id: valueStr, company_name: customerName })
+      setSearchTerm('')
+      return
+    }
+    
+    // Handle regular customers
+    const customer = customers.find(c => String(c.id) === valueStr)
+    setSelectedCustomer(customer || null)
+    if (customer) {
+      setSearchTerm('')
+    }
+  }, [value, customers])
+
+  // Filter customers by search term
+  const filteredCustomers = searchTerm.trim()
+    ? customers.filter(c => 
+        c.company_name.toLowerCase().includes(searchTerm.toLowerCase())
+      ).slice(0, 10)
+    : []
+
+  const handleCustomerSelect = (customer: typeof customers[0]) => {
+    onSelect(customer.id)
+    setSelectedCustomer(customer)
+    setSearchTerm('')
+    setIsOpen(false)
+  }
+
+  const handleFreeText = () => {
+    // Store the free text as a string with a special prefix to identify it's not a real customer ID
+    onSelect(`free:${searchTerm}`)
+    setSelectedCustomer({ id: `free:${searchTerm}`, company_name: searchTerm })
+    setSearchTerm('')
+    setIsOpen(false)
+  }
+
+  const handleClear = () => {
+    onSelect('')
+    setSelectedCustomer(null)
+    setSearchTerm('')
+  }
+
+  return (
+    <div className="relative">
+      {selectedCustomer ? (
+        <div className="flex items-center gap-1">
+          <div className="flex-1 h-9 px-2 py-2 border border-input rounded-md bg-background text-sm truncate">
+            {selectedCustomer.company_name}
+          </div>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="h-9 w-9 p-0"
+            onClick={handleClear}
+            disabled={disabled}
+          >
+            <X className="w-4 h-4" />
+          </Button>
+        </div>
+      ) : (
+        <>
+          <div className="relative">
+            <Search className="absolute left-2.5 top-2.5 w-4 h-4 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder="Buscar cliente..."
+              value={searchTerm}
+              onChange={(e) => {
+                setSearchTerm(e.target.value)
+                setIsOpen(true)
+              }}
+              onFocus={() => setIsOpen(true)}
+              className="pl-8 h-9 text-sm"
+              disabled={disabled}
+            />
+          </div>
+          {isOpen && searchTerm.trim() && (
+            <>
+              {filteredCustomers.length > 0 && (
+                <div className="absolute top-full left-0 right-0 mt-1 border border-input rounded-md bg-background shadow-lg z-10">
+                  {filteredCustomers.map((customer) => (
+                    <button
+                      key={customer.id}
+                      type="button"
+                      onClick={() => handleCustomerSelect(customer)}
+                      className="w-full text-left px-3 py-2 hover:bg-accent text-sm"
+                    >
+                      {customer.company_name}
+                    </button>
+                  ))}
+                </div>
+              )}
+              {filteredCustomers.length === 0 && (
+                <div className="absolute top-full left-0 right-0 mt-1 border border-input rounded-md bg-background shadow-lg z-10">
+                  <button
+                    type="button"
+                    onClick={handleFreeText}
+                    className="w-full text-left px-3 py-2 hover:bg-accent text-sm text-foreground"
+                  >
+                    Usar "{searchTerm}" como cliente libre
+                  </button>
+                </div>
+              )}
+            </>
+          )}
+        </>
+      )}
+    </div>
+  )
+}
+
+export function OfferForm({ offer, currentUserId, currentUserRole, customers, createdByName }: OfferFormProps) {
+  const router = useRouter()
+  
+  // State declarations - all in one place
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState(false)
+  const [savedOfferId, setSavedOfferId] = useState<string | null>(offer?.id ?? null)
+  const [products, setProducts] = useState<any[]>([])
+  const [tarifas, setTarifas] = useState<any[]>([])
+  const [nextOfferNumber, setNextOfferNumber] = useState<number | null>(null)
+  const [precios, setPrecios] = useState<any[]>([])
+  const [defaultTarifa, setDefaultTarifa] = useState<number | null>(null)
+  const [contactList, setContactList] = useState<any[]>([])
+  const callbackRef = useRef<(() => void) | null>(null)
+  const [currentCustomer, setCurrentCustomer] = useState<any>(null)
+  const [users, setUsers] = useState<any[]>([])
+  const [assignedUserIds, setAssignedUserIds] = useState<string[]>([])
+  const [unsavedChanges, setUnsavedChanges] = useState(false)
+  const [showExitDialog, setShowExitDialog] = useState(false)
+  const [pendingNavigation, setPendingNavigation] = useState<string | null>(null)
+
+  const existingItems: OfferItem[] = []
+
+  const createEmptyItem = (type: 'article' | 'section_header' | 'note' = 'article'): OfferItem => ({
+    id: crypto.randomUUID(),
+    type,
+    product_id: null,
+    description: '',
+    quantity: type === 'article' ? 1 : 0,
+    pvp: 0,
+    pvp_total: 0,
+    discount1: 0,
+    discount2: 0,
+    neto_total1: 0,
+    neto_total2: 0,
+  })
+
+  const [items, setItems] = useState<OfferItem[]>(
+    existingItems.length > 0
+      ? existingItems
+      : Array.from({ length: 5 }, () => createEmptyItem())
+  )
+  const [previousOfferId, setPreviousOfferId] = useState<string | null>(null)
+  const [nextOfferId, setNextOfferId] = useState<string | null>(null)
+
+  // Format number to Spanish locale (1.000,50)
+  const formatNumber = (value: number, decimals = 2) => {
+    return new Intl.NumberFormat('es-ES', {
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals,
+    }).format(value)
+  }
+
+  const loadAdjacentOffers = async () => {
+    if (!offer?.id || offer?.offer_number == null) return
+
+    try {
+      const supabase = createClient()
+      const offerNum = Number(offer.offer_number)
+
+      // Get previous offer (highest offer_number below current)
+      const { data: prevOffers } = await supabase
+        .from('offers')
+        .select('id, offer_number')
+        .lt('offer_number', offerNum)
+        .order('offer_number', { ascending: false })
+        .limit(1)
+
+      // Get next offer (lowest offer_number above current)
+      const { data: nextOffers } = await supabase
+        .from('offers')
+        .select('id, offer_number')
+        .gt('offer_number', offerNum)
+        .order('offer_number', { ascending: true })
+        .limit(1)
+
+      setPreviousOfferId(prevOffers?.[0]?.id ?? null)
+      setNextOfferId(nextOffers?.[0]?.id ?? null)
+    } catch (err) {
+      console.error('[v0] Error loading adjacent offers:', err)
+    }
+  }
+
+  // Load offer items when offer is provided
+  const loadOfferItems = async () => {
+    if (!offer?.id) return
+
+    try {
+      const supabase = createClient()
+      const { data: offerItems, error } = await supabase
+        .from('offer_items')
+        .select('*')
+        .eq('offer_id', offer.id)
+        .order('id')
+
+      if (error) {
+        console.error('Error loading offer items:', error)
+        return
+      }
+
+      if (offerItems && offerItems.length > 0) {
+        // Load items
+        const loadedItems = offerItems as OfferItem[]
+        const itemsToSet = loadedItems.length >= 5 
+          ? loadedItems 
+          : [
+              ...loadedItems,
+              ...Array.from({ length: 5 - loadedItems.length }, () => createEmptyItem('article'))
+            ]
+        setItems(itemsToSet)
+      }
+    } catch (err) {
+      console.error('Error:', err)
+    }
+  }
+
+  useEffect(() => {
+    loadOfferItems()
+    loadAdjacentOffers()
+  }, [offer?.id])
+
+  // Helper to add 30 days to a date
+  const addDays = (dateStr: string, days: number) => {
+    const date = new Date(dateStr)
+    date.setDate(date.getDate() + days)
+    return date.toISOString().split('T')[0]
+  }
+
+  const [formData, setFormData] = useState({
+    title: offer?.title || '',
+    description: offer?.description || '',
+    notas_internas: (offer as any)?.notas_internas || '',
+    customer_id: offer?.customer_id || null,
+    contact_id: offer?.contact_id || null,
+    tarifa_id: offer?.tarifa_id || null,
+    status: (offer?.status || 'borrador') as OfferStatus,
+    valid_until: offer?.valid_until ? offer.valid_until.split('T')[0] : addDays(new Date().toISOString().split('T')[0], 30),
+  })
+
+  // Load active products and tarifas
+  useEffect(() => {
+    const loadData = async () => {
+      const supabase = createClient()
+
+      const BATCH = 1000
+      const MAX_PRODUCTS = 50000
+
+      // Helper: fetch all products in parallel batches to bypass the 1000-row limit
+      const fetchAllProducts = async (columns: string) => {
+        // First batch to know total count
+        const first = await supabase
+          .from('products')
+          .select(columns, { count: 'exact' })
+          .order('referencia')
+          .range(0, BATCH - 1)
+
+        const total = first.count ?? BATCH
+        const pages = Math.min(Math.ceil(total / BATCH), MAX_PRODUCTS / BATCH)
+
+        // If only one page, return immediately
+        if (pages <= 1) return first.data ?? []
+
+        // Fetch remaining pages in parallel
+        const rest = await Promise.all(
+          Array.from({ length: pages - 1 }, (_, i) =>
+            supabase
+              .from('products')
+              .select(columns)
+              .order('referencia')
+              .range((i + 1) * BATCH, (i + 2) * BATCH - 1)
+          )
+        )
+
+        return [
+          ...(first.data ?? []),
+          ...rest.flatMap(r => r.data ?? []),
+        ]
+      }
+
+      // ── Phase 1: load only referencia (minimal payload) — shows references immediately
+      const refsOnly = await fetchAllProducts('id, referencia')
+      if (refsOnly.length > 0) {
+        setProducts(refsOnly as any[])
+      }
+
+      // ── Phase 2: enrich with full columns + load tarifas/settings in parallel
+      const [fullProducts, tarifasResponse, settingsResponse] = await Promise.all([
+        fetchAllProducts('id, referencia, descripcion, modelo_nombre, familia, larguero_largo, larguero_alto'),
+        supabase.from('tarifas').select('id_tarifa, nombre').order('nombre'),
+        supabase.from('app_settings').select('default_tarifa_id').eq('id', 1).single(),
+      ])
+
+      if (fullProducts.length > 0) {
+        setProducts(fullProducts as any[])
+      }
+
+      const { data: tarifasData } = tarifasResponse
+      if (tarifasData) {
+        setTarifas(tarifasData)
+
+        const { data: settingsData } = settingsResponse
+        let defaultTarifaId: number | null = null
+
+        if (settingsData?.default_tarifa_id) {
+          defaultTarifaId = settingsData.default_tarifa_id
+        } else {
+          const mysairTarifa = tarifasData.find(t => t.nombre === 'Tarifa_MYSAIR_2026')
+          defaultTarifaId = mysairTarifa ? mysairTarifa.id_tarifa : (tarifasData.length > 0 ? tarifasData[0].id_tarifa : null)
+        }
+
+        if (defaultTarifaId) {
+          setDefaultTarifa(defaultTarifaId)
+          setFormData(prev => {
+            if (!prev.tarifa_id) {
+              return { ...prev, tarifa_id: defaultTarifaId }
+            }
+            return prev
+          })
+        }
+      }
+    }
+    loadData()
+  }, [])
+
+  // Calculate next offer number for new offers
+  useEffect(() => {
+    const calculateNextOfferNumber = async () => {
+      if (offer) return // Only for new offers
+      
+      try {
+        const supabase = createClient()
+
+        // Preview only: read the current sequence value without consuming it
+        const { data: existingOffers, error } = await supabase
+          .from('offers')
+          .select('offer_number')
+          .order('offer_number', { ascending: false })
+          .limit(1)
+
+        if (error) {
+          console.error('Error calculating offer number:', error)
+          return
+        }
+
+        const nextNumber = (existingOffers && existingOffers.length > 0)
+          ? (existingOffers[0].offer_number as number) + 1
+          : 1
+
+        setNextOfferNumber(nextNumber)
+      } catch (err) {
+        console.error('Error:', err)
+      }
+    }
+
+    calculateNextOfferNumber()
+  }, [currentUserId, offer])
+
+  // Load contacts and customer when customer changes
+  useEffect(() => {
+    const loadCustomerData = async () => {
+      if (!formData.customer_id) {
+        setContactList([])
+        setCurrentCustomer(null)
+        return
+      }
+
+      try {
+        const supabase = createClient()
+        const customerIdStr = String(formData.customer_id)
+        
+        // Skip loading if it's a free-text customer (not yet created/assigned a numeric ID)
+        if (customerIdStr.startsWith('free:')) {
+          setContactList([])
+          setCurrentCustomer(null)
+          return
+        }
+
+        const customerId = parseInt(customerIdStr)
+        
+        // Load contacts
+        const { data: contacts, error: contactsError } = await supabase
+          .from('clients_contacts')
+          .select('*')
+          .eq('customer_id', customerId)
+          .order('nombre')
+
+        if (contactsError) {
+          console.error('Error loading contacts:', contactsError)
+          setError('Error loading contacts')
+          return
+        }
+
+        setContactList(contacts || [])
+
+        // Load customer data
+        const { data: customerData, error: customerError } = await supabase
+          .from('customers')
+          .select('*')
+          .eq('id', customerId)
+          .single()
+
+        if (customerError) {
+          console.error('Error loading customer:', customerError)
+          return
+        }
+
+        setCurrentCustomer(customerData)
+      } catch (err) {
+        console.error('Error:', err)
+        setError('Error loading data')
+      }
+    }
+
+    loadCustomerData()
+  }, [formData.customer_id])
+
+  // Recalculate discounts when customer changes
+  useEffect(() => {
+    if (!currentCustomer || items.length === 0) return
+
+    const updatedItems = items.map(item => {
+      if (!item.product_id) return item
+
+      const product = products.find(p => p.id === item.product_id)
+      if (!product) return item
+
+      // Calculate new discount based on product family and current customer discounts
+      let newDiscount = 0
+      if (product.familia === 'SISTEMAS') {
+        newDiscount = currentCustomer.descuento_sistemas || 0
+      } else if (product.familia === 'DIFUSIÓN') {
+        newDiscount = currentCustomer.descuento_difusion || 0
+      } else if (product.familia === 'MYSAir') {
+        newDiscount = currentCustomer.descuento_agfri || 0
+      }
+
+      // Only update if discount changed
+      if (newDiscount !== item.discount1) {
+        const updatedItem = { ...item, discount1: newDiscount }
+        return calculateItemTotals(updatedItem)
+      }
+
+      return item
+    })
+
+    setItems(updatedItems)
+  }, [currentCustomer])
+
+  // Load precios when tarifa changes
+  useEffect(() => {
+    if (!formData.tarifa_id) return
+
+    const loadPrecios = async () => {
+      const supabase = createClient()
+      const allPrecios: any[] = []
+      
+      // Load precios in batches up to 50000
+      for (let i = 0; i < 50; i++) {
+        const { data, error } = await supabase
+          .from('precios_producto')
+          .select('id_producto, id_tarifa, precio')
+          .eq('id_tarifa', formData.tarifa_id)
+          .order('id_producto')
+          .range(i * 1000, i * 1000 + 999)
+        
+        if (error || !data || data.length === 0) break
+        allPrecios.push(...data)
+        if (data.length < 1000) break
+      }
+
+      setPrecios(allPrecios)
+    }
+    loadPrecios()
+  }, [formData.tarifa_id])
+
+  // Load available users
+  useEffect(() => {
+    const loadUsers = async () => {
+      try {
+        const supabase = createClient()
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('id, full_name, email')
+          .order('full_name')
+
+        if (error) {
+          console.error('Error loading users:', error)
+          return
+        }
+
+        setUsers(data || [])
+      } catch (err) {
+        console.error('[v0] Error:', err)
+      }
+    }
+
+    loadUsers()
+  }, [])
+
+  // Load offer assignments if editing
+  useEffect(() => {
+    const loadAssignments = async () => {
+      if (!offer?.id) return
+
+      try {
+        const supabase = createClient()
+        const { data, error } = await supabase
+          .from('offer_assignments')
+          .select('user_id')
+          .eq('offer_id', offer.id)
+
+        if (error) {
+          console.error('Error loading assignments:', error)
+          return
+        }
+
+        const userIds = data?.map(a => a.user_id) || []
+        setAssignedUserIds(userIds)
+      } catch (err) {
+        console.error('Error:', err)
+      }
+    }
+
+    loadAssignments()
+  }, [offer?.id])
+
+  // Update prices of existing items when tarifa changes and precios are loaded
+  useEffect(() => {
+    if (precios.length === 0 || items.length === 0) return
+
+    const updatedItems = items.map((item) => {
+      if (!item.product_id) return item
+
+      const newPrecio = precios.find(p => p.id_producto === parseInt(item.product_id))
+
+      const updatedItem = {
+        ...item,
+        pvp: newPrecio ? newPrecio.precio : 0,
+      }
+      return calculateItemTotals(updatedItem)
+    })
+
+    setItems(updatedItems)
+  }, [precios])
+
+  // Execute callback action after successful save
+  useEffect(() => {
+    if (savedOfferId && success && callbackRef.current) {
+      const callback = callbackRef.current
+      callbackRef.current = null
+      callback()
+      setSuccess(false)
+    }
+  }, [savedOfferId, success])
+
+  // Handle unsaved changes when leaving the page
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (unsavedChanges) {
+        e.preventDefault()
+        e.returnValue = ''
+      }
+    }
+
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+  }, [unsavedChanges])
+
+  // Mark changes as unsaved when form data changes
+  useEffect(() => {
+    if (!loading && !success) {
+      setUnsavedChanges(true)
+    }
+  }, [items])
+
+  const handleNavigation = (path: string) => {
+    if (unsavedChanges && !loading) {
+      setPendingNavigation(path)
+      setShowExitDialog(true)
+    } else {
+      router.push(path)
+    }
+  }
+
+  const handleSaveAndExit = async () => {
+    setShowExitDialog(false)
+    // Trigger save by setting callback
+    if (pendingNavigation && savedOfferId) {
+      callbackRef.current = () => {
+        router.push(pendingNavigation)
+      }
+      // The save will trigger through handleSaveOffer
+      const saveButton = document.querySelector('[data-save-button]') as HTMLButtonElement
+      if (saveButton) saveButton.click()
+    } else {
+      router.push(pendingNavigation || '/dashboard/offers')
+    }
+  }
+
+  const handleExitWithoutSave = () => {
+    setShowExitDialog(false)
+    setUnsavedChanges(false)
+    router.push(pendingNavigation || '/dashboard/offers')
+  }
+
+  const getPrecioForProduct = (productId: number): number | null => {
+    const precio = precios.find(p => p.id_producto === productId)
+    return precio ? precio.precio : null
+  }
+
+  const calculateItemTotals = (item: OfferItem): OfferItem => {
+    const quantity = Number(item.quantity) || 0
+    const pvp = Number(item.pvp) || 0
+    const discount1 = Number(item.discount1) || 0
+    const discount2 = Number(item.discount2) || 0
+
+    // PVP Total = Cantidad * PVP
+    const pvp_total = quantity * pvp
+
+    // Neto Total 1 = PVP Total - (PVP Total * Descuento1 / 100)
+    const neto_total1 = pvp_total - (pvp_total * discount1 / 100)
+
+    // Neto Total 2 = Neto Total 1 - (Neto Total 1 * Descuento2 / 100)
+    const neto_total2 = neto_total1 - (neto_total1 * discount2 / 100)
+
+    return {
+      ...item,
+      pvp_total,
+      neto_total1,
+      neto_total2,
+    }
+  }
+
+  const handleProductSelect = (index: number, productId: string) => {
+    const product = products.find(p => String(p.id) === String(productId))
+    if (!product) return
+
+    const newItems = [...items]
+    const precioFromTarifa = getPrecioForProduct(product.id)
+
+    // Calculate automatic discount based on product family and customer discounts
+    let automaticDiscount = 0
+    if (currentCustomer) {
+      if (product.familia === 'SISTEMAS') {
+        automaticDiscount = currentCustomer.descuento_sistemas || 0
+      } else if (product.familia === 'DIFUSIÓN') {
+        automaticDiscount = currentCustomer.descuento_difusion || 0
+      } else if (product.familia === 'HERRAMIENTA') {
+        automaticDiscount = currentCustomer.descuento_agfri || 0
+      }
+    }
+
+    newItems[index] = {
+      ...newItems[index],
+      product_id: productId,
+      description: product.descripcion || '',
+      pvp: precioFromTarifa !== null ? precioFromTarifa : 0,
+      discount1: automaticDiscount,
+    }
+    newItems[index] = calculateItemTotals(newItems[index])
+    setItems(newItems)
+  }
+
+  const recalculateSummaries = (currentItems: OfferItem[]): OfferItem[] => {
+    return currentItems.map((item, index) => {
+      if (item.type !== 'summary') return item
+
+      // Find the previous section_header
+      let lastHeaderIndex = -1
+      for (let i = index - 1; i >= 0; i--) {
+        if (currentItems[i].type === 'section_header') {
+          lastHeaderIndex = i
+          break
+        }
+      }
+
+      // Find articles between last header and this summary (excluding other summaries/notes)
+      const articlesBefore = currentItems.slice(lastHeaderIndex + 1, index).filter(
+        i => i.type === 'article'
+      )
+
+      return {
+        ...item,
+        pvp_total: articlesBefore.reduce((sum, i) => sum + (i.pvp_total || 0), 0),
+        neto_total1: articlesBefore.reduce((sum, i) => sum + (i.neto_total1 || 0), 0),
+        neto_total2: articlesBefore.reduce((sum, i) => sum + (i.neto_total2 || 0), 0),
+      }
+    })
+  }
+
+  const handleItemChange = (index: number, field: keyof OfferItem, value: string | number) => {
+    const newItems = [...items]
+    newItems[index] = { ...newItems[index], [field]: value }
+
+    // Recalcular totales cuando cambian campos relevantes
+    if (['quantity', 'pvp', 'discount1', 'discount2'].includes(field)) {
+      newItems[index] = calculateItemTotals(newItems[index])
+    }
+
+    // Recalcular todos los resúmenes con los nuevos valores
+    setItems(recalculateSummaries(newItems))
+  }
+
+  const addItem = () => {
+    setItems([...items, createEmptyItem('article')])
+  }
+
+  const addItemByProductId = (productId: string, quantity: number) => {
+    const product = products.find(p => String(p.id) === String(productId))
+    
+    const precioFromTarifa = product ? getPrecioForProduct(product.id) : null
+    let automaticDiscount = 0
+    if (product && currentCustomer) {
+      if (product.familia === 'SISTEMAS') automaticDiscount = currentCustomer.descuento_sistemas || 0
+      else if (product.familia === 'DIFUSIÓN') automaticDiscount = currentCustomer.descuento_difusion || 0
+      else if (product.familia === 'HERRAMIENTA') automaticDiscount = currentCustomer.descuento_agfri || 0
+    }
+    
+    const newItem = {
+      ...createEmptyItem('article'),
+      product_id: String(productId),
+      description: product ? product.descripcion || '' : '',
+      pvp: precioFromTarifa !== null ? precioFromTarifa : 0,
+      quantity,
+      discount1: automaticDiscount,
+    }
+    setItems(prev => [...prev, calculateItemTotals(newItem)])
+  }
+
+  const addExternalItem = () => {
+    const item: OfferItem = {
+      ...createEmptyItem('external'),
+      external_ref: '',
+    }
+    setItems([...items, item])
+  }
+
+  const addSectionHeader = () => {
+    setItems([...items, createEmptyItem('section_header')])
+  }
+
+  const addNote = () => {
+    setItems([...items, createEmptyItem('note')])
+  }
+
+  const addSummary = () => {
+    // Find articles since the last section_header
+    let lastHeaderIndex = -1
+    for (let i = items.length - 1; i >= 0; i--) {
+      if (items[i].type === 'section_header') {
+        lastHeaderIndex = i
+        break
+      }
+    }
+
+    // Sum up articles between last header and current position (excluding summaries and notes)
+    const articlesSinceHeader = items.slice(lastHeaderIndex + 1).filter(
+      item => item.type === 'article'
+    )
+
+    const summaryPVP = articlesSinceHeader.reduce((sum, item) => sum + (item.pvp_total || 0), 0)
+    const summaryNeto1 = articlesSinceHeader.reduce((sum, item) => sum + (item.neto_total1 || 0), 0)
+    const summaryNeto2 = articlesSinceHeader.reduce((sum, item) => sum + (item.neto_total2 || 0), 0)
+
+    const summaryItem: OfferItem = {
+      id: crypto.randomUUID(),
+      type: 'summary',
+      product_id: null,
+      description: 'Resumen',
+      quantity: 0,
+      pvp: 0,
+      pvp_total: summaryPVP,
+      discount1: 0,
+      discount2: 0,
+      neto_total1: summaryNeto1,
+      neto_total2: summaryNeto2,
+    }
+
+    setItems([...items, summaryItem])
+  }
+
+  const removeItem = (index: number) => {
+    if (items.length > 1) {
+      const newItems = items.filter((_, i) => i !== index)
+      setItems(recalculateSummaries(newItems))
+    }
+  }
+
+  // Drag & drop state
+  const dragIndexRef = useRef<number | null>(null)
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null)
+
+  const handleDragStart = (index: number) => {
+    dragIndexRef.current = index
+  }
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault()
+    setDragOverIndex(index)
+  }
+
+  const handleDrop = (e: React.DragEvent, dropIndex: number) => {
+    e.preventDefault()
+    const dragIndex = dragIndexRef.current
+    if (dragIndex === null || dragIndex === dropIndex) {
+      setDragOverIndex(null)
+      return
+    }
+    const newItems = [...items]
+    const [dragged] = newItems.splice(dragIndex, 1)
+    newItems.splice(dropIndex, 0, dragged)
+    setItems(recalculateSummaries(newItems))
+    dragIndexRef.current = null
+    setDragOverIndex(null)
+  }
+
+  const handleDragEnd = () => {
+    dragIndexRef.current = null
+    setDragOverIndex(null)
+  }
+
+  // Totals: exclude summary rows from global totals
+  const totalAmount = items.reduce((sum, item) => item.type !== 'summary' ? sum + (item.neto_total2 || 0) : sum, 0)
+  const totalPVP = items.reduce((sum, item) => item.type !== 'summary' ? sum + (item.pvp_total || 0) : sum, 0)
+  const totalNeto = items.reduce((sum, item) => item.type !== 'summary' ? sum + (item.neto_total2 || 0) : sum, 0)
+
+  // Calculate warnings for articles
+  const articlesWithoutCost = items.filter(item => 
+    item.type === 'article' && item.product_id && (item.pvp === undefined || item.pvp === 0 || item.pvp === null)
+  )
+  const articlesWithoutDiscount = items.filter(item => 
+    item.type === 'article' && item.product_id && (item.discount1 === undefined || item.discount1 === 0 || item.discount1 === null)
+  )
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError(null)
+    setLoading(true)
+
+    try {
+      const supabase = createClient()
+
+      // Handle free-text customer
+      let customerId: number | null = null
+      let customerName: string | null = null
+      
+      if (formData.customer_id) {
+        const customerIdStr = String(formData.customer_id)
+        
+        if (customerIdStr.startsWith('free:')) {
+          // Extract the free-text customer name
+          customerName = customerIdStr.substring(5)
+          
+          // Try to find or create a customer with this name
+          const { data: existingCustomer } = await supabase
+            .from('customers')
+            .select('id')
+            .eq('company_name', customerName)
+            .single()
+          
+          if (existingCustomer) {
+            customerId = existingCustomer.id
+          } else {
+            // Create a new customer with the free-text name
+            const { data: newCustomer, error: createError } = await supabase
+              .from('customers')
+              .insert({
+                company_name: customerName,
+                created_by: currentUserId,
+              })
+              .select('id')
+              .single()
+            
+            if (createError) {
+              throw createError
+            }
+            customerId = newCustomer.id
+          }
+        } else {
+          customerId = parseInt(customerIdStr)
+        }
+      }
+
+      const offerData = {
+        title: formData.title,
+        description: formData.description,
+        notas_internas: formData.notas_internas,
+        customer_id: customerId,
+        contact_id: formData.contact_id ? parseInt(String(formData.contact_id)) : null,
+        tarifa_id: formData.tarifa_id ? parseInt(String(formData.tarifa_id)) : null,
+        status: formData.status,
+        valid_until: formData.valid_until || null,
+      }
+
+      let offerId: string | null = null
+
+      if (offer) {
+        // Update existing offer
+        offerId = offer.id
+        const { error: updateError } = await supabase
+          .from('offers')
+          .update({
+            ...offerData,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', offer.id)
+
+        if (updateError) throw updateError
+
+        // Update offer items if they exist
+        if (items.length > 0) {
+          // Delete existing items first
+          const { error: deleteError } = await supabase
+            .from('offer_items')
+            .delete()
+            .eq('offer_id', offer.id)
+
+          if (deleteError) throw deleteError
+
+          // Insert new items
+          const itemsToInsert = items
+            .filter(item =>
+              item.type === 'section_header' ||
+              item.type === 'note' ||
+              item.type === 'summary' ||
+              (item.type === 'article' && (item.product_id || item.description)) ||
+              (item.type === 'external' && (item.external_ref || item.description))
+            )
+            .map(item => ({
+              offer_id: offerId,
+              type: item.type,
+              product_id: item.product_id ? Number(item.product_id) : null,
+              external_ref: item.type === 'external' ? (item.external_ref || null) : null,
+              description: item.description || null,
+              quantity: item.type === 'summary' ? 0 : (parseInt(String(item.quantity)) || 0),
+              pvp: parseFloat(String(item.pvp)) || 0,
+              pvp_total: parseFloat(String(item.pvp_total)) || 0,
+              discount1: parseFloat(String(item.discount1)) || 0,
+              discount2: parseFloat(String(item.discount2)) || 0,
+              neto_total1: parseFloat(String(item.neto_total1)) || 0,
+              neto_total2: parseFloat(String(item.neto_total2)) || 0,
+            }))
+
+          if (itemsToInsert.length > 0) {
+            const { error: insertError } = await supabase
+              .from('offer_items')
+              .insert(itemsToInsert)
+
+            if (insertError) throw insertError
+          }
+        }
+      } else {
+        // Create new offer - offer_number will be auto-generated by database trigger
+        const { data: newOfferData, error: insertError } = await supabase
+          .from('offers')
+          .insert({
+            ...offerData,
+            created_by: currentUserId,
+            amount: totalAmount,
+          })
+          .select()
+
+        if (insertError) throw insertError
+        if (!newOfferData || newOfferData.length === 0) throw new Error('Failed to create offer')
+
+        offerId = newOfferData[0].id
+
+        // Insert offer items
+        if (items.length > 0) {
+          const itemsToInsert = items
+            .filter(item =>
+              item.type === 'section_header' ||
+              item.type === 'note' ||
+              item.type === 'summary' ||
+              (item.type === 'article' && (item.product_id || item.description)) ||
+              (item.type === 'external' && (item.external_ref || item.description))
+            )
+            .map(item => ({
+              offer_id: offerId,
+              type: item.type,
+              product_id: item.product_id ? Number(item.product_id) : null,
+              external_ref: item.type === 'external' ? (item.external_ref || null) : null,
+              description: item.description || null,
+              quantity: item.type === 'summary' ? 0 : (parseInt(String(item.quantity)) || 0),
+              pvp: parseFloat(String(item.pvp)) || 0,
+              pvp_total: parseFloat(String(item.pvp_total)) || 0,
+              discount1: parseFloat(String(item.discount1)) || 0,
+              discount2: parseFloat(String(item.discount2)) || 0,
+              neto_total1: parseFloat(String(item.neto_total1)) || 0,
+              neto_total2: parseFloat(String(item.neto_total2)) || 0,
+            }))
+
+          if (itemsToInsert.length > 0) {
+            const { error: insertItemsError } = await supabase
+              .from('offer_items')
+              .insert(itemsToInsert)
+
+            if (insertItemsError) throw insertItemsError
+          }
+        }
+      }
+
+      // Handle user assignments
+      if (offerId && assignedUserIds.length > 0) {
+        // Delete existing assignments
+        const { error: deleteError } = await supabase
+          .from('offer_assignments')
+          .delete()
+          .eq('offer_id', offerId)
+
+        if (deleteError) throw deleteError
+
+        // Insert new assignments
+        const assignmentsToInsert = assignedUserIds.map(userId => ({
+          offer_id: offerId,
+          user_id: userId,
+        }))
+
+        const { error: insertError } = await supabase
+          .from('offer_assignments')
+          .insert(assignmentsToInsert)
+
+        if (insertError) throw insertError
+      }
+
+      // Show success message
+      setSuccess(true)
+      setError(null)
+      setSavedOfferId(offerId)
+      setUnsavedChanges(false)
+      setLoading(false)
+      
+      // Refresh the offers list
+      router.refresh()
+      
+      // Reset success message after 2 seconds
+      setTimeout(() => {
+        setSuccess(false)
+      }, 2000)
+    } catch (err) {
+      setSuccess(false)
+      setError(err instanceof Error ? err.message : 'Error al guardar la oferta')
+      setLoading(false)
+    }
+  }
+
+  return (
+    <>
+    <form onSubmit={handleSubmit} className="space-y-4">
+      {error && (
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+
+      {success && (
+        <Alert className="border-green-200 bg-green-50">
+          <CheckCircle className="h-4 w-4 text-green-600" />
+          <AlertDescription className="text-green-800 font-medium">
+            Oferta creada correctamente
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Detalles de la Oferta — 4 filas x 4 columnas */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+
+        {/* ── Fila 1: Nº Oferta | — | — | Tarifa ��─ */}
+        <div className="space-y-0.5">
+          <Label className="text-xs">Nº Oferta</Label>
+          <div className="flex items-center gap-1">
+            <div className="flex-1 h-9 px-3 py-2 bg-muted rounded-md border border-input flex items-center text-sm font-medium justify-center">
+              {offer
+                ? formatOfferNumber(offer.offer_number, new Date(offer.created_at).getFullYear())
+                : nextOfferNumber
+                  ? formatOfferNumber(nextOfferNumber, new Date().getFullYear())
+                  : 'Calculando...'}
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+                onClick={() => previousOfferId && handleNavigation(`/dashboard/offers/${previousOfferId}/edit`)}
+              disabled={!previousOfferId || loading}
+              className="h-9 w-9 p-0"
+              title="Oferta anterior"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+                onClick={() => nextOfferId && handleNavigation(`/dashboard/offers/${nextOfferId}/edit`)}
+              disabled={!nextOfferId || loading}
+              className="h-9 w-9 p-0"
+              title="Oferta siguiente"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+
+        {/* empty spacer to push Tarifa to col 4 */}
+        <div className="hidden md:block" />
+
+        {/* Creada por */}
+        <div className="space-y-0.5">
+          <Label className="text-xs">Creada por</Label>
+          <Input
+            type="text"
+            value={createdByName || 'N/A'}
+            readOnly
+            disabled
+            className="h-9 text-sm bg-muted"
+          />
+        </div>
+
+        <div className="space-y-0.5">
+          <Label htmlFor="tarifa_id" className="text-xs">Tarifa *</Label>
+          <Select
+            value={formData.tarifa_id?.toString() || ''}
+            onValueChange={(value) => setFormData(prev => ({ ...prev, tarifa_id: parseInt(value) }))}
+            disabled={loading}
+          >
+            <SelectTrigger id="tarifa_id" className="h-9 text-sm">
+              <SelectValue placeholder="Seleccionar tarifa" />
+            </SelectTrigger>
+            <SelectContent>
+              {tarifas.map((tarifa) => (
+                <SelectItem key={tarifa.id_tarifa} value={tarifa.id_tarifa.toString()}>
+                  {tarifa.nombre}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* ── Fila 2: Título (2 cols) | Estado (1 col) | — | Fecha Creación (1 col) ── */}
+        <div className="space-y-0.5 md:col-span-2">
+          <Label htmlFor="title" className="text-xs">Título Oferta *</Label>
+          <Input
+            id="title"
+            value={formData.title}
+            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+            required
+            disabled={loading}
+            className="h-9 text-sm"
+          />
+        </div>
+
+        <div className="space-y-0.5">
+          <Label htmlFor="status" className="text-xs">Estado</Label>
+          <Select
+            value={formData.status}
+            onValueChange={(value) => setFormData({ ...formData, status: value as OfferStatus })}
+            disabled={loading}
+          >
+            <SelectTrigger id="status" className="h-9 text-sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="borrador">Borrador</SelectItem>
+              <SelectItem value="enviada">Enviada</SelectItem>
+              <SelectItem value="aceptada">Aceptada</SelectItem>
+              <SelectItem value="rechazada">Rechazada</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-0.5">
+          <Label className="text-xs">Fecha Creación</Label>
+          <Input
+            type="text"
+            value={
+              offer?.created_at
+                ? new Date(offer.created_at).toLocaleString('es-ES', {
+                    year: 'numeric', month: '2-digit', day: '2-digit',
+                    hour: '2-digit', minute: '2-digit', second: '2-digit',
+                  })
+                : new Date().toLocaleString('es-ES', {
+                    year: 'numeric', month: '2-digit', day: '2-digit',
+                    hour: '2-digit', minute: '2-digit', second: '2-digit',
+                  })
+            }
+            readOnly
+            disabled
+            className="h-9 text-sm bg-muted"
+          />
+        </div>
+
+        {/* ── Fila 3: Cliente | Contacto | Descuentos ── */}
+        <div className="space-y-0.5">
+          <Label htmlFor="customer_id" className="text-xs">Cliente *</Label>
+          <CustomerSearchInput
+            value={formData.customer_id}
+            customers={customers}
+            onSelect={(customerId) => {
+              // Keep free-text format as-is, only parse numbers
+              const processedId = String(customerId).startsWith('free:') ? customerId : parseInt(String(customerId))
+              setFormData(prev => ({ ...prev, customer_id: processedId }))
+            }}
+            disabled={loading}
+          />
+        </div>
+
+        <div className="space-y-0.5">
+          <Label htmlFor="contact_id" className="text-xs">Contacto</Label>
+          <Select
+            value={formData.contact_id?.toString() || ''}
+            onValueChange={(value) => setFormData(prev => ({ ...prev, contact_id: value ? parseInt(value) : null }))}
+            disabled={loading || !formData.customer_id || contactList.length === 0}
+          >
+            <SelectTrigger id="contact_id" className="h-9 text-sm">
+              <SelectValue placeholder="Seleccionar contacto" />
+            </SelectTrigger>
+            <SelectContent>
+              {contactList.map((contact) => (
+                <SelectItem key={contact.id} value={contact.id.toString()}>
+                  {contact.nombre} {contact.apellidos} - {contact.puesto}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
+          <Label className="text-xs">Descuentos (%)</Label>
+          <div className="grid grid-cols-3 gap-2">
+            <div className="flex flex-col gap-1">
+              <Input
+                id="discount_sistemas"
+                type="number"
+                min="0"
+                max="100"
+                step="0.01"
+                value={currentCustomer?.descuento_sistemas || ''}
+                readOnly
+                disabled
+                className="h-7 text-xs bg-muted text-center"
+                placeholder="0.00"
+              />
+              <Label htmlFor="discount_sistemas" className="text-xs text-center">Sist.</Label>
+            </div>
+            <div className="flex flex-col gap-1">
+              <Input
+                id="discount_difusion"
+                type="number"
+                min="0"
+                max="100"
+                step="0.01"
+                value={currentCustomer?.descuento_difusion || ''}
+                readOnly
+                disabled
+                className="h-7 text-xs bg-muted text-center"
+                placeholder="0.00"
+              />
+              <Label htmlFor="discount_difusion" className="text-xs text-center">Difus.</Label>
+            </div>
+            <div className="flex flex-col gap-1">
+              <Input
+                id="discount_agfri"
+                type="number"
+                min="0"
+                max="100"
+                step="0.01"
+                value={currentCustomer?.descuento_agfri || ''}
+                readOnly
+                disabled
+                className="h-7 text-xs bg-muted text-center"
+                placeholder="0.00"
+              />
+              <Label htmlFor="discount_agfri" className="text-xs text-center">Agfri</Label>
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-0.5">
+          <Label htmlFor="valid_until" className="text-xs">Fecha Validez</Label>
+          <Input
+            id="valid_until"
+            type="date"
+            value={formData.valid_until}
+            onChange={(e) => setFormData({ ...formData, valid_until: e.target.value })}
+            disabled={loading}
+            className="h-9 text-sm"
+          />
+        </div>
+
+        {/* ── Fila 4: Notas Cliente | Descripción | Notas Internas | Asignar Usuarios ── */}
+        <div className="space-y-0.5">
+          <Label className="text-xs">Notas Cliente</Label>
+          <Textarea
+            value={currentCustomer?.notas_cliente || ''}
+            readOnly
+            rows={4}
+            className="resize-none text-xs bg-muted"
+            placeholder="Notas del cliente (solo lectura)"
+          />
+        </div>
+
+        <div className="space-y-0.5">
+          <Label htmlFor="description" className="text-xs">Descripción (Visible en Oferta)</Label>
+          <Textarea
+            id="description"
+            value={formData.description}
+            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+            rows={4}
+            disabled={loading}
+            className="resize-none text-xs"
+            placeholder="Descripción visible en la oferta"
+          />
+        </div>
+
+        <div className="space-y-0.5">
+          <Label htmlFor="notas_internas" className="text-xs">Notas Internas (Invisibles)</Label>
+          <Textarea
+            id="notas_internas"
+            value={formData.notas_internas}
+            onChange={(e) => setFormData({ ...formData, notas_internas: e.target.value })}
+            rows={4}
+            disabled={loading}
+            className="resize-none text-xs"
+            placeholder="Notas internas que no se mostrarán en la oferta"
+          />
+        </div>
+
+        <div className="space-y-0.5">
+          <Label className="text-xs">Asignar a Usuarios</Label>
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                disabled={loading}
+                className="flex h-9 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <span className="text-sm text-muted-foreground truncate">
+                  {assignedUserIds.length === 0
+                    ? 'Seleccionar usuarios...'
+                    : assignedUserIds.length === 1
+                      ? users.find(u => u.id === assignedUserIds[0])?.full_name || '1 usuario'
+                      : `${assignedUserIds.length} usuarios seleccionados`}
+                </span>
+                <ChevronDown className="h-4 w-4 shrink-0 opacity-50 ml-2" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-64 p-1" align="start">
+              <div className="max-h-60 overflow-y-auto">
+                {users.length > 0 ? (
+                  users.map((user) => {
+                    const isChecked = assignedUserIds.includes(user.id)
+                    return (
+                      <label
+                        key={user.id}
+                        className="flex items-center gap-2 cursor-pointer hover:bg-accent/60 px-2 py-1.5 rounded select-none"
+                      >
+                        <div className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border ${isChecked ? 'bg-primary border-primary' : 'border-input'}`}>
+                          {isChecked && <Check className="h-3 w-3 text-primary-foreground" />}
+                        </div>
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setAssignedUserIds([...assignedUserIds, user.id])
+                            } else {
+                              setAssignedUserIds(assignedUserIds.filter(id => id !== user.id))
+                            }
+                          }}
+                          disabled={loading}
+                          className="sr-only"
+                        />
+                        <span className="text-sm truncate">{user.full_name || user.email}</span>
+                      </label>
+                    )
+                  })
+                ) : (
+                  <p className="text-xs text-muted-foreground px-2 py-1.5">No hay usuarios</p>
+                )}
+              </div>
+            </PopoverContent>
+          </Popover>
+        </div>
+
+      </div>
+
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <Label className="text-xs">Artículos de la Oferta</Label>
+          <div className="flex gap-2">
+            <Button type="button" variant="outline" size="sm" onClick={addItem} disabled={loading} className="h-7 text-xs">
+              <Plus className="w-3 h-3 mr-1" />
+              Añadir Línea
+            </Button>
+            <Button type="button" variant="outline" size="sm" onClick={() => window.open('https://docs.google.com/spreadsheets/d/12fjRD3s82M38YtwH0XkJe4iHUTR6S9WG/edit?usp=sharing&ouid=105945344502741152620&rtpof=true&sd=true', '_blank')} className="h-7 text-xs">
+              Calcular precio articulo
+            </Button>
+          </div>
+        </div>
+
+        <div className="border border-border rounded-lg overflow-hidden flex flex-col">
+          <div>
+            <table className="w-full text-xs" style={{ tableLayout: 'fixed' }}>
+              <colgroup>
+                <col style={{ width: '1.5rem' }} />
+                <col style={{ width: '225px' }} />
+                <col style={{ width: '350px' }} />
+                <col style={{ width: '6rem' }} />
+                <col style={{ width: '7rem' }} />
+                <col style={{ width: '7rem' }} />
+                <col style={{ width: '7rem' }} />
+                <col style={{ width: '7rem' }} />
+                <col style={{ width: '8rem' }} />
+                <col style={{ width: '8rem' }} />
+                <col style={{ width: '3rem' }} />
+              </colgroup>
+              <thead className="bg-muted/50 sticky top-0 z-10">
+              <tr>
+                <th className="px-1 py-1"></th>
+                <th className="px-2 py-1 text-left font-medium text-xs">Artículo</th>
+                <th className="px-2 py-1 text-left font-medium text-xs">Descripción</th>
+                <th className="px-2 py-1 text-right font-medium text-xs">Cantidad</th>
+                <th className="px-2 py-1 text-right font-medium text-xs">PVP</th>
+                <th className="px-2 py-1 text-right font-medium text-xs">PVP Total</th>
+                <th className="px-2 py-1 text-right font-medium text-xs">Desc. 1 (%)</th>
+                <th className="px-2 py-1 text-right font-medium text-xs">Desc. 2 (%)</th>
+                <th className="px-2 py-1 text-right font-medium text-xs">Neto Total 1</th>
+                <th className="px-2 py-1 text-right font-medium text-xs">Neto Total 2</th>
+                <th className="px-2 py-1 text-center font-medium text-xs"></th>
+              </tr>
+            </thead>
+            </table>
+          </div>
+          <div className="overflow-y-auto" style={{ maxHeight: 'calc(2.5rem * 10)' }}>
+            <table className="w-full text-xs" style={{ tableLayout: 'fixed' }}>
+              <colgroup>
+                <col style={{ width: '1.5rem' }} />
+                <col style={{ width: '225px' }} />
+                <col style={{ width: '350px' }} />
+                <col style={{ width: '6rem' }} />
+                <col style={{ width: '7rem' }} />
+                <col style={{ width: '7rem' }} />
+                <col style={{ width: '7rem' }} />
+                <col style={{ width: '7rem' }} />
+                <col style={{ width: '8rem' }} />
+                <col style={{ width: '8rem' }} />
+                <col style={{ width: '3rem' }} />
+              </colgroup>
+              <tbody>
+              {items.map((item, index) => {
+                const isDragOver = dragOverIndex === index
+                const dragRowClass = isDragOver ? 'outline outline-2 outline-primary outline-offset-[-2px]' : ''
+                if (item.type === 'section_header') {
+                  return (
+                    <tr key={item.id}
+                      className={`border-t border-border bg-[#1a2e4a] ${dragRowClass}`}
+                      onDragOver={(e) => handleDragOver(e, index)}
+                      onDrop={(e) => handleDrop(e, index)}
+                    >
+                      <td className="px-1 py-1 w-6 cursor-grab active:cursor-grabbing select-none"
+                        draggable
+                        onDragStart={() => handleDragStart(index)}
+                        onDragEnd={handleDragEnd}
+                      >
+                        <GripVertical className="w-3.5 h-3.5 text-muted-foreground/50 hover:text-muted-foreground" />
+                      </td>
+                      <td colSpan={9} className="px-2 py-2">
+                        <Input
+                          value={item.description}
+                          onChange={(e) => handleItemChange(index, 'description', e.target.value)}
+                          placeholder="Título de sección"
+                          className="h-7 text-xs font-semibold bg-[#1a2e4a] text-white placeholder:text-white/50 border-white/20"
+                          disabled={loading}
+                        />
+                      </td>
+                      <td className="px-2 py-1 text-center">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeItem(index)}
+                          disabled={loading}
+                          className="h-6 w-6 p-0"
+                        >
+                          <X className="w-3 h-3" />
+                        </Button>
+                      </td>
+                    </tr>
+                  )
+                }
+
+                // Note Row
+                if (item.type === 'note') {
+                  return (
+                    <tr key={item.id}
+                      className={`border-t border-border bg-yellow-100 ${dragRowClass}`}
+                      onDragOver={(e) => handleDragOver(e, index)}
+                      onDrop={(e) => handleDrop(e, index)}
+                    >
+                      <td className="px-1 py-1 w-6 cursor-grab active:cursor-grabbing select-none"
+                        draggable
+                        onDragStart={() => handleDragStart(index)}
+                        onDragEnd={handleDragEnd}
+                      >
+                        <GripVertical className="w-3.5 h-3.5 text-muted-foreground/50 hover:text-muted-foreground" />
+                      </td>
+                      <td colSpan={9} className="px-2 py-2">
+                        <Input
+                          value={item.description}
+                          onChange={(e) => handleItemChange(index, 'description', e.target.value)}
+                          placeholder="Anotación"
+                          className="h-7 text-xs italic bg-yellow-100 text-yellow-900 placeholder:text-yellow-700/60 border-yellow-300"
+                          disabled={loading}
+                        />
+                      </td>
+                      <td className="px-2 py-1 text-center">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeItem(index)}
+                          disabled={loading}
+                          className="h-6 w-6 p-0"
+                        >
+                          <X className="w-3 h-3" />
+                        </Button>
+                      </td>
+                    </tr>
+                  )
+                }
+
+                // Summary Row
+                if (item.type === 'summary') {
+                  return (
+                    <tr key={item.id}
+                      className={`border-t-2 border-border bg-[#1a2e4a] font-semibold ${dragRowClass}`}
+                      onDragOver={(e) => handleDragOver(e, index)}
+                      onDrop={(e) => handleDrop(e, index)}
+                    >
+                      <td className="px-1 py-1 w-6 cursor-grab active:cursor-grabbing select-none" draggable onDragStart={() => handleDragStart(index)} onDragEnd={handleDragEnd}><GripVertical className="w-3.5 h-3.5 text-muted-foreground/50 hover:text-muted-foreground" /></td>
+                      <td colSpan={4} className="px-2 py-1.5 text-xs text-white italic">
+                        {item.description || 'Resumen'}
+                      </td>
+                      <td className="px-2 py-1.5 text-right text-xs text-white">
+                        {formatNumber(item.pvp_total)}
+                      </td>
+                      <td colSpan={2} className="px-2 py-1.5"></td>
+                      <td className="px-2 py-1.5 text-right text-xs text-white">
+                        {formatNumber(item.neto_total1)}
+                      </td>
+                      <td className="px-2 py-1.5 text-right text-xs text-white font-bold">
+                        {formatNumber(item.neto_total2)}
+                      </td>
+                      <td className="px-2 py-1 text-center">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeItem(index)}
+                          disabled={loading}
+                          className="h-6 w-6 p-0"
+                        >
+                          <X className="w-3 h-3" />
+                        </Button>
+                      </td>
+                    </tr>
+                  )
+                }
+
+                // External Article Row — free-text reference, no product lookup
+                if (item.type === 'external') {
+                  return (
+                    <tr key={item.id}
+                      className={`border-t border-border hover:bg-muted/20 ${dragRowClass}`}
+                      onDragOver={(e) => handleDragOver(e, index)}
+                      onDrop={(e) => handleDrop(e, index)}
+                    >
+                      <td className="px-1 py-1 w-6 cursor-grab active:cursor-grabbing select-none" draggable onDragStart={() => handleDragStart(index)} onDragEnd={handleDragEnd}><GripVertical className="w-3.5 h-3.5 text-muted-foreground/50 hover:text-muted-foreground" /></td>
+                      <td className="px-2 py-1">
+                        <Input
+                          value={item.external_ref ?? ''}
+                          onChange={(e) => handleItemChange(index, 'external_ref', e.target.value)}
+                          placeholder="Referencia libre"
+                          className="h-7 text-xs font-medium"
+                          disabled={loading}
+                        />
+                      </td>
+                      <td className="px-2 py-1">
+                        <Input
+                          value={item.description}
+                          onChange={(e) => handleItemChange(index, 'description', e.target.value)}
+                          placeholder="Descripción"
+                          className="h-7 text-xs"
+                          disabled={loading}
+                        />
+                      </td>
+                      <td className="px-2 py-1">
+                        <Input
+                          type="number"
+                          min="0"
+                          step="1"
+                          value={item.quantity || ''}
+                          onChange={(e) => handleItemChange(index, 'quantity', Number(e.target.value))}
+                          className="h-7 text-xs text-right"
+                          disabled={loading}
+                        />
+                      </td>
+                      <td className="px-2 py-1">
+                        <Input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={item.pvp || ''}
+                          onChange={(e) => handleItemChange(index, 'pvp', Number(e.target.value))}
+                          className="h-7 text-xs text-right"
+                          disabled={loading}
+                          placeholder="-"
+                        />
+                      </td>
+                      <td className="px-2 py-1 text-right font-medium text-xs">
+                        {item.pvp > 0 ? formatNumber(item.pvp_total) : '-'}
+                      </td>
+                      <td className="px-2 py-1">
+                        <Input
+                          type="number"
+                          min="0"
+                          max="100"
+                          step="0.01"
+                          value={item.discount1 !== undefined && item.discount1 !== null ? item.discount1 : ''}
+                          onChange={(e) => handleItemChange(index, 'discount1', Number(e.target.value))}
+                          className="h-7 text-xs text-right"
+                          disabled={loading}
+                          placeholder="-"
+                        />
+                      </td>
+                      <td className="px-2 py-1">
+                        <Input
+                          type="number"
+                          min="0"
+                          max="100"
+                          step="0.01"
+                          value={item.discount2 || ''}
+                          onChange={(e) => handleItemChange(index, 'discount2', Number(e.target.value))}
+                          className="h-7 text-xs text-right"
+                          disabled={loading}
+                          placeholder="-"
+                        />
+                      </td>
+                      <td className="px-2 py-1 text-right font-medium text-xs">
+                        {item.neto_total1 > 0 ? formatNumber(item.neto_total1) : '-'}
+                      </td>
+                      <td className="px-2 py-1 text-right font-semibold text-xs text-primary">
+                        {item.neto_total2 > 0 ? formatNumber(item.neto_total2) : '-'}
+                      </td>
+                      <td className="px-2 py-1 text-center">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeItem(index)}
+                          disabled={loading}
+                          className="h-6 w-6 p-0"
+                        >
+                          <X className="w-3 h-3" />
+                        </Button>
+                      </td>
+                    </tr>
+                  )
+                }
+
+                // Article Row (regular)
+                return (
+                  <tr key={item.id}
+                    className={`border-t border-border hover:bg-muted/20 ${dragOverIndex === index ? 'outline outline-2 outline-primary outline-offset-[-2px]' : ''}`}
+                    onDragOver={(e) => handleDragOver(e, index)}
+                    onDrop={(e) => handleDrop(e, index)}
+                  >
+                    <td className="px-1 py-1 w-6 cursor-grab active:cursor-grabbing select-none" draggable onDragStart={() => handleDragStart(index)} onDragEnd={handleDragEnd}>
+                      <GripVertical className="w-3.5 h-3.5 text-muted-foreground/50 hover:text-muted-foreground" />
+                    </td>
+                    <td className="px-2 py-1">
+                      <ProductSearchInput
+                        value={item.product_id || ''}
+                        products={products}
+                        onSelect={(productId) => handleProductSelect(index, productId)}
+                        disabled={loading}
+                      />
+                    </td>
+                    <td className="px-2 py-1">
+                      <Input
+                        value={item.description}
+                        onChange={(e) => handleItemChange(index, 'description', e.target.value)}
+                        placeholder="Descripción"
+                        className="h-7 text-xs"
+                        disabled={loading}
+                      />
+                    </td>
+                    <td className="px-2 py-1">
+                      <Input
+                        type="number"
+                        min="0"
+                        step="1"
+                        value={item.quantity || ''}
+                        onChange={(e) => handleItemChange(index, 'quantity', Number(e.target.value))}
+                        className="h-7 text-xs text-right"
+                        disabled={loading}
+                      />
+                    </td>
+                    <td className="px-2 py-1">
+                      <Input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={item.pvp || ''}
+                        onChange={(e) => handleItemChange(index, 'pvp', Number(e.target.value))}
+                        className="h-7 text-xs text-right"
+                        disabled={loading}
+                        placeholder="-"
+                      />
+                    </td>
+                    <td className="px-2 py-1 text-right font-medium text-xs">
+                      {item.pvp > 0 ? formatNumber(item.pvp_total) : '-'}
+                    </td>
+                    <td className="px-2 py-1">
+                      <Input
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="0.01"
+                        value={item.discount1 || ''}
+                        onChange={(e) => handleItemChange(index, 'discount1', Number(e.target.value))}
+                        className="h-7 text-xs text-right"
+                        disabled={loading}
+                      />
+                    </td>
+                    <td className="px-2 py-1">
+                      <Input
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="0.01"
+                        value={item.discount2 || ''}
+                        onChange={(e) => handleItemChange(index, 'discount2', Number(e.target.value))}
+                        className="h-7 text-xs text-right"
+                        disabled={loading}
+                      />
+                    </td>
+                    <td className="px-2 py-1 text-right font-medium text-xs">
+                      {item.pvp > 0 ? formatNumber(item.neto_total1) : '-'}
+                    </td>
+                    <td className="px-2 py-1 text-right font-medium text-primary text-xs">
+                      {item.pvp > 0 ? formatNumber(item.neto_total2) : '-'}
+                    </td>
+                    <td className="px-2 py-1 text-center">
+                      {items.length > 1 && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeItem(index)}
+                          disabled={loading}
+                          className="h-6 w-6 p-0"
+                        >
+                          <X className="w-3 h-3" />
+                        </Button>
+                      )}
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+            </table>
+          </div>
+          <table className="w-full text-xs table-fixed border-t border-border">
+            <tfoot className="bg-muted/30">
+              <tr>
+                <td colSpan={7}></td>
+                <td className="px-2 py-1 text-right font-semibold text-xs">
+                  Total PVP: <span className="font-bold text-sm">EUR {formatNumber(totalPVP)}</span>
+                </td>
+                <td className="px-2 py-1 text-right font-semibold text-xs">
+                  Total NETO: <span className="font-bold text-sm text-primary">EUR {formatNumber(totalNeto)}</span>
+                </td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        {/* Warnings for articles */}
+        <div className="space-y-2 mt-3">
+          {articlesWithoutCost.length > 0 && (
+            <div className="flex items-start gap-2 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+              <AlertCircle className="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0" />
+              <div className="text-sm text-yellow-800">
+                <span className="font-semibold">{articlesWithoutCost.length} artículo(s) sin coste</span> - Añade un precio PVP a los artículos para calcular totales correctamente
+              </div>
+            </div>
+          )}
+          {articlesWithoutDiscount.length > 0 && (
+            <div className="flex items-start gap-2 p-3 bg-orange-50 border border-orange-200 rounded-md">
+              <AlertCircle className="w-4 h-4 text-orange-600 mt-0.5 flex-shrink-0" />
+              <div className="text-sm text-orange-800">
+                <span className="font-semibold">{articlesWithoutDiscount.length} artículo(s) sin descuento</span> - Estos artículos no tienen descuento aplicado
+              </div>
+            </div>
+          )}
+        </div>
+
+      <div className="flex gap-1 justify-start py-3 border-b border-border">
+        <Button type="button" variant="outline" size="sm" onClick={addExternalItem} disabled={loading} className="h-7 text-xs">
+          <Plus className="w-3 h-3 mr-1" />
+          Añadir Artículo Externo
+        </Button>
+        <Button type="button" variant="outline" size="sm" onClick={addSectionHeader} disabled={loading} className="h-7 text-xs">
+          <Plus className="w-3 h-3 mr-1" />
+          Añadir Título
+        </Button>
+        <Button type="button" variant="outline" size="sm" onClick={addNote} disabled={loading} className="h-7 text-xs">
+          <Plus className="w-3 h-3 mr-1" />
+          Añadir Anotación
+        </Button>
+        <Button type="button" variant="outline" size="sm" onClick={addSummary} disabled={loading} className="h-7 text-xs">
+          <Plus className="w-3 h-3 mr-1" />
+          Añadir Resumen
+        </Button>
+        {offer?.id && (
+          <ImportItemsDialog offerId={offer.id} onSuccess={() => loadOfferItems()} />
+        )}
+        <CalcularLarguerosDialog
+          items={items.filter(i => i.type === 'article' && i.product_id).map(i => {
+            const product = products.find(p => p.id === i.product_id)
+            return {
+              product_id: i.product_id || '',
+              quantity: i.quantity || 1,
+              product: product ? {
+                referencia: product.referencia || '',
+                descripcion: product.descripcion || '',
+                larguero_largo: product.larguero_largo || null,
+                larguero_alto: product.larguero_alto || null,
+              } : undefined,
+            }
+          })}
+          onAddItem={addItemByProductId}
+        />
+      </div>
+      </div>
+
+      <div className="flex justify-between gap-2">
+        <div className="flex gap-2">
+          <Button 
+            type="button" 
+            variant="default"
+            onClick={() => handleNavigation('/dashboard/offers/new')} 
+            disabled={loading} 
+            className="h-8 text-xs"
+          >
+            <Plus className="mr-2 h-3 w-3" />
+            Nueva Oferta
+          </Button>
+          <DuplicateOfferButton 
+            offerId={savedOfferId ?? ''} 
+            variant="outline" 
+            size="sm" 
+            showLabel={true}
+            disabled={!savedOfferId && !offer?.id}
+            onClick={(e) => {
+              if (!savedOfferId && !offer?.id) {
+                e.preventDefault()
+                callbackRef.current = () => router.push(`/dashboard/offers/${savedOfferId}/duplicate`)
+                const form = document.querySelector('form') as HTMLFormElement | null
+                if (form) form.requestSubmit()
+              }
+            }}
+          />
+          <Button 
+            type="button" 
+            variant="outline" 
+            onClick={() => {
+              if (savedOfferId || offer?.id) {
+                router.push(`/dashboard/offers/${savedOfferId || offer?.id}`)
+              } else {
+                callbackRef.current = () => router.push(`/dashboard/offers/${savedOfferId}`)
+                const form = document.querySelector('form') as HTMLFormElement | null
+                if (form) form.requestSubmit()
+              }
+            }} 
+            disabled={loading} 
+            className="h-8 text-xs"
+            title={!savedOfferId && !offer?.id ? 'Guarda la oferta primero para poder verla' : undefined}
+          >
+            <Eye className="mr-2 h-3 w-3" />
+            Ver
+          </Button>
+          <GeneratePdfButton 
+            offerId={savedOfferId || offer?.id || ''} 
+            offerNumber={offer?.offer_number || 0}
+            customerName={offer?.customer?.company_name || currentCustomer?.company_name}
+            offerTitle={offer?.title}
+          />
+        </div>
+        <div className="flex gap-2">
+          <Button type="button" variant="outline" onClick={() => handleNavigation('/dashboard/offers')} disabled={loading} className="h-8 text-xs">
+            Cancelar
+          </Button>
+          <Button type="submit" disabled={loading} className="h-8 text-xs" data-save-button>
+            {loading && <Loader2 className="mr-2 h-3 w-3 animate-spin" />}
+            {offer ? 'Actualizar Oferta' : 'Guardar'}
+          </Button>
+        </div>
+      </div>
+    </form>
+    
+    <AlertDialog open={showExitDialog} onOpenChange={setShowExitDialog}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Cambios sin guardar</AlertDialogTitle>
+          <AlertDialogDescription>
+            Tienes cambios sin guardar en esta oferta. ¿Qué deseas hacer?
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={handleExitWithoutSave}>
+            Salir sin guardar
+          </AlertDialogCancel>
+          <AlertDialogAction onClick={handleSaveAndExit}>
+            Guardar y salir
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
+  )
+}
