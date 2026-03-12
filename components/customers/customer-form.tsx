@@ -146,7 +146,7 @@ export function CustomerForm({
   const unassignedProfiles = availableUsers.filter(u => !selectedProfileIds.includes(u.id))
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-3">
       {error && (
         <Alert variant="destructive">
           <AlertDescription>{error}</AlertDescription>
@@ -154,53 +154,56 @@ export function CustomerForm({
       )}
 
       {/* Customer fields */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="space-y-2">
-          <Label htmlFor="company_name">Nombre de empresa *</Label>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div className="space-y-1">
+          <Label htmlFor="company_name" className="text-sm">Nombre de empresa *</Label>
           <Input
             id="company_name"
             value={formData.company_name}
             onChange={(e) => setFormData({ ...formData, company_name: e.target.value })}
             required
             disabled={loading}
+            className="h-8 text-sm"
           />
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="nif">NIF / CIF</Label>
+        <div className="space-y-1">
+          <Label htmlFor="nif" className="text-sm">NIF / CIF</Label>
           <Input
             id="nif"
             value={formData.nif}
             onChange={(e) => setFormData({ ...formData, nif: e.target.value })}
             disabled={loading}
+            className="h-8 text-sm"
           />
         </div>
 
         {customer && createdByUser && (
-          <div className="space-y-2">
-            <Label htmlFor="created_by">Creado Por</Label>
+          <div className="space-y-1">
+            <Label htmlFor="created_by" className="text-sm">Creado Por</Label>
             <Input
               id="created_by"
               value={createdByUser.full_name || '-'}
               disabled
-              className="bg-muted"
+              className="bg-muted h-8 text-sm"
             />
           </div>
         )}
 
-        <div className="space-y-2">
-          <Label htmlFor="contact_name">Nombre de contacto *</Label>
+        <div className="space-y-1">
+          <Label htmlFor="contact_name" className="text-sm">Nombre de contacto *</Label>
           <Input
             id="contact_name"
             value={formData.contact_name}
             onChange={(e) => setFormData({ ...formData, contact_name: e.target.value })}
             required
             disabled={loading}
+            className="h-8 text-sm"
           />
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="contact_email">Email de contacto *</Label>
+        <div className="space-y-1">
+          <Label htmlFor="contact_email" className="text-sm">Email de contacto *</Label>
           <Input
             id="contact_email"
             type="email"
@@ -208,49 +211,53 @@ export function CustomerForm({
             onChange={(e) => setFormData({ ...formData, contact_email: e.target.value })}
             required
             disabled={loading}
+            className="h-8 text-sm"
           />
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="contact_phone">Teléfono</Label>
+        <div className="space-y-1">
+          <Label htmlFor="contact_phone" className="text-sm">Teléfono</Label>
           <Input
             id="contact_phone"
             type="tel"
             value={formData.contact_phone}
             onChange={(e) => setFormData({ ...formData, contact_phone: e.target.value })}
             disabled={loading}
+            className="h-8 text-sm"
           />
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="website">Web</Label>
+        <div className="space-y-1">
+          <Label htmlFor="website" className="text-sm">Web</Label>
           <Input
             id="website"
             placeholder="https://example.com"
             value={formData.website}
             onChange={(e) => setFormData({ ...formData, website: e.target.value })}
             disabled={loading}
+            className="h-8 text-sm"
           />
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="industry">Sector</Label>
+        <div className="space-y-1">
+          <Label htmlFor="industry" className="text-sm">Sector</Label>
           <Input
             id="industry"
             value={formData.industry}
             onChange={(e) => setFormData({ ...formData, industry: e.target.value })}
             disabled={loading}
+            className="h-8 text-sm"
           />
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="status">Estado</Label>
+        <div className="space-y-1">
+          <Label htmlFor="status" className="text-sm">Estado</Label>
           <Select
             value={formData.status}
             onValueChange={(value) => setFormData({ ...formData, status: value as CustomerStatus })}
             disabled={loading}
           >
-            <SelectTrigger id="status">
+            <SelectTrigger id="status" className="h-8 text-sm">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -263,79 +270,85 @@ export function CustomerForm({
           </Select>
         </div>
 
-        <div className="space-y-2 md:col-span-2">
-          <Label htmlFor="address">Dirección</Label>
+        <div className="space-y-1 md:col-span-2">
+          <Label htmlFor="address" className="text-sm">Dirección</Label>
           <Input
             id="address"
             value={formData.address}
             onChange={(e) => setFormData({ ...formData, address: e.target.value })}
             disabled={loading}
+            className="h-8 text-sm"
           />
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="ciudad">Ciudad</Label>
+        <div className="space-y-1">
+          <Label htmlFor="ciudad" className="text-sm">Ciudad</Label>
           <Input
             id="ciudad"
             value={formData.ciudad}
             onChange={(e) => setFormData({ ...formData, ciudad: e.target.value })}
             disabled={loading}
+            className="h-8 text-sm"
           />
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="provincia">Provincia</Label>
+        <div className="space-y-1">
+          <Label htmlFor="provincia" className="text-sm">Provincia</Label>
           <Input
             id="provincia"
             value={formData.provincia}
             onChange={(e) => setFormData({ ...formData, provincia: e.target.value })}
             disabled={loading}
+            className="h-8 text-sm"
           />
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="codigo_postal">Código Postal</Label>
+        <div className="space-y-1">
+          <Label htmlFor="codigo_postal" className="text-sm">Código Postal</Label>
           <Input
             id="codigo_postal"
             value={formData.codigo_postal}
             onChange={(e) => setFormData({ ...formData, codigo_postal: e.target.value })}
             disabled={loading}
+            className="h-8 text-sm"
           />
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="pais">País</Label>
+        <div className="space-y-1">
+          <Label htmlFor="pais" className="text-sm">País</Label>
           <Input
             id="pais"
             value={formData.pais}
             onChange={(e) => setFormData({ ...formData, pais: e.target.value })}
             disabled={loading}
+            className="h-8 text-sm"
           />
         </div>
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="notas_cliente">Notas</Label>
+      <div className="space-y-1">
+        <Label htmlFor="notas_cliente" className="text-sm">Notas</Label>
         <Textarea
           id="notas_cliente"
           value={formData.notas_cliente}
           onChange={(e) => setFormData({ ...formData, notas_cliente: e.target.value })}
-          rows={3}
+          rows={2}
           disabled={loading}
+          className="text-sm"
         />
       </div>
 
       {/* Discounts section */}
-      <div className="border rounded-lg p-4 space-y-4">
+      <div className="border rounded-lg p-3 space-y-2">
         <div className="flex items-center gap-2">
-          <Label className="text-base font-semibold">Descuentos</Label>
+          <Label className="text-sm font-semibold">Descuentos</Label>
           {currentUserRole !== 'admin' && (
             <span className="text-xs text-muted-foreground ml-1">(solo lectura)</span>
           )}
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="descuento_sistemas">Descuento Sistemas (%)</Label>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className="space-y-1">
+            <Label htmlFor="descuento_sistemas" className="text-sm">Descuento Sistemas (%)</Label>
             <Input
               id="descuento_sistemas"
               type="number"
@@ -345,11 +358,11 @@ export function CustomerForm({
               value={formData.descuento_sistemas}
               onChange={(e) => setFormData({ ...formData, descuento_sistemas: parseFloat(e.target.value) || 0 })}
               disabled={loading || currentUserRole !== 'admin'}
-              className={currentUserRole !== 'admin' ? 'bg-muted' : ''}
+              className={`h-8 text-sm ${currentUserRole !== 'admin' ? 'bg-muted' : ''}`}
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="descuento_difusion">Descuento Difusión (%)</Label>
+          <div className="space-y-1">
+            <Label htmlFor="descuento_difusion" className="text-sm">Descuento Difusión (%)</Label>
             <Input
               id="descuento_difusion"
               type="number"
@@ -359,11 +372,11 @@ export function CustomerForm({
               value={formData.descuento_difusion}
               onChange={(e) => setFormData({ ...formData, descuento_difusion: parseFloat(e.target.value) || 0 })}
               disabled={loading || currentUserRole !== 'admin'}
-              className={currentUserRole !== 'admin' ? 'bg-muted' : ''}
+              className={`h-8 text-sm ${currentUserRole !== 'admin' ? 'bg-muted' : ''}`}
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="descuento_agfri">Descuento Agfri (%)</Label>
+          <div className="space-y-1">
+            <Label htmlFor="descuento_agfri" className="text-sm">Descuento Agfri (%)</Label>
             <Input
               id="descuento_agfri"
               type="number"
@@ -373,29 +386,29 @@ export function CustomerForm({
               value={formData.descuento_agfri}
               onChange={(e) => setFormData({ ...formData, descuento_agfri: parseFloat(e.target.value) || 0 })}
               disabled={loading || currentUserRole !== 'admin'}
-              className={currentUserRole !== 'admin' ? 'bg-muted' : ''}
+              className={`h-8 text-sm ${currentUserRole !== 'admin' ? 'bg-muted' : ''}`}
             />
           </div>
         </div>
       </div>
 
       {/* Profile assignment section */}
-      <div className="border rounded-lg p-4 space-y-4">
+      <div className="border rounded-lg p-3 space-y-2">
         <div className="flex items-center gap-2">
           <Users className="h-4 w-4 text-muted-foreground" />
-          <Label className="text-base font-semibold">Perfiles Asignados</Label>
+          <Label className="text-sm font-semibold">Perfiles Asignados</Label>
           {!isAdmin && (
             <span className="text-xs text-muted-foreground ml-1">(solo lectura)</span>
           )}
         </div>
 
         {/* Currently assigned badges */}
-        <div className="flex flex-wrap gap-2 min-h-[36px]">
+        <div className="flex flex-wrap gap-1 min-h-[28px]">
           {selectedProfileIds.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No hay perfiles asignados.</p>
+            <p className="text-xs text-muted-foreground">No hay perfiles asignados.</p>
           ) : (
             selectedProfileIds.map(id => (
-              <Badge key={id} variant="secondary" className="flex items-center gap-1 pr-1 text-sm py-1">
+              <Badge key={id} variant="secondary" className="flex items-center gap-1 pr-0.5 text-xs py-0.5">
                 {getProfileName(id)}
                 {isAdmin && (
                   <button
@@ -417,8 +430,8 @@ export function CustomerForm({
         {isAdmin && (
           <div className="flex gap-2">
             <Select value={profileToAdd} onValueChange={setProfileToAdd} disabled={loading}>
-              <SelectTrigger className="flex-1">
-                <SelectValue placeholder="Seleccionar perfil para asignar..." />
+              <SelectTrigger className="flex-1 h-8 text-sm">
+                <SelectValue placeholder="Seleccionar perfil..." />
               </SelectTrigger>
               <SelectContent>
                 {unassignedProfiles.length === 0 ? (
@@ -441,6 +454,7 @@ export function CustomerForm({
               variant="outline"
               onClick={addProfile}
               disabled={!profileToAdd || profileToAdd === '_none' || loading}
+              className="h-8 text-sm px-3"
             >
               Añadir
             </Button>
@@ -453,16 +467,16 @@ export function CustomerForm({
         <ContactsTable customerId={Number(customerId)} customerName={formData.company_name} disabled={loading} />
       )}
 
-      <div className="flex gap-3 pt-2">
-        <Button type="submit" disabled={loading}>
+      <div className="flex gap-2 pt-1">
+        <Button type="submit" disabled={loading} className="h-8 text-sm px-4">
           {loading ? (
             <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              <Loader2 className="mr-2 h-3 w-3 animate-spin" />
               Guardando...
             </>
           ) : customer ? 'Actualizar Cliente' : 'Crear Cliente'}
         </Button>
-        <Button type="button" variant="outline" onClick={() => router.back()} disabled={loading}>
+        <Button type="button" variant="outline" onClick={() => router.back()} disabled={loading} className="h-8 text-sm px-4">
           Cancelar
         </Button>
       </div>
