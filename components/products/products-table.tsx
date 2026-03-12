@@ -29,6 +29,7 @@ interface Product {
   id: number
   referencia: string
   descripcion?: string
+  modelo_nombre?: string
   familia?: string
   subfamilia?: string
   acabado?: string
@@ -196,6 +197,7 @@ export function ProductsTable({ products: initialProducts }: ProductsTableProps)
                 <TableHead className="text-xs">Familia</TableHead>
                 <TableHead className="text-xs">Subfamilia</TableHead>
                 <TableHead className="text-xs">Descripción</TableHead>
+                <TableHead className="text-xs">Modelo Nombre</TableHead>
                 <TableHead className="text-xs">Acabado</TableHead>
                 <TableHead className="text-xs">Fijación</TableHead>
                 <TableHead className="text-xs text-right">Largo</TableHead>
@@ -208,7 +210,7 @@ export function ProductsTable({ products: initialProducts }: ProductsTableProps)
             <TableBody>
               {pageProducts.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={13} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={14} className="text-center text-muted-foreground py-8">
                     {search ? 'No se encontraron productos' : 'Sin productos'}
                   </TableCell>
                 </TableRow>
@@ -221,6 +223,7 @@ export function ProductsTable({ products: initialProducts }: ProductsTableProps)
                     <TableCell className="text-xs">{product.familia || '-'}</TableCell>
                     <TableCell className="text-xs">{product.subfamilia || '-'}</TableCell>
                     <TableCell className="text-xs max-w-[180px] truncate">{product.descripcion || '-'}</TableCell>
+                    <TableCell className="text-xs max-w-[150px] truncate">{product.modelo_nombre || '-'}</TableCell>
                     <TableCell className="text-xs">{product.acabado || '-'}</TableCell>
                     <TableCell className="text-xs">{product.fijacion || '-'}</TableCell>
                     <TableCell className="text-xs text-right">{formatDim(product.largo)}</TableCell>
