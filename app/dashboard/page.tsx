@@ -63,7 +63,7 @@ export default async function DashboardPage() {
       <div>
         <h1 className="text-3xl font-semibold text-foreground">Dashboard</h1>
         <p className="text-muted-foreground mt-1">
-          Overview of your business metrics
+          Resumen de las métricas de su negocio
         </p>
       </div>
 
@@ -86,7 +86,7 @@ export default async function DashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {(isAdmin || isManager || isSalesRep) && recentOffers && (
           <RecentActivity
-            title="Recent Offers"
+            title="Ofertas recientes"
             items={recentOffers.map(offer => ({
               id: offer.id,
               title: offer.title,
