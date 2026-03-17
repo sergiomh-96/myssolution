@@ -7,6 +7,9 @@ import { Edit } from 'lucide-react'
 import Link from 'next/link'
 import { GeneratePdfButton } from '@/components/offers/generate-pdf-button'
 import { DuplicateOfferButton } from '@/components/offers/duplicate-offer-button'
+import { ValidateOfferButton } from '@/components/offers/validate-offer-button'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { AlertCircle } from 'lucide-react'
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -22,7 +25,7 @@ export default async function OfferDetailPage({ params }: PageProps) {
     .from('offers')
     .select(`
       *,
-      customer:customers!customer_id(id, company_name),
+      customer:customers!customer_id(id, company_name, descuento_sistemas, descuento_difusion, descuento_agfri),
       contact:clients_contacts!contact_id(id, nombre, apellidos, email, telefono),
       tarifa:tarifas!tarifa_id(id_tarifa, nombre),
       created_by_profile:profiles!created_by(full_name, email),
@@ -40,10 +43,26 @@ export default async function OfferDetailPage({ params }: PageProps) {
     .from('offer_items')
     .select(`
       *,
-      product:products!product_id(id, referencia, modelo_nombre, descripcion)
+      product:products!product_id(id, referencia, modelo_nombre, descripcion, familia)
     `)
     .eq('offer_id', id)
     .order('id')
+
+  const needsValidation = items?.some(item => {
+    if (item.type !== 'article' || !item.product?.familia) return false;
+    
+    let maxDiscount = 0;
+    if (item.product.familia === 'SISTEMAS') maxDiscount = offer.customer?.descuento_sistemas || 0;
+    else if (item.product.familia === 'DIFUSIÓN') maxDiscount = offer.customer?.descuento_difusion || 0;
+    else if (item.product.familia === 'HERRAMIENTA' || item.product.familia === 'MYSAir' || item.product.familia === 'AGFRI') maxDiscount = offer.customer?.descuento_agfri || 0;
+
+    if (maxDiscount === 0) return false;
+
+    const totalDiscount = (1 - (1 - (item.discount1 || 0) / 100) * (1 - (item.discount2 || 0) / 100)) * 100;
+    return totalDiscount > maxDiscount + 0.01;
+  }) || false;
+  
+  const isPendingValidation = needsValidation && !offer.is_validated;
 
   return (
     <main className="min-h-screen bg-background">
@@ -55,11 +74,15 @@ export default async function OfferDetailPage({ params }: PageProps) {
             <p className="text-muted-foreground mt-1">{offer.title}</p>
           </div>
           <div className="flex gap-2">
+            {profile.role === 'admin' && isPendingValidation && (
+              <ValidateOfferButton offerId={id} />
+            )}
             <GeneratePdfButton 
               offerId={id} 
               offerNumber={offer.offer_number}
               customerName={offer.customer?.company_name}
               offerTitle={offer.title}
+              disabled={isPendingValidation}
             />
             <DuplicateOfferButton offerId={id} />
             <Button asChild>
@@ -70,6 +93,15 @@ export default async function OfferDetailPage({ params }: PageProps) {
             </Button>
           </div>
         </div>
+
+        {isPendingValidation && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              Esta oferta incluye descuentos superiores a los permitidos para el cliente. Un administrador debe validar la oferta antes de poder generar el PDF.
+            </AlertDescription>
+          </Alert>
+        )}
 
         {/* Professional Offer View */}
         <div id="offer-print-content" className="print:bg-white">

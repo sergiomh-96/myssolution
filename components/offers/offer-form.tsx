@@ -383,7 +383,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
-  const [savedOfferId, setSavedOfferId] = useState<string | null>(offer?.id ?? null)
+  const [savedOfferId, setSavedOfferId] = useState<string | null>(offer?.id?.toString() ?? null)
   const [products, setProducts] = useState<any[]>([])
   const [tarifas, setTarifas] = useState<any[]>([])
   const [nextOfferNumber, setNextOfferNumber] = useState<number | null>(null)
@@ -400,7 +400,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
 
   const existingItems: OfferItem[] = []
 
-  const createEmptyItem = (type: 'article' | 'section_header' | 'note' = 'article'): OfferItem => ({
+  const createEmptyItem = (type: 'article' | 'section_header' | 'note' | 'summary' | 'external' = 'article'): OfferItem => ({
     id: crypto.randomUUID(),
     type,
     product_id: null,
@@ -810,7 +810,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
     const updatedItems = items.map((item) => {
       if (!item.product_id) return item
 
-      const newPrecio = precios.find(p => p.id_producto === parseInt(item.product_id))
+      const newPrecio = precios.find(p => p.id_producto === parseInt(item.product_id || '0'))
 
       const updatedItem = {
         ...item,
@@ -1108,9 +1108,28 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
     item.type === 'article' && item.product_id && (item.pvp === undefined || item.pvp === 0 || item.pvp === null)
   )
   const articlesWithoutDiscount = items.filter(item => 
-    item.type === 'article' && item.product_id && (item.discount1 === undefined || item.discount1 === 0 || item.discount1 === null)
+    item.type === 'article' && item.product_id && (item.discount1 === undefined || item.discount1 === null)
   )
 
+  const needsValidation = items.some(item => {
+    if (item.type !== 'article' || !item.product_id) return false;
+    const product = products.find(p => String(p.id) === String(item.product_id));
+    if (!product) return false;
+
+    let maxDiscount = 0;
+    if (currentCustomer) {
+      if (product.familia === 'SISTEMAS') maxDiscount = currentCustomer.descuento_sistemas || 0;
+      else if (product.familia === 'DIFUSIÓN') maxDiscount = currentCustomer.descuento_difusion || 0;
+      else if (product.familia === 'HERRAMIENTA' || product.familia === 'MYSAir' || product.familia === 'AGFRI') maxDiscount = currentCustomer.descuento_agfri || 0;
+    }
+
+    if (maxDiscount === 0) return false;
+
+    const totalDiscount = (1 - (1 - (item.discount1 || 0) / 100) * (1 - (item.discount2 || 0) / 100)) * 100;
+    return totalDiscount > maxDiscount + 0.01;
+  });
+
+  const isPendingValidation = needsValidation && (!offer?.is_validated || unsavedChanges);
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
@@ -1169,13 +1188,14 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
         tarifa_id: formData.tarifa_id ? parseInt(String(formData.tarifa_id)) : null,
         status: formData.status,
         valid_until: formData.valid_until || null,
+        is_validated: !isPendingValidation,
       }
 
       let offerId: string | null = null
 
       if (offer) {
         // Update existing offer
-        offerId = offer.id
+        offerId = offer.id.toString()
         const { error: updateError } = await supabase
           .from('offers')
           .update({
@@ -1243,7 +1263,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
         if (insertError) throw insertError
         if (!newOfferData) throw new Error('Failed to create offer')
 
-        offerId = newOfferData.id
+        offerId = newOfferData.id.toString()
 
         // Insert offer items
         if (items.length > 0) {
@@ -1339,6 +1359,15 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
         </Alert>
       )}
 
+      {isPendingValidation && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            Esta oferta incluye descuentos superiores a los permitidos para el cliente. Un administrador debe validarla antes de poder generar el PDF.
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Detalles de la Oferta — 4 filas x 4 columnas */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
 
@@ -1378,8 +1407,16 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
           </div>
         </div>
 
-        {/* empty spacer to push Tarifa to col 4 */}
-        <div className="hidden md:block" />
+        {/* Validación */}
+        <div className="space-y-0.5">
+          <Label className="text-xs">Validación</Label>
+          <div className={`h-9 px-3 py-2 rounded-md border flex items-center justify-center text-xs font-medium ${
+            !needsValidation ? 'bg-muted border-input text-muted-foreground' : 
+            (isPendingValidation ? 'bg-orange-100 border-orange-200 text-orange-800' : 'bg-green-100 border-green-200 text-green-800')
+          }`}>
+            {!needsValidation ? 'No requiere' : (isPendingValidation ? 'Pendiente' : 'Validada')}
+          </div>
+        </div>
 
         {/* Creada por */}
         <div className="space-y-0.5">
@@ -2169,10 +2206,11 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
             Ver
           </Button>
           <GeneratePdfButton 
-            offerId={savedOfferId || offer?.id || ''} 
+            offerId={savedOfferId || offer?.id?.toString() || ''} 
             offerNumber={offer?.offer_number || 0}
-            customerName={offer?.customer?.company_name || currentCustomer?.company_name}
+            customerName={(offer as any)?.customer?.company_name || currentCustomer?.company_name}
             offerTitle={offer?.title}
+            disabled={isPendingValidation || unsavedChanges}
           />
         </div>
         <div className="flex gap-2">

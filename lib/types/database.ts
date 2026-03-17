@@ -67,6 +67,7 @@ export interface Offer {
   created_by: string
   approved_by: string | null
   approved_at: string | null
+  is_validated: boolean
   created_at: string
   updated_at: string
 }
