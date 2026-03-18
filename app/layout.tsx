@@ -7,7 +7,7 @@ const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: {
-    default: 'MYSSolution - B2B CRM Platformsss2',
+    default: 'MYSSolution - B2B CRM Platformsss3',
     template: '%s | MYSSolution'
   },
   description: 'Comprehensive B2B CRM solution for managing customers, offers, technical support, and team communication',
