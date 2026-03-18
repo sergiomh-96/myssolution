@@ -10,6 +10,7 @@ import { DuplicateOfferButton } from '@/components/offers/duplicate-offer-button
 import { ValidateOfferButton } from '@/components/offers/validate-offer-button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { AlertCircle } from 'lucide-react'
+import { RefreshButton } from '@/components/offers/refresh-button'
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -74,6 +75,7 @@ export default async function OfferDetailPage({ params }: PageProps) {
             <p className="text-muted-foreground mt-1">{offer.title}</p>
           </div>
           <div className="flex gap-2">
+            <RefreshButton />
             {profile.role === 'admin' && isPendingValidation && (
               <ValidateOfferButton offerId={id} />
             )}

@@ -71,19 +71,19 @@ function ProductSearchInput({
 
   // Filter products by search term, prioritizing referencia matches
   const filteredProducts = searchTerm.trim()
-    ? products.filter(p => 
-        p.referencia?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.descripcion?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (p.modelo_nombre && p.modelo_nombre.toLowerCase().includes(searchTerm.toLowerCase()))
-      )
+    ? products.filter(p =>
+      p.referencia?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      p.descripcion?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (p.modelo_nombre && p.modelo_nombre.toLowerCase().includes(searchTerm.toLowerCase()))
+    )
       .sort((a, b) => {
         const aRefMatch = a.referencia?.toLowerCase().includes(searchTerm.toLowerCase())
         const bRefMatch = b.referencia?.toLowerCase().includes(searchTerm.toLowerCase())
-        
+
         // Priorize referencia matches first
         if (aRefMatch && !bRefMatch) return -1
         if (!aRefMatch && bRefMatch) return 1
-        
+
         // Then sort alphabetically
         return (a.referencia || '').localeCompare(b.referencia || '')
       })
@@ -218,11 +218,10 @@ function ProductSearchInput({
                   <button
                     key={product.id}
                     type="button"
-                    className={`w-full text-left px-2 py-1.5 text-xs cursor-pointer ${
-                      idx === highlightedIndex
-                        ? 'bg-accent text-accent-foreground'
-                        : 'hover:bg-accent'
-                    }`}
+                    className={`w-full text-left px-2 py-1.5 text-xs cursor-pointer ${idx === highlightedIndex
+                      ? 'bg-accent text-accent-foreground'
+                      : 'hover:bg-accent'
+                      }`}
                     onMouseEnter={() => setHighlightedIndex(idx)}
                     onClick={() => handleProductSelect(product)}
                   >
@@ -261,7 +260,7 @@ function CustomerSearchInput({
   // Update selected customer when value changes
   useEffect(() => {
     const valueStr = String(value)
-    
+
     // Handle free-text customers
     if (valueStr.startsWith('free:')) {
       const customerName = valueStr.substring(5)
@@ -269,7 +268,7 @@ function CustomerSearchInput({
       setSearchTerm('')
       return
     }
-    
+
     // Handle regular customers
     const customer = customers.find(c => String(c.id) === valueStr)
     setSelectedCustomer(customer || null)
@@ -280,9 +279,9 @@ function CustomerSearchInput({
 
   // Filter customers by search term
   const filteredCustomers = searchTerm.trim()
-    ? customers.filter(c => 
-        c.company_name.toLowerCase().includes(searchTerm.toLowerCase())
-      ).slice(0, 10)
+    ? customers.filter(c =>
+      c.company_name.toLowerCase().includes(searchTerm.toLowerCase())
+    ).slice(0, 10)
     : []
 
   const handleCustomerSelect = (customer: typeof customers[0]) => {
@@ -378,7 +377,7 @@ function CustomerSearchInput({
 
 export function OfferForm({ offer, currentUserId, currentUserRole, customers, createdByName }: OfferFormProps) {
   const router = useRouter()
-  
+
   // State declarations - all in one place
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -397,6 +396,10 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
   const [unsavedChanges, setUnsavedChanges] = useState(false)
   const [showExitDialog, setShowExitDialog] = useState(false)
   const [pendingNavigation, setPendingNavigation] = useState<string | null>(null)
+  // Track server-side validated state; updated when offer prop changes (e.g. after router.refresh())
+  const [isValidated, setIsValidated] = useState<boolean>(offer?.is_validated ?? false)
+  // Track if user has explicitly modified any discount field in this session
+  const [userHasModifiedDiscounts, setUserHasModifiedDiscounts] = useState(false)
 
   const existingItems: OfferItem[] = []
 
@@ -480,12 +483,12 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
       if (offerItems && offerItems.length > 0) {
         // Load items
         const loadedItems = offerItems as OfferItem[]
-        const itemsToSet = loadedItems.length >= 5 
-          ? loadedItems 
+        const itemsToSet = loadedItems.length >= 5
+          ? loadedItems
           : [
-              ...loadedItems,
-              ...Array.from({ length: 5 - loadedItems.length }, () => createEmptyItem('article'))
-            ]
+            ...loadedItems,
+            ...Array.from({ length: 5 - loadedItems.length }, () => createEmptyItem('article'))
+          ]
         setItems(itemsToSet)
       }
     } catch (err) {
@@ -601,11 +604,17 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
     loadData()
   }, [])
 
+  // Sync isValidated from server when offer prop is refreshed (e.g. via router.refresh())
+  useEffect(() => {
+    setIsValidated(offer?.is_validated ?? false)
+  }, [offer?.is_validated])
+
   // Calculate next offer number for new offers
   useEffect(() => {
     const calculateNextOfferNumber = async () => {
       if (offer) return // Only for new offers
-      
+
+
       try {
         const supabase = createClient()
 
@@ -646,7 +655,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
       try {
         const supabase = createClient()
         const customerIdStr = String(formData.customer_id)
-        
+
         // Skip loading if it's a free-text customer (not yet created/assigned a numeric ID)
         if (customerIdStr.startsWith('free:')) {
           setContactList([])
@@ -655,7 +664,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
         }
 
         const customerId = parseInt(customerIdStr)
-        
+
         // Load contacts
         const { data: contacts, error: contactsError } = await supabase
           .from('clients_contacts')
@@ -732,7 +741,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
     const loadPrecios = async () => {
       const supabase = createClient()
       const allPrecios: any[] = []
-      
+
       // Load precios in batches up to 50000
       for (let i = 0; i < 50; i++) {
         const { data, error } = await supabase
@@ -741,7 +750,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
           .eq('id_tarifa', formData.tarifa_id)
           .order('id_producto')
           .range(i * 1000, i * 1000 + 999)
-        
+
         if (error || !data || data.length === 0) break
         allPrecios.push(...data)
         if (data.length < 1000) break
@@ -938,6 +947,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
     }
     newItems[index] = calculateItemTotals(newItems[index])
     setItems(newItems)
+    setUserHasModifiedDiscounts(true)
   }
 
   const recalculateSummaries = (currentItems: OfferItem[]): OfferItem[] => {
@@ -978,6 +988,11 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
 
     // Recalcular todos los resúmenes con los nuevos valores
     setItems(recalculateSummaries(newItems))
+
+    // If discount fields are modified, track it separately from general unsavedChanges
+    if (['discount1', 'discount2', 'product_id'].includes(field)) {
+      setUserHasModifiedDiscounts(true)
+    }
   }
 
   const addItem = () => {
@@ -986,7 +1001,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
 
   const addItemByProductId = (productId: string, quantity: number) => {
     const product = products.find(p => String(p.id) === String(productId))
-    
+
     const precioFromTarifa = product ? getPrecioForProduct(product.id) : null
     let automaticDiscount = 0
     if (product && currentCustomer) {
@@ -994,7 +1009,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
       else if (product.familia === 'DIFUSIÓN') automaticDiscount = currentCustomer.descuento_difusion || 0
       else if (product.familia === 'HERRAMIENTA') automaticDiscount = currentCustomer.descuento_agfri || 0
     }
-    
+
     const newItem = {
       ...createEmptyItem('article'),
       product_id: String(productId),
@@ -1003,7 +1018,9 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
       quantity,
       discount1: automaticDiscount,
     }
-    setItems(prev => [...prev, calculateItemTotals(newItem)])
+    const updatedItems = [...items, calculateItemTotals(newItem)]
+    setItems(recalculateSummaries(updatedItems))
+    setUserHasModifiedDiscounts(true)
   }
 
   const addExternalItem = () => {
@@ -1104,10 +1121,10 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
   const totalNeto = items.reduce((sum, item) => item.type !== 'summary' ? sum + (item.neto_total2 || 0) : sum, 0)
 
   // Calculate warnings for articles
-  const articlesWithoutCost = items.filter(item => 
+  const articlesWithoutCost = items.filter(item =>
     item.type === 'article' && item.product_id && (item.pvp === undefined || item.pvp === 0 || item.pvp === null)
   )
-  const articlesWithoutDiscount = items.filter(item => 
+  const articlesWithoutDiscount = items.filter(item =>
     item.type === 'article' && item.product_id && (item.discount1 === undefined || item.discount1 === null)
   )
 
@@ -1129,7 +1146,11 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
     return totalDiscount > maxDiscount + 0.01;
   });
 
-  const isPendingValidation = needsValidation && (!offer?.is_validated || unsavedChanges);
+  // isPendingValidation logic:
+  // - If discounts are within limits → never pending
+  // - If discounts exceed limits AND the offer has NOT been validated → pending
+  // - If discounts exceed limits AND the offer WAS validated BUT user has since changed discount fields → pending again
+  const isPendingValidation = needsValidation && (!isValidated || userHasModifiedDiscounts);
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
@@ -1141,21 +1162,21 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
       // Handle free-text customer
       let customerId: number | null = null
       let customerName: string | null = null
-      
+
       if (formData.customer_id) {
         const customerIdStr = String(formData.customer_id)
-        
+
         if (customerIdStr.startsWith('free:')) {
           // Extract the free-text customer name
           customerName = customerIdStr.substring(5)
-          
+
           // Try to find or create a customer with this name
           const { data: existingCustomer } = await supabase
             .from('customers')
             .select('id')
             .eq('company_name', customerName)
             .single()
-          
+
           if (existingCustomer) {
             customerId = existingCustomer.id
           } else {
@@ -1168,7 +1189,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
               })
               .select('id')
               .single()
-            
+
             if (createError) {
               throw createError
             }
@@ -1179,7 +1200,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
         }
       }
 
-      const offerData = {
+      const offerData: Record<string, any> = {
         title: formData.title,
         description: formData.description,
         notas_internas: formData.notas_internas,
@@ -1188,7 +1209,10 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
         tarifa_id: formData.tarifa_id ? parseInt(String(formData.tarifa_id)) : null,
         status: formData.status,
         valid_until: formData.valid_until || null,
-        is_validated: !isPendingValidation,
+        // is_validated can ONLY be set to true by an admin from the validations panel.
+        // When saving, we only reset it to false if the offer now requires validation.
+        // If no validation is needed, we leave the existing is_validated value untouched.
+        ...(isPendingValidation ? { is_validated: false } : {}),
       }
 
       let offerId: string | null = null
@@ -1328,8 +1352,12 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
       setError(null)
       setSavedOfferId(offerId)
       setUnsavedChanges(false)
+      setUserHasModifiedDiscounts(false) // New line added
       setLoading(false)
-      
+
+      // Refresh the page data to get the latest status from DB
+      router.refresh()
+
       // Reset success message after 2 seconds
       setTimeout(() => {
         setSuccess(false)
@@ -1343,906 +1371,905 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
 
   return (
     <>
-    <form onSubmit={handleSubmit} className="space-y-4">
-      {error && (
-        <Alert variant="destructive">
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {error && (
+          <Alert variant="destructive">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
 
-      {success && (
-        <Alert className="border-green-200 bg-green-50">
-          <CheckCircle className="h-4 w-4 text-green-600" />
-          <AlertDescription className="text-green-800 font-medium">
-            Oferta creada correctamente
-          </AlertDescription>
-        </Alert>
-      )}
+        {success && (
+          <Alert className="border-green-200 bg-green-50">
+            <CheckCircle className="h-4 w-4 text-green-600" />
+            <AlertDescription className="text-green-800 font-medium">
+              Oferta creada correctamente
+            </AlertDescription>
+          </Alert>
+        )}
 
-      {isPendingValidation && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            Esta oferta incluye descuentos superiores a los permitidos para el cliente. Un administrador debe validarla antes de poder generar el PDF.
-          </AlertDescription>
-        </Alert>
-      )}
+        {isPendingValidation && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              Esta oferta incluye descuentos superiores a los permitidos para el cliente. Un administrador debe validarla antes de poder generar el PDF.
+            </AlertDescription>
+          </Alert>
+        )}
 
-      {/* Detalles de la Oferta — 4 filas x 4 columnas */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+        {/* Detalles de la Oferta — 4 filas x 4 columnas */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
 
-        {/* ── Fila 1: Nº Oferta | — | — | Tarifa ��─ */}
-        <div className="space-y-0.5">
-          <Label className="text-xs">Nº Oferta</Label>
-          <div className="flex items-center gap-1">
-            <div className="flex-1 h-9 px-3 py-2 bg-muted rounded-md border border-input flex items-center text-sm font-medium justify-center">
-              {offer
-                ? formatOfferNumber(offer.offer_number, new Date(offer.created_at).getFullYear())
-                : nextOfferNumber
-                  ? formatOfferNumber(nextOfferNumber, new Date().getFullYear())
-                  : 'Calculando...'}
-            </div>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
+          {/* ── Fila 1: Nº Oferta | — | — | Tarifa ��─ */}
+          <div className="space-y-0.5">
+            <Label className="text-xs">Nº Oferta</Label>
+            <div className="flex items-center gap-1">
+              <div className="flex-1 h-9 px-3 py-2 bg-muted rounded-md border border-input flex items-center text-sm font-medium justify-center">
+                {offer
+                  ? formatOfferNumber(offer.offer_number, new Date(offer.created_at).getFullYear())
+                  : nextOfferNumber
+                    ? formatOfferNumber(nextOfferNumber, new Date().getFullYear())
+                    : 'Calculando...'}
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
                 onClick={() => previousOfferId && handleNavigation(`/dashboard/offers/${previousOfferId}/edit`)}
-              disabled={!previousOfferId || loading}
-              className="h-9 w-9 p-0"
-              title="Oferta anterior"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
+                disabled={!previousOfferId || loading}
+                className="h-9 w-9 p-0"
+                title="Oferta anterior"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
                 onClick={() => nextOfferId && handleNavigation(`/dashboard/offers/${nextOfferId}/edit`)}
-              disabled={!nextOfferId || loading}
-              className="h-9 w-9 p-0"
-              title="Oferta siguiente"
+                disabled={!nextOfferId || loading}
+                className="h-9 w-9 p-0"
+                title="Oferta siguiente"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+
+          {/* Validación */}
+          <div className="space-y-0.5">
+            <Label className="text-xs">Validación</Label>
+            <div className={`h-9 px-3 py-2 rounded-md border flex items-center justify-center text-xs font-medium ${!needsValidation ? 'bg-muted border-input text-muted-foreground' :
+              (isPendingValidation ? 'bg-orange-100 border-orange-200 text-orange-800' : 'bg-green-100 border-green-200 text-green-800')
+              }`}>
+              {!needsValidation ? 'No requiere' : (isPendingValidation ? 'Pendiente' : 'Validada')}
+            </div>
+          </div>
+
+          {/* Creada por */}
+          <div className="space-y-0.5">
+            <Label className="text-xs">Creada por</Label>
+            <Input
+              type="text"
+              value={createdByName || 'N/A'}
+              readOnly
+              disabled
+              className="h-9 text-sm bg-muted"
+            />
+          </div>
+
+          <div className="space-y-0.5">
+            <Label htmlFor="tarifa_id" className="text-xs">Tarifa *</Label>
+            <Select
+              value={formData.tarifa_id?.toString() || ''}
+              onValueChange={(value) => setFormData(prev => ({ ...prev, tarifa_id: parseInt(value) }))}
+              disabled={loading}
             >
-              <ChevronRight className="w-4 h-4" />
-            </Button>
+              <SelectTrigger id="tarifa_id" className="h-9 text-sm">
+                <SelectValue placeholder="Seleccionar tarifa" />
+              </SelectTrigger>
+              <SelectContent>
+                {tarifas.map((tarifa) => (
+                  <SelectItem key={tarifa.id_tarifa} value={tarifa.id_tarifa.toString()}>
+                    {tarifa.nombre}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-        </div>
 
-        {/* Validación */}
-        <div className="space-y-0.5">
-          <Label className="text-xs">Validación</Label>
-          <div className={`h-9 px-3 py-2 rounded-md border flex items-center justify-center text-xs font-medium ${
-            !needsValidation ? 'bg-muted border-input text-muted-foreground' : 
-            (isPendingValidation ? 'bg-orange-100 border-orange-200 text-orange-800' : 'bg-green-100 border-green-200 text-green-800')
-          }`}>
-            {!needsValidation ? 'No requiere' : (isPendingValidation ? 'Pendiente' : 'Validada')}
+          {/* ── Fila 2: Título (2 cols) | Estado (1 col) | — | Fecha Creación (1 col) ── */}
+          <div className="space-y-0.5 md:col-span-2">
+            <Label htmlFor="title" className="text-xs">Título Oferta *</Label>
+            <Input
+              id="title"
+              value={formData.title}
+              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              required
+              disabled={loading}
+              className="h-9 text-sm"
+            />
           </div>
-        </div>
 
-        {/* Creada por */}
-        <div className="space-y-0.5">
-          <Label className="text-xs">Creada por</Label>
-          <Input
-            type="text"
-            value={createdByName || 'N/A'}
-            readOnly
-            disabled
-            className="h-9 text-sm bg-muted"
-          />
-        </div>
+          <div className="space-y-0.5">
+            <Label htmlFor="status" className="text-xs">Estado</Label>
+            <Select
+              value={formData.status}
+              onValueChange={(value) => setFormData({ ...formData, status: value as OfferStatus })}
+              disabled={loading}
+            >
+              <SelectTrigger id="status" className="h-9 text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="borrador">Borrador</SelectItem>
+                <SelectItem value="enviada">Enviada</SelectItem>
+                <SelectItem value="aceptada">Aceptada</SelectItem>
+                <SelectItem value="rechazada">Rechazada</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-        <div className="space-y-0.5">
-          <Label htmlFor="tarifa_id" className="text-xs">Tarifa *</Label>
-          <Select
-            value={formData.tarifa_id?.toString() || ''}
-            onValueChange={(value) => setFormData(prev => ({ ...prev, tarifa_id: parseInt(value) }))}
-            disabled={loading}
-          >
-            <SelectTrigger id="tarifa_id" className="h-9 text-sm">
-              <SelectValue placeholder="Seleccionar tarifa" />
-            </SelectTrigger>
-            <SelectContent>
-              {tarifas.map((tarifa) => (
-                <SelectItem key={tarifa.id_tarifa} value={tarifa.id_tarifa.toString()}>
-                  {tarifa.nombre}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* ── Fila 2: Título (2 cols) | Estado (1 col) | — | Fecha Creación (1 col) ── */}
-        <div className="space-y-0.5 md:col-span-2">
-          <Label htmlFor="title" className="text-xs">Título Oferta *</Label>
-          <Input
-            id="title"
-            value={formData.title}
-            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-            required
-            disabled={loading}
-            className="h-9 text-sm"
-          />
-        </div>
-
-        <div className="space-y-0.5">
-          <Label htmlFor="status" className="text-xs">Estado</Label>
-          <Select
-            value={formData.status}
-            onValueChange={(value) => setFormData({ ...formData, status: value as OfferStatus })}
-            disabled={loading}
-          >
-            <SelectTrigger id="status" className="h-9 text-sm">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="borrador">Borrador</SelectItem>
-              <SelectItem value="enviada">Enviada</SelectItem>
-              <SelectItem value="aceptada">Aceptada</SelectItem>
-              <SelectItem value="rechazada">Rechazada</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-0.5">
-          <Label className="text-xs">Fecha Creación</Label>
-          <Input
-            type="text"
-            value={
-              offer?.created_at
-                ? new Date(offer.created_at).toLocaleString('es-ES', {
+          <div className="space-y-0.5">
+            <Label className="text-xs">Fecha Creación</Label>
+            <Input
+              type="text"
+              value={
+                offer?.created_at
+                  ? new Date(offer.created_at).toLocaleString('es-ES', {
                     year: 'numeric', month: '2-digit', day: '2-digit',
                     hour: '2-digit', minute: '2-digit', second: '2-digit',
                   })
-                : new Date().toLocaleString('es-ES', {
+                  : new Date().toLocaleString('es-ES', {
                     year: 'numeric', month: '2-digit', day: '2-digit',
                     hour: '2-digit', minute: '2-digit', second: '2-digit',
                   })
-            }
-            readOnly
-            disabled
-            className="h-9 text-sm bg-muted"
-          />
-        </div>
+              }
+              readOnly
+              disabled
+              className="h-9 text-sm bg-muted"
+            />
+          </div>
 
-        {/* ── Fila 3: Cliente | Contacto | Descuentos ── */}
-        <div className="space-y-0.5">
-          <Label htmlFor="customer_id" className="text-xs">Cliente *</Label>
-          <CustomerSearchInput
-            value={formData.customer_id}
-            customers={customers}
-            onSelect={(customerId) => {
-              // Keep free-text format as-is, only parse numbers
-              const processedId = String(customerId).startsWith('free:') ? customerId : parseInt(String(customerId))
-              setFormData(prev => ({ ...prev, customer_id: processedId }))
-            }}
-            disabled={loading}
-          />
-        </div>
+          {/* ── Fila 3: Cliente | Contacto | Descuentos ── */}
+          <div className="space-y-0.5">
+            <Label htmlFor="customer_id" className="text-xs">Cliente *</Label>
+            <CustomerSearchInput
+              value={formData.customer_id}
+              customers={customers}
+              onSelect={(customerId) => {
+                // Keep free-text format as-is, only parse numbers
+                const processedId = String(customerId).startsWith('free:') ? customerId : parseInt(String(customerId))
+                setFormData(prev => ({ ...prev, customer_id: processedId }))
+              }}
+              disabled={loading}
+            />
+          </div>
 
-        <div className="space-y-0.5">
-          <Label htmlFor="contact_id" className="text-xs">Contacto</Label>
-          <Select
-            value={formData.contact_id?.toString() || ''}
-            onValueChange={(value) => setFormData(prev => ({ ...prev, contact_id: value ? parseInt(value) : null }))}
-            disabled={loading || !formData.customer_id || contactList.length === 0}
-          >
-            <SelectTrigger id="contact_id" className="h-9 text-sm">
-              <SelectValue placeholder="Seleccionar contacto" />
-            </SelectTrigger>
-            <SelectContent>
-              {contactList.map((contact) => (
-                <SelectItem key={contact.id} value={contact.id.toString()}>
-                  {contact.nombre} {contact.apellidos} - {contact.puesto}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="space-y-0.5">
+            <Label htmlFor="contact_id" className="text-xs">Contacto</Label>
+            <Select
+              value={formData.contact_id?.toString() || ''}
+              onValueChange={(value) => setFormData(prev => ({ ...prev, contact_id: value ? parseInt(value) : null }))}
+              disabled={loading || !formData.customer_id || contactList.length === 0}
+            >
+              <SelectTrigger id="contact_id" className="h-9 text-sm">
+                <SelectValue placeholder="Seleccionar contacto" />
+              </SelectTrigger>
+              <SelectContent>
+                {contactList.map((contact) => (
+                  <SelectItem key={contact.id} value={contact.id.toString()}>
+                    {contact.nombre} {contact.apellidos} - {contact.puesto}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-xs">Descuentos (%)</Label>
+            <div className="grid grid-cols-3 gap-2">
+              <div className="flex flex-col gap-1">
+                <Input
+                  id="discount_sistemas"
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.01"
+                  value={currentCustomer?.descuento_sistemas || ''}
+                  readOnly
+                  disabled
+                  className="h-7 text-xs bg-muted text-center"
+                  placeholder="0.00"
+                />
+                <Label htmlFor="discount_sistemas" className="text-xs text-center">Sist.</Label>
+              </div>
+              <div className="flex flex-col gap-1">
+                <Input
+                  id="discount_difusion"
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.01"
+                  value={currentCustomer?.descuento_difusion || ''}
+                  readOnly
+                  disabled
+                  className="h-7 text-xs bg-muted text-center"
+                  placeholder="0.00"
+                />
+                <Label htmlFor="discount_difusion" className="text-xs text-center">Difus.</Label>
+              </div>
+              <div className="flex flex-col gap-1">
+                <Input
+                  id="discount_agfri"
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.01"
+                  value={currentCustomer?.descuento_agfri || ''}
+                  readOnly
+                  disabled
+                  className="h-7 text-xs bg-muted text-center"
+                  placeholder="0.00"
+                />
+                <Label htmlFor="discount_agfri" className="text-xs text-center">Agfri</Label>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-0.5">
+            <Label htmlFor="valid_until" className="text-xs">Fecha Validez</Label>
+            <Input
+              id="valid_until"
+              type="date"
+              value={formData.valid_until}
+              onChange={(e) => setFormData({ ...formData, valid_until: e.target.value })}
+              disabled={loading}
+              className="h-9 text-sm"
+            />
+          </div>
+
+          {/* ── Fila 4: Notas Cliente | Descripción | Notas Internas | Asignar Usuarios ── */}
+          <div className="space-y-0.5">
+            <Label className="text-xs">Notas Cliente</Label>
+            <Textarea
+              value={currentCustomer?.notas_cliente || ''}
+              readOnly
+              rows={4}
+              className="resize-none text-xs bg-muted"
+              placeholder="Notas del cliente (solo lectura)"
+            />
+          </div>
+
+          <div className="space-y-0.5">
+            <Label htmlFor="description" className="text-xs">Descripción (Visible en Oferta)</Label>
+            <Textarea
+              id="description"
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              rows={4}
+              disabled={loading}
+              className="resize-none text-xs"
+              placeholder="Descripción visible en la oferta"
+            />
+          </div>
+
+          <div className="space-y-0.5">
+            <Label htmlFor="notas_internas" className="text-xs">Notas Internas (Invisibles)</Label>
+            <Textarea
+              id="notas_internas"
+              value={formData.notas_internas}
+              onChange={(e) => setFormData({ ...formData, notas_internas: e.target.value })}
+              rows={4}
+              disabled={loading}
+              className="resize-none text-xs"
+              placeholder="Notas internas que no se mostrarán en la oferta"
+            />
+          </div>
+
+          <div className="space-y-0.5">
+            <Label className="text-xs">Asignar a Usuarios</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  disabled={loading}
+                  className="flex h-9 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <span className="text-sm text-muted-foreground truncate">
+                    {assignedUserIds.length === 0
+                      ? 'Seleccionar usuarios...'
+                      : assignedUserIds.length === 1
+                        ? users.find(u => u.id === assignedUserIds[0])?.full_name || '1 usuario'
+                        : `${assignedUserIds.length} usuarios seleccionados`}
+                  </span>
+                  <ChevronDown className="h-4 w-4 shrink-0 opacity-50 ml-2" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-64 p-1" align="start">
+                <div className="max-h-60 overflow-y-auto">
+                  {users.length > 0 ? (
+                    users.map((user) => {
+                      const isChecked = assignedUserIds.includes(user.id)
+                      return (
+                        <label
+                          key={user.id}
+                          className="flex items-center gap-2 cursor-pointer hover:bg-accent/60 px-2 py-1.5 rounded select-none"
+                        >
+                          <div className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border ${isChecked ? 'bg-primary border-primary' : 'border-input'}`}>
+                            {isChecked && <Check className="h-3 w-3 text-primary-foreground" />}
+                          </div>
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setAssignedUserIds([...assignedUserIds, user.id])
+                              } else {
+                                setAssignedUserIds(assignedUserIds.filter(id => id !== user.id))
+                              }
+                            }}
+                            disabled={loading}
+                            className="sr-only"
+                          />
+                          <span className="text-sm truncate">{user.full_name || user.email}</span>
+                        </label>
+                      )
+                    })
+                  ) : (
+                    <p className="text-xs text-muted-foreground px-2 py-1.5">No hay usuarios</p>
+                  )}
+                </div>
+              </PopoverContent>
+            </Popover>
+          </div>
+
         </div>
 
         <div className="space-y-2">
-          <Label className="text-xs">Descuentos (%)</Label>
-          <div className="grid grid-cols-3 gap-2">
-            <div className="flex flex-col gap-1">
-              <Input
-                id="discount_sistemas"
-                type="number"
-                min="0"
-                max="100"
-                step="0.01"
-                value={currentCustomer?.descuento_sistemas || ''}
-                readOnly
-                disabled
-                className="h-7 text-xs bg-muted text-center"
-                placeholder="0.00"
-              />
-              <Label htmlFor="discount_sistemas" className="text-xs text-center">Sist.</Label>
-            </div>
-            <div className="flex flex-col gap-1">
-              <Input
-                id="discount_difusion"
-                type="number"
-                min="0"
-                max="100"
-                step="0.01"
-                value={currentCustomer?.descuento_difusion || ''}
-                readOnly
-                disabled
-                className="h-7 text-xs bg-muted text-center"
-                placeholder="0.00"
-              />
-              <Label htmlFor="discount_difusion" className="text-xs text-center">Difus.</Label>
-            </div>
-            <div className="flex flex-col gap-1">
-              <Input
-                id="discount_agfri"
-                type="number"
-                min="0"
-                max="100"
-                step="0.01"
-                value={currentCustomer?.descuento_agfri || ''}
-                readOnly
-                disabled
-                className="h-7 text-xs bg-muted text-center"
-                placeholder="0.00"
-              />
-              <Label htmlFor="discount_agfri" className="text-xs text-center">Agfri</Label>
+          <div className="flex items-center justify-between">
+            <Label className="text-xs">Artículos de la Oferta</Label>
+            <div className="flex gap-2">
+              <Button type="button" variant="outline" size="sm" onClick={addItem} disabled={loading} className="h-7 text-xs">
+                <Plus className="w-3 h-3 mr-1" />
+                Añadir Línea
+              </Button>
+              <Button type="button" variant="outline" size="sm" onClick={() => window.open('https://docs.google.com/spreadsheets/d/12fjRD3s82M38YtwH0XkJe4iHUTR6S9WG/edit?usp=sharing&ouid=105945344502741152620&rtpof=true&sd=true', '_blank')} className="h-7 text-xs">
+                Calcular precio articulo
+              </Button>
             </div>
           </div>
-        </div>
 
-        <div className="space-y-0.5">
-          <Label htmlFor="valid_until" className="text-xs">Fecha Validez</Label>
-          <Input
-            id="valid_until"
-            type="date"
-            value={formData.valid_until}
-            onChange={(e) => setFormData({ ...formData, valid_until: e.target.value })}
-            disabled={loading}
-            className="h-9 text-sm"
-          />
-        </div>
-
-        {/* ── Fila 4: Notas Cliente | Descripción | Notas Internas | Asignar Usuarios ── */}
-        <div className="space-y-0.5">
-          <Label className="text-xs">Notas Cliente</Label>
-          <Textarea
-            value={currentCustomer?.notas_cliente || ''}
-            readOnly
-            rows={4}
-            className="resize-none text-xs bg-muted"
-            placeholder="Notas del cliente (solo lectura)"
-          />
-        </div>
-
-        <div className="space-y-0.5">
-          <Label htmlFor="description" className="text-xs">Descripción (Visible en Oferta)</Label>
-          <Textarea
-            id="description"
-            value={formData.description}
-            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            rows={4}
-            disabled={loading}
-            className="resize-none text-xs"
-            placeholder="Descripción visible en la oferta"
-          />
-        </div>
-
-        <div className="space-y-0.5">
-          <Label htmlFor="notas_internas" className="text-xs">Notas Internas (Invisibles)</Label>
-          <Textarea
-            id="notas_internas"
-            value={formData.notas_internas}
-            onChange={(e) => setFormData({ ...formData, notas_internas: e.target.value })}
-            rows={4}
-            disabled={loading}
-            className="resize-none text-xs"
-            placeholder="Notas internas que no se mostrarán en la oferta"
-          />
-        </div>
-
-        <div className="space-y-0.5">
-          <Label className="text-xs">Asignar a Usuarios</Label>
-          <Popover>
-            <PopoverTrigger asChild>
-              <button
-                type="button"
-                disabled={loading}
-                className="flex h-9 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <span className="text-sm text-muted-foreground truncate">
-                  {assignedUserIds.length === 0
-                    ? 'Seleccionar usuarios...'
-                    : assignedUserIds.length === 1
-                      ? users.find(u => u.id === assignedUserIds[0])?.full_name || '1 usuario'
-                      : `${assignedUserIds.length} usuarios seleccionados`}
-                </span>
-                <ChevronDown className="h-4 w-4 shrink-0 opacity-50 ml-2" />
-              </button>
-            </PopoverTrigger>
-            <PopoverContent className="w-64 p-1" align="start">
-              <div className="max-h-60 overflow-y-auto">
-                {users.length > 0 ? (
-                  users.map((user) => {
-                    const isChecked = assignedUserIds.includes(user.id)
-                    return (
-                      <label
-                        key={user.id}
-                        className="flex items-center gap-2 cursor-pointer hover:bg-accent/60 px-2 py-1.5 rounded select-none"
-                      >
-                        <div className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border ${isChecked ? 'bg-primary border-primary' : 'border-input'}`}>
-                          {isChecked && <Check className="h-3 w-3 text-primary-foreground" />}
-                        </div>
-                        <input
-                          type="checkbox"
-                          checked={isChecked}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setAssignedUserIds([...assignedUserIds, user.id])
-                            } else {
-                              setAssignedUserIds(assignedUserIds.filter(id => id !== user.id))
-                            }
-                          }}
-                          disabled={loading}
-                          className="sr-only"
-                        />
-                        <span className="text-sm truncate">{user.full_name || user.email}</span>
-                      </label>
-                    )
-                  })
-                ) : (
-                  <p className="text-xs text-muted-foreground px-2 py-1.5">No hay usuarios</p>
-                )}
-              </div>
-            </PopoverContent>
-          </Popover>
-        </div>
-
-      </div>
-
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <Label className="text-xs">Artículos de la Oferta</Label>
-          <div className="flex gap-2">
-            <Button type="button" variant="outline" size="sm" onClick={addItem} disabled={loading} className="h-7 text-xs">
-              <Plus className="w-3 h-3 mr-1" />
-              Añadir Línea
-            </Button>
-            <Button type="button" variant="outline" size="sm" onClick={() => window.open('https://docs.google.com/spreadsheets/d/12fjRD3s82M38YtwH0XkJe4iHUTR6S9WG/edit?usp=sharing&ouid=105945344502741152620&rtpof=true&sd=true', '_blank')} className="h-7 text-xs">
-              Calcular precio articulo
-            </Button>
-          </div>
-        </div>
-
-        <div className="border border-border rounded-lg overflow-hidden flex flex-col">
-          <div>
-            <table className="w-full text-xs" style={{ tableLayout: 'fixed' }}>
-              <colgroup>
-                <col style={{ width: '1.5rem' }} />
-                <col style={{ width: '225px' }} />
-                <col style={{ width: '350px' }} />
-                <col style={{ width: '6rem' }} />
-                <col style={{ width: '7rem' }} />
-                <col style={{ width: '7rem' }} />
-                <col style={{ width: '7rem' }} />
-                <col style={{ width: '7rem' }} />
-                <col style={{ width: '8rem' }} />
-                <col style={{ width: '8rem' }} />
-                <col style={{ width: '3rem' }} />
-              </colgroup>
-              <thead className="bg-muted/50 sticky top-0 z-10">
-              <tr>
-                <th className="px-1 py-1"></th>
-                <th className="px-2 py-1 text-left font-medium text-xs">Artículo</th>
-                <th className="px-2 py-1 text-left font-medium text-xs">Descripción</th>
-                <th className="px-2 py-1 text-right font-medium text-xs">Cantidad</th>
-                <th className="px-2 py-1 text-right font-medium text-xs">PVP</th>
-                <th className="px-2 py-1 text-right font-medium text-xs">PVP Total</th>
-                <th className="px-2 py-1 text-right font-medium text-xs">Desc. 1 (%)</th>
-                <th className="px-2 py-1 text-right font-medium text-xs">Desc. 2 (%)</th>
-                <th className="px-2 py-1 text-right font-medium text-xs">Neto Total 1</th>
-                <th className="px-2 py-1 text-right font-medium text-xs">Neto Total 2</th>
-                <th className="px-2 py-1 text-center font-medium text-xs"></th>
-              </tr>
-            </thead>
-            </table>
-          </div>
-          <div className="overflow-y-auto" style={{ maxHeight: 'calc(2.5rem * 10)' }}>
-            <table className="w-full text-xs" style={{ tableLayout: 'fixed' }}>
-              <colgroup>
-                <col style={{ width: '1.5rem' }} />
-                <col style={{ width: '225px' }} />
-                <col style={{ width: '350px' }} />
-                <col style={{ width: '6rem' }} />
-                <col style={{ width: '7rem' }} />
-                <col style={{ width: '7rem' }} />
-                <col style={{ width: '7rem' }} />
-                <col style={{ width: '7rem' }} />
-                <col style={{ width: '8rem' }} />
-                <col style={{ width: '8rem' }} />
-                <col style={{ width: '3rem' }} />
-              </colgroup>
-              <tbody>
-              {items.map((item, index) => {
-                const isDragOver = dragOverIndex === index
-                const dragRowClass = isDragOver ? 'outline outline-2 outline-primary outline-offset-[-2px]' : ''
-                if (item.type === 'section_header') {
-                  return (
-                    <tr key={item.id}
-                      className={`border-t border-border bg-[#1a2e4a] ${dragRowClass}`}
-                      onDragOver={(e) => handleDragOver(e, index)}
-                      onDrop={(e) => handleDrop(e, index)}
-                    >
-                      <td className="px-1 py-1 w-6 cursor-grab active:cursor-grabbing select-none"
-                        draggable
-                        onDragStart={() => handleDragStart(index)}
-                        onDragEnd={handleDragEnd}
-                      >
-                        <GripVertical className="w-3.5 h-3.5 text-muted-foreground/50 hover:text-muted-foreground" />
-                      </td>
-                      <td colSpan={9} className="px-2 py-2">
-                        <Input
-                          value={item.description}
-                          onChange={(e) => handleItemChange(index, 'description', e.target.value)}
-                          placeholder="Título de sección"
-                          className="h-7 text-xs font-semibold bg-[#1a2e4a] text-white placeholder:text-white/50 border-white/20"
-                          disabled={loading}
-                        />
-                      </td>
-                      <td className="px-2 py-1 text-center">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeItem(index)}
-                          disabled={loading}
-                          className="h-6 w-6 p-0"
-                        >
-                          <X className="w-3 h-3" />
-                        </Button>
-                      </td>
-                    </tr>
-                  )
-                }
-
-                // Note Row
-                if (item.type === 'note') {
-                  return (
-                    <tr key={item.id}
-                      className={`border-t border-border bg-yellow-100 ${dragRowClass}`}
-                      onDragOver={(e) => handleDragOver(e, index)}
-                      onDrop={(e) => handleDrop(e, index)}
-                    >
-                      <td className="px-1 py-1 w-6 cursor-grab active:cursor-grabbing select-none"
-                        draggable
-                        onDragStart={() => handleDragStart(index)}
-                        onDragEnd={handleDragEnd}
-                      >
-                        <GripVertical className="w-3.5 h-3.5 text-muted-foreground/50 hover:text-muted-foreground" />
-                      </td>
-                      <td colSpan={9} className="px-2 py-2">
-                        <Input
-                          value={item.description}
-                          onChange={(e) => handleItemChange(index, 'description', e.target.value)}
-                          placeholder="Anotación"
-                          className="h-7 text-xs italic bg-yellow-100 text-yellow-900 placeholder:text-yellow-700/60 border-yellow-300"
-                          disabled={loading}
-                        />
-                      </td>
-                      <td className="px-2 py-1 text-center">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeItem(index)}
-                          disabled={loading}
-                          className="h-6 w-6 p-0"
-                        >
-                          <X className="w-3 h-3" />
-                        </Button>
-                      </td>
-                    </tr>
-                  )
-                }
-
-                // Summary Row
-                if (item.type === 'summary') {
-                  return (
-                    <tr key={item.id}
-                      className={`border-t-2 border-border bg-[#1a2e4a] font-semibold ${dragRowClass}`}
-                      onDragOver={(e) => handleDragOver(e, index)}
-                      onDrop={(e) => handleDrop(e, index)}
-                    >
-                      <td className="px-1 py-1 w-6 cursor-grab active:cursor-grabbing select-none" draggable onDragStart={() => handleDragStart(index)} onDragEnd={handleDragEnd}><GripVertical className="w-3.5 h-3.5 text-muted-foreground/50 hover:text-muted-foreground" /></td>
-                      <td colSpan={4} className="px-2 py-1.5 text-xs text-white italic">
-                        {item.description || 'Resumen'}
-                      </td>
-                      <td className="px-2 py-1.5 text-right text-xs text-white">
-                        {formatNumber(item.pvp_total)}
-                      </td>
-                      <td colSpan={2} className="px-2 py-1.5"></td>
-                      <td className="px-2 py-1.5 text-right text-xs text-white">
-                        {formatNumber(item.neto_total1)}
-                      </td>
-                      <td className="px-2 py-1.5 text-right text-xs text-white font-bold">
-                        {formatNumber(item.neto_total2)}
-                      </td>
-                      <td className="px-2 py-1 text-center">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeItem(index)}
-                          disabled={loading}
-                          className="h-6 w-6 p-0"
-                        >
-                          <X className="w-3 h-3" />
-                        </Button>
-                      </td>
-                    </tr>
-                  )
-                }
-
-                // External Article Row — free-text reference, no product lookup
-                if (item.type === 'external') {
-                  return (
-                    <tr key={item.id}
-                      className={`border-t border-border hover:bg-muted/20 ${dragRowClass}`}
-                      onDragOver={(e) => handleDragOver(e, index)}
-                      onDrop={(e) => handleDrop(e, index)}
-                    >
-                      <td className="px-1 py-1 w-6 cursor-grab active:cursor-grabbing select-none" draggable onDragStart={() => handleDragStart(index)} onDragEnd={handleDragEnd}><GripVertical className="w-3.5 h-3.5 text-muted-foreground/50 hover:text-muted-foreground" /></td>
-                      <td className="px-2 py-1">
-                        <Input
-                          value={item.external_ref ?? ''}
-                          onChange={(e) => handleItemChange(index, 'external_ref', e.target.value)}
-                          placeholder="Referencia libre"
-                          className="h-7 text-xs font-medium"
-                          disabled={loading}
-                        />
-                      </td>
-                      <td className="px-2 py-1">
-                        <Input
-                          value={item.description}
-                          onChange={(e) => handleItemChange(index, 'description', e.target.value)}
-                          placeholder="Descripción"
-                          className="h-7 text-xs"
-                          disabled={loading}
-                        />
-                      </td>
-                      <td className="px-2 py-1">
-                        <Input
-                          type="number"
-                          min="0"
-                          step="1"
-                          value={item.quantity || ''}
-                          onChange={(e) => handleItemChange(index, 'quantity', Number(e.target.value))}
-                          className="h-7 text-xs text-right"
-                          disabled={loading}
-                        />
-                      </td>
-                      <td className="px-2 py-1">
-                        <Input
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          value={item.pvp || ''}
-                          onChange={(e) => handleItemChange(index, 'pvp', Number(e.target.value))}
-                          className="h-7 text-xs text-right"
-                          disabled={loading}
-                          placeholder="-"
-                        />
-                      </td>
-                      <td className="px-2 py-1 text-right font-medium text-xs">
-                        {item.pvp > 0 ? formatNumber(item.pvp_total) : '-'}
-                      </td>
-                      <td className="px-2 py-1">
-                        <Input
-                          type="number"
-                          min="0"
-                          max="100"
-                          step="0.01"
-                          value={item.discount1 !== undefined && item.discount1 !== null ? item.discount1 : ''}
-                          onChange={(e) => handleItemChange(index, 'discount1', Number(e.target.value))}
-                          className="h-7 text-xs text-right"
-                          disabled={loading}
-                          placeholder="-"
-                        />
-                      </td>
-                      <td className="px-2 py-1">
-                        <Input
-                          type="number"
-                          min="0"
-                          max="100"
-                          step="0.01"
-                          value={item.discount2 || ''}
-                          onChange={(e) => handleItemChange(index, 'discount2', Number(e.target.value))}
-                          className="h-7 text-xs text-right"
-                          disabled={loading}
-                          placeholder="-"
-                        />
-                      </td>
-                      <td className="px-2 py-1 text-right font-medium text-xs">
-                        {item.neto_total1 > 0 ? formatNumber(item.neto_total1) : '-'}
-                      </td>
-                      <td className="px-2 py-1 text-right font-semibold text-xs text-primary">
-                        {item.neto_total2 > 0 ? formatNumber(item.neto_total2) : '-'}
-                      </td>
-                      <td className="px-2 py-1 text-center">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeItem(index)}
-                          disabled={loading}
-                          className="h-6 w-6 p-0"
-                        >
-                          <X className="w-3 h-3" />
-                        </Button>
-                      </td>
-                    </tr>
-                  )
-                }
-
-                // Article Row (regular)
-                return (
-                  <tr key={item.id}
-                    className={`border-t border-border hover:bg-muted/20 ${dragOverIndex === index ? 'outline outline-2 outline-primary outline-offset-[-2px]' : ''}`}
-                    onDragOver={(e) => handleDragOver(e, index)}
-                    onDrop={(e) => handleDrop(e, index)}
-                  >
-                    <td className="px-1 py-1 w-6 cursor-grab active:cursor-grabbing select-none" draggable onDragStart={() => handleDragStart(index)} onDragEnd={handleDragEnd}>
-                      <GripVertical className="w-3.5 h-3.5 text-muted-foreground/50 hover:text-muted-foreground" />
-                    </td>
-                    <td className="px-2 py-1">
-                      <ProductSearchInput
-                        value={item.product_id || ''}
-                        products={products}
-                        onSelect={(productId) => handleProductSelect(index, productId)}
-                        disabled={loading}
-                      />
-                    </td>
-                    <td className="px-2 py-1">
-                      <Input
-                        value={item.description}
-                        onChange={(e) => handleItemChange(index, 'description', e.target.value)}
-                        placeholder="Descripción"
-                        className="h-7 text-xs"
-                        disabled={loading}
-                      />
-                    </td>
-                    <td className="px-2 py-1">
-                      <Input
-                        type="number"
-                        min="0"
-                        step="1"
-                        value={item.quantity || ''}
-                        onChange={(e) => handleItemChange(index, 'quantity', Number(e.target.value))}
-                        className="h-7 text-xs text-right"
-                        disabled={loading}
-                      />
-                    </td>
-                    <td className="px-2 py-1">
-                      <Input
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        value={item.pvp || ''}
-                        onChange={(e) => handleItemChange(index, 'pvp', Number(e.target.value))}
-                        className="h-7 text-xs text-right"
-                        disabled={loading}
-                        placeholder="-"
-                      />
-                    </td>
-                    <td className="px-2 py-1 text-right font-medium text-xs">
-                      {item.pvp > 0 ? formatNumber(item.pvp_total) : '-'}
-                    </td>
-                    <td className="px-2 py-1">
-                      <Input
-                        type="number"
-                        min="0"
-                        max="100"
-                        step="0.01"
-                        value={item.discount1 || ''}
-                        onChange={(e) => handleItemChange(index, 'discount1', Number(e.target.value))}
-                        className="h-7 text-xs text-right"
-                        disabled={loading}
-                      />
-                    </td>
-                    <td className="px-2 py-1">
-                      <Input
-                        type="number"
-                        min="0"
-                        max="100"
-                        step="0.01"
-                        value={item.discount2 || ''}
-                        onChange={(e) => handleItemChange(index, 'discount2', Number(e.target.value))}
-                        className="h-7 text-xs text-right"
-                        disabled={loading}
-                      />
-                    </td>
-                    <td className="px-2 py-1 text-right font-medium text-xs">
-                      {item.pvp > 0 ? formatNumber(item.neto_total1) : '-'}
-                    </td>
-                    <td className="px-2 py-1 text-right font-medium text-primary text-xs">
-                      {item.pvp > 0 ? formatNumber(item.neto_total2) : '-'}
-                    </td>
-                    <td className="px-2 py-1 text-center">
-                      {items.length > 1 && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeItem(index)}
-                          disabled={loading}
-                          className="h-6 w-6 p-0"
-                        >
-                          <X className="w-3 h-3" />
-                        </Button>
-                      )}
-                    </td>
+          <div className="border border-border rounded-lg overflow-hidden flex flex-col">
+            <div>
+              <table className="w-full text-xs" style={{ tableLayout: 'fixed' }}>
+                <colgroup>
+                  <col style={{ width: '1.5rem' }} />
+                  <col style={{ width: '225px' }} />
+                  <col style={{ width: '350px' }} />
+                  <col style={{ width: '6rem' }} />
+                  <col style={{ width: '7rem' }} />
+                  <col style={{ width: '7rem' }} />
+                  <col style={{ width: '7rem' }} />
+                  <col style={{ width: '7rem' }} />
+                  <col style={{ width: '8rem' }} />
+                  <col style={{ width: '8rem' }} />
+                  <col style={{ width: '3rem' }} />
+                </colgroup>
+                <thead className="bg-muted/50 sticky top-0 z-10">
+                  <tr>
+                    <th className="px-1 py-1"></th>
+                    <th className="px-2 py-1 text-left font-medium text-xs">Artículo</th>
+                    <th className="px-2 py-1 text-left font-medium text-xs">Descripción</th>
+                    <th className="px-2 py-1 text-right font-medium text-xs">Cantidad</th>
+                    <th className="px-2 py-1 text-right font-medium text-xs">PVP</th>
+                    <th className="px-2 py-1 text-right font-medium text-xs">PVP Total</th>
+                    <th className="px-2 py-1 text-right font-medium text-xs">Desc. 1 (%)</th>
+                    <th className="px-2 py-1 text-right font-medium text-xs">Desc. 2 (%)</th>
+                    <th className="px-2 py-1 text-right font-medium text-xs">Neto Total 1</th>
+                    <th className="px-2 py-1 text-right font-medium text-xs">Neto Total 2</th>
+                    <th className="px-2 py-1 text-center font-medium text-xs"></th>
                   </tr>
-                )
-              })}
-            </tbody>
+                </thead>
+              </table>
+            </div>
+            <div className="overflow-y-auto" style={{ maxHeight: 'calc(2.5rem * 10)' }}>
+              <table className="w-full text-xs" style={{ tableLayout: 'fixed' }}>
+                <colgroup>
+                  <col style={{ width: '1.5rem' }} />
+                  <col style={{ width: '225px' }} />
+                  <col style={{ width: '350px' }} />
+                  <col style={{ width: '6rem' }} />
+                  <col style={{ width: '7rem' }} />
+                  <col style={{ width: '7rem' }} />
+                  <col style={{ width: '7rem' }} />
+                  <col style={{ width: '7rem' }} />
+                  <col style={{ width: '8rem' }} />
+                  <col style={{ width: '8rem' }} />
+                  <col style={{ width: '3rem' }} />
+                </colgroup>
+                <tbody>
+                  {items.map((item, index) => {
+                    const isDragOver = dragOverIndex === index
+                    const dragRowClass = isDragOver ? 'outline outline-2 outline-primary outline-offset-[-2px]' : ''
+                    if (item.type === 'section_header') {
+                      return (
+                        <tr key={item.id}
+                          className={`border-t border-border bg-[#1a2e4a] ${dragRowClass}`}
+                          onDragOver={(e) => handleDragOver(e, index)}
+                          onDrop={(e) => handleDrop(e, index)}
+                        >
+                          <td className="px-1 py-1 w-6 cursor-grab active:cursor-grabbing select-none"
+                            draggable
+                            onDragStart={() => handleDragStart(index)}
+                            onDragEnd={handleDragEnd}
+                          >
+                            <GripVertical className="w-3.5 h-3.5 text-muted-foreground/50 hover:text-muted-foreground" />
+                          </td>
+                          <td colSpan={9} className="px-2 py-2">
+                            <Input
+                              value={item.description}
+                              onChange={(e) => handleItemChange(index, 'description', e.target.value)}
+                              placeholder="Título de sección"
+                              className="h-7 text-xs font-semibold bg-[#1a2e4a] text-white placeholder:text-white/50 border-white/20"
+                              disabled={loading}
+                            />
+                          </td>
+                          <td className="px-2 py-1 text-center">
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeItem(index)}
+                              disabled={loading}
+                              className="h-6 w-6 p-0"
+                            >
+                              <X className="w-3 h-3" />
+                            </Button>
+                          </td>
+                        </tr>
+                      )
+                    }
+
+                    // Note Row
+                    if (item.type === 'note') {
+                      return (
+                        <tr key={item.id}
+                          className={`border-t border-border bg-yellow-100 ${dragRowClass}`}
+                          onDragOver={(e) => handleDragOver(e, index)}
+                          onDrop={(e) => handleDrop(e, index)}
+                        >
+                          <td className="px-1 py-1 w-6 cursor-grab active:cursor-grabbing select-none"
+                            draggable
+                            onDragStart={() => handleDragStart(index)}
+                            onDragEnd={handleDragEnd}
+                          >
+                            <GripVertical className="w-3.5 h-3.5 text-muted-foreground/50 hover:text-muted-foreground" />
+                          </td>
+                          <td colSpan={9} className="px-2 py-2">
+                            <Input
+                              value={item.description}
+                              onChange={(e) => handleItemChange(index, 'description', e.target.value)}
+                              placeholder="Anotación"
+                              className="h-7 text-xs italic bg-yellow-100 text-yellow-900 placeholder:text-yellow-700/60 border-yellow-300"
+                              disabled={loading}
+                            />
+                          </td>
+                          <td className="px-2 py-1 text-center">
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeItem(index)}
+                              disabled={loading}
+                              className="h-6 w-6 p-0"
+                            >
+                              <X className="w-3 h-3" />
+                            </Button>
+                          </td>
+                        </tr>
+                      )
+                    }
+
+                    // Summary Row
+                    if (item.type === 'summary') {
+                      return (
+                        <tr key={item.id}
+                          className={`border-t-2 border-border bg-[#1a2e4a] font-semibold ${dragRowClass}`}
+                          onDragOver={(e) => handleDragOver(e, index)}
+                          onDrop={(e) => handleDrop(e, index)}
+                        >
+                          <td className="px-1 py-1 w-6 cursor-grab active:cursor-grabbing select-none" draggable onDragStart={() => handleDragStart(index)} onDragEnd={handleDragEnd}><GripVertical className="w-3.5 h-3.5 text-muted-foreground/50 hover:text-muted-foreground" /></td>
+                          <td colSpan={4} className="px-2 py-1.5 text-xs text-white italic">
+                            {item.description || 'Resumen'}
+                          </td>
+                          <td className="px-2 py-1.5 text-right text-xs text-white">
+                            {formatNumber(item.pvp_total)}
+                          </td>
+                          <td colSpan={2} className="px-2 py-1.5"></td>
+                          <td className="px-2 py-1.5 text-right text-xs text-white">
+                            {formatNumber(item.neto_total1)}
+                          </td>
+                          <td className="px-2 py-1.5 text-right text-xs text-white font-bold">
+                            {formatNumber(item.neto_total2)}
+                          </td>
+                          <td className="px-2 py-1 text-center">
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeItem(index)}
+                              disabled={loading}
+                              className="h-6 w-6 p-0"
+                            >
+                              <X className="w-3 h-3" />
+                            </Button>
+                          </td>
+                        </tr>
+                      )
+                    }
+
+                    // External Article Row — free-text reference, no product lookup
+                    if (item.type === 'external') {
+                      return (
+                        <tr key={item.id}
+                          className={`border-t border-border hover:bg-muted/20 ${dragRowClass}`}
+                          onDragOver={(e) => handleDragOver(e, index)}
+                          onDrop={(e) => handleDrop(e, index)}
+                        >
+                          <td className="px-1 py-1 w-6 cursor-grab active:cursor-grabbing select-none" draggable onDragStart={() => handleDragStart(index)} onDragEnd={handleDragEnd}><GripVertical className="w-3.5 h-3.5 text-muted-foreground/50 hover:text-muted-foreground" /></td>
+                          <td className="px-2 py-1">
+                            <Input
+                              value={item.external_ref ?? ''}
+                              onChange={(e) => handleItemChange(index, 'external_ref', e.target.value)}
+                              placeholder="Referencia libre"
+                              className="h-7 text-xs font-medium"
+                              disabled={loading}
+                            />
+                          </td>
+                          <td className="px-2 py-1">
+                            <Input
+                              value={item.description}
+                              onChange={(e) => handleItemChange(index, 'description', e.target.value)}
+                              placeholder="Descripción"
+                              className="h-7 text-xs"
+                              disabled={loading}
+                            />
+                          </td>
+                          <td className="px-2 py-1">
+                            <Input
+                              type="number"
+                              min="0"
+                              step="1"
+                              value={item.quantity || ''}
+                              onChange={(e) => handleItemChange(index, 'quantity', Number(e.target.value))}
+                              className="h-7 text-xs text-right"
+                              disabled={loading}
+                            />
+                          </td>
+                          <td className="px-2 py-1">
+                            <Input
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              value={item.pvp || ''}
+                              onChange={(e) => handleItemChange(index, 'pvp', Number(e.target.value))}
+                              className="h-7 text-xs text-right"
+                              disabled={loading}
+                              placeholder="-"
+                            />
+                          </td>
+                          <td className="px-2 py-1 text-right font-medium text-xs">
+                            {item.pvp > 0 ? formatNumber(item.pvp_total) : '-'}
+                          </td>
+                          <td className="px-2 py-1">
+                            <Input
+                              type="number"
+                              min="0"
+                              max="100"
+                              step="0.01"
+                              value={item.discount1 !== undefined && item.discount1 !== null ? item.discount1 : ''}
+                              onChange={(e) => handleItemChange(index, 'discount1', Number(e.target.value))}
+                              className="h-7 text-xs text-right"
+                              disabled={loading}
+                              placeholder="-"
+                            />
+                          </td>
+                          <td className="px-2 py-1">
+                            <Input
+                              type="number"
+                              min="0"
+                              max="100"
+                              step="0.01"
+                              value={item.discount2 || ''}
+                              onChange={(e) => handleItemChange(index, 'discount2', Number(e.target.value))}
+                              className="h-7 text-xs text-right"
+                              disabled={loading}
+                              placeholder="-"
+                            />
+                          </td>
+                          <td className="px-2 py-1 text-right font-medium text-xs">
+                            {item.neto_total1 > 0 ? formatNumber(item.neto_total1) : '-'}
+                          </td>
+                          <td className="px-2 py-1 text-right font-semibold text-xs text-primary">
+                            {item.neto_total2 > 0 ? formatNumber(item.neto_total2) : '-'}
+                          </td>
+                          <td className="px-2 py-1 text-center">
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeItem(index)}
+                              disabled={loading}
+                              className="h-6 w-6 p-0"
+                            >
+                              <X className="w-3 h-3" />
+                            </Button>
+                          </td>
+                        </tr>
+                      )
+                    }
+
+                    // Article Row (regular)
+                    return (
+                      <tr key={item.id}
+                        className={`border-t border-border hover:bg-muted/20 ${dragOverIndex === index ? 'outline outline-2 outline-primary outline-offset-[-2px]' : ''}`}
+                        onDragOver={(e) => handleDragOver(e, index)}
+                        onDrop={(e) => handleDrop(e, index)}
+                      >
+                        <td className="px-1 py-1 w-6 cursor-grab active:cursor-grabbing select-none" draggable onDragStart={() => handleDragStart(index)} onDragEnd={handleDragEnd}>
+                          <GripVertical className="w-3.5 h-3.5 text-muted-foreground/50 hover:text-muted-foreground" />
+                        </td>
+                        <td className="px-2 py-1">
+                          <ProductSearchInput
+                            value={item.product_id || ''}
+                            products={products}
+                            onSelect={(productId) => handleProductSelect(index, productId)}
+                            disabled={loading}
+                          />
+                        </td>
+                        <td className="px-2 py-1">
+                          <Input
+                            value={item.description}
+                            onChange={(e) => handleItemChange(index, 'description', e.target.value)}
+                            placeholder="Descripción"
+                            className="h-7 text-xs"
+                            disabled={loading}
+                          />
+                        </td>
+                        <td className="px-2 py-1">
+                          <Input
+                            type="number"
+                            min="0"
+                            step="1"
+                            value={item.quantity || ''}
+                            onChange={(e) => handleItemChange(index, 'quantity', Number(e.target.value))}
+                            className="h-7 text-xs text-right"
+                            disabled={loading}
+                          />
+                        </td>
+                        <td className="px-2 py-1">
+                          <Input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={item.pvp || ''}
+                            onChange={(e) => handleItemChange(index, 'pvp', Number(e.target.value))}
+                            className="h-7 text-xs text-right"
+                            disabled={loading}
+                            placeholder="-"
+                          />
+                        </td>
+                        <td className="px-2 py-1 text-right font-medium text-xs">
+                          {item.pvp > 0 ? formatNumber(item.pvp_total) : '-'}
+                        </td>
+                        <td className="px-2 py-1">
+                          <Input
+                            type="number"
+                            min="0"
+                            max="100"
+                            step="0.01"
+                            value={item.discount1 || ''}
+                            onChange={(e) => handleItemChange(index, 'discount1', Number(e.target.value))}
+                            className="h-7 text-xs text-right"
+                            disabled={loading}
+                          />
+                        </td>
+                        <td className="px-2 py-1">
+                          <Input
+                            type="number"
+                            min="0"
+                            max="100"
+                            step="0.01"
+                            value={item.discount2 || ''}
+                            onChange={(e) => handleItemChange(index, 'discount2', Number(e.target.value))}
+                            className="h-7 text-xs text-right"
+                            disabled={loading}
+                          />
+                        </td>
+                        <td className="px-2 py-1 text-right font-medium text-xs">
+                          {item.pvp > 0 ? formatNumber(item.neto_total1) : '-'}
+                        </td>
+                        <td className="px-2 py-1 text-right font-medium text-primary text-xs">
+                          {item.pvp > 0 ? formatNumber(item.neto_total2) : '-'}
+                        </td>
+                        <td className="px-2 py-1 text-center">
+                          {items.length > 1 && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeItem(index)}
+                              disabled={loading}
+                              className="h-6 w-6 p-0"
+                            >
+                              <X className="w-3 h-3" />
+                            </Button>
+                          )}
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+            <table className="w-full text-xs table-fixed border-t border-border">
+              <tfoot className="bg-muted/30">
+                <tr>
+                  <td colSpan={7}></td>
+                  <td className="px-2 py-1 text-right font-semibold text-xs">
+                    Total PVP: <span className="font-bold text-sm">EUR {formatNumber(totalPVP)}</span>
+                  </td>
+                  <td className="px-2 py-1 text-right font-semibold text-xs">
+                    Total NETO: <span className="font-bold text-sm text-primary">EUR {formatNumber(totalNeto)}</span>
+                  </td>
+                </tr>
+              </tfoot>
             </table>
           </div>
-          <table className="w-full text-xs table-fixed border-t border-border">
-            <tfoot className="bg-muted/30">
-              <tr>
-                <td colSpan={7}></td>
-                <td className="px-2 py-1 text-right font-semibold text-xs">
-                  Total PVP: <span className="font-bold text-sm">EUR {formatNumber(totalPVP)}</span>
-                </td>
-                <td className="px-2 py-1 text-right font-semibold text-xs">
-                  Total NETO: <span className="font-bold text-sm text-primary">EUR {formatNumber(totalNeto)}</span>
-                </td>
-              </tr>
-            </tfoot>
-          </table>
-        </div>
 
-        {/* Warnings for articles */}
-        <div className="space-y-2 mt-3">
-          {articlesWithoutCost.length > 0 && (
-            <div className="flex items-start gap-2 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
-              <AlertCircle className="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0" />
-              <div className="text-sm text-yellow-800">
-                <span className="font-semibold">{articlesWithoutCost.length} artículo(s) sin coste</span> - Añade un precio PVP a los artículos para calcular totales correctamente
+          {/* Warnings for articles */}
+          <div className="space-y-2 mt-3">
+            {articlesWithoutCost.length > 0 && (
+              <div className="flex items-start gap-2 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                <AlertCircle className="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0" />
+                <div className="text-sm text-yellow-800">
+                  <span className="font-semibold">{articlesWithoutCost.length} artículo(s) sin coste</span> - Añade un precio PVP a los artículos para calcular totales correctamente
+                </div>
               </div>
-            </div>
-          )}
-          {articlesWithoutDiscount.length > 0 && (
-            <div className="flex items-start gap-2 p-3 bg-orange-50 border border-orange-200 rounded-md">
-              <AlertCircle className="w-4 h-4 text-orange-600 mt-0.5 flex-shrink-0" />
-              <div className="text-sm text-orange-800">
-                <span className="font-semibold">{articlesWithoutDiscount.length} artículo(s) sin descuento</span> - Estos artículos no tienen descuento aplicado
+            )}
+            {articlesWithoutDiscount.length > 0 && (
+              <div className="flex items-start gap-2 p-3 bg-orange-50 border border-orange-200 rounded-md">
+                <AlertCircle className="w-4 h-4 text-orange-600 mt-0.5 flex-shrink-0" />
+                <div className="text-sm text-orange-800">
+                  <span className="font-semibold">{articlesWithoutDiscount.length} artículo(s) sin descuento</span> - Estos artículos no tienen descuento aplicado
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
+
+          <div className="flex gap-1 justify-start py-3 border-b border-border">
+            <Button type="button" variant="outline" size="sm" onClick={addExternalItem} disabled={loading} className="h-7 text-xs">
+              <Plus className="w-3 h-3 mr-1" />
+              Añadir Artículo Externo
+            </Button>
+            <Button type="button" variant="outline" size="sm" onClick={addSectionHeader} disabled={loading} className="h-7 text-xs">
+              <Plus className="w-3 h-3 mr-1" />
+              Añadir Título
+            </Button>
+            <Button type="button" variant="outline" size="sm" onClick={addNote} disabled={loading} className="h-7 text-xs">
+              <Plus className="w-3 h-3 mr-1" />
+              Añadir Anotación
+            </Button>
+            <Button type="button" variant="outline" size="sm" onClick={addSummary} disabled={loading} className="h-7 text-xs">
+              <Plus className="w-3 h-3 mr-1" />
+              Añadir Resumen
+            </Button>
+            {offer?.id && (
+              <ImportItemsDialog offerId={offer.id} onSuccess={() => loadOfferItems()} />
+            )}
+            <CalcularLarguerosDialog
+              items={items.filter(i => i.type === 'article' && i.product_id).map(i => {
+                const product = products.find(p => p.id === i.product_id)
+                return {
+                  product_id: i.product_id || '',
+                  quantity: i.quantity || 1,
+                  product: product ? {
+                    referencia: product.referencia || '',
+                    descripcion: product.descripcion || '',
+                    larguero_largo: product.larguero_largo || null,
+                    larguero_alto: product.larguero_alto || null,
+                  } : undefined,
+                }
+              })}
+              onAddItem={addItemByProductId}
+            />
+          </div>
         </div>
 
-      <div className="flex gap-1 justify-start py-3 border-b border-border">
-        <Button type="button" variant="outline" size="sm" onClick={addExternalItem} disabled={loading} className="h-7 text-xs">
-          <Plus className="w-3 h-3 mr-1" />
-          Añadir Artículo Externo
-        </Button>
-        <Button type="button" variant="outline" size="sm" onClick={addSectionHeader} disabled={loading} className="h-7 text-xs">
-          <Plus className="w-3 h-3 mr-1" />
-          Añadir Título
-        </Button>
-        <Button type="button" variant="outline" size="sm" onClick={addNote} disabled={loading} className="h-7 text-xs">
-          <Plus className="w-3 h-3 mr-1" />
-          Añadir Anotación
-        </Button>
-        <Button type="button" variant="outline" size="sm" onClick={addSummary} disabled={loading} className="h-7 text-xs">
-          <Plus className="w-3 h-3 mr-1" />
-          Añadir Resumen
-        </Button>
-        {offer?.id && (
-          <ImportItemsDialog offerId={offer.id} onSuccess={() => loadOfferItems()} />
-        )}
-        <CalcularLarguerosDialog
-          items={items.filter(i => i.type === 'article' && i.product_id).map(i => {
-            const product = products.find(p => p.id === i.product_id)
-            return {
-              product_id: i.product_id || '',
-              quantity: i.quantity || 1,
-              product: product ? {
-                referencia: product.referencia || '',
-                descripcion: product.descripcion || '',
-                larguero_largo: product.larguero_largo || null,
-                larguero_alto: product.larguero_alto || null,
-              } : undefined,
-            }
-          })}
-          onAddItem={addItemByProductId}
-        />
-      </div>
-      </div>
+        <div className="flex justify-between gap-2">
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant="default"
+              onClick={() => handleNavigation('/dashboard/offers/new')}
+              disabled={loading}
+              className="h-8 text-xs"
+            >
+              <Plus className="mr-2 h-3 w-3" />
+              Nueva Oferta
+            </Button>
+            <DuplicateOfferButton
+              offerId={savedOfferId ?? ''}
+              variant="outline"
+              size="sm"
+              showLabel={true}
+              disabled={!savedOfferId && !offer?.id}
+              onClick={(e) => {
+                if (!savedOfferId && !offer?.id) {
+                  e.preventDefault()
+                  callbackRef.current = () => router.push(`/dashboard/offers/${savedOfferId}/duplicate`)
+                  const form = document.querySelector('form') as HTMLFormElement | null
+                  if (form) form.requestSubmit()
+                }
+              }}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                if (savedOfferId || offer?.id) {
+                  router.push(`/dashboard/offers/${savedOfferId || offer?.id}`)
+                } else {
+                  callbackRef.current = () => router.push(`/dashboard/offers/${savedOfferId}`)
+                  const form = document.querySelector('form') as HTMLFormElement | null
+                  if (form) form.requestSubmit()
+                }
+              }}
+              disabled={loading}
+              className="h-8 text-xs"
+              title={!savedOfferId && !offer?.id ? 'Guarda la oferta primero para poder verla' : undefined}
+            >
+              <Eye className="mr-2 h-3 w-3" />
+              Ver
+            </Button>
+            <GeneratePdfButton
+              offerId={savedOfferId || offer?.id?.toString() || ''}
+              offerNumber={offer?.offer_number || 0}
+              customerName={(offer as any)?.customer?.company_name || currentCustomer?.company_name}
+              offerTitle={offer?.title}
+              disabled={isPendingValidation || unsavedChanges}
+            />
+          </div>
+          <div className="flex gap-2">
+            <Button type="button" variant="outline" onClick={() => handleNavigation('/dashboard/offers')} disabled={loading} className="h-8 text-xs">
+              Cancelar
+            </Button>
+            <Button type="submit" disabled={loading} className="h-8 text-xs" data-save-button>
+              {loading && <Loader2 className="mr-2 h-3 w-3 animate-spin" />}
+              {offer ? 'Actualizar Oferta' : 'Guardar'}
+            </Button>
+          </div>
+        </div>
+      </form>
 
-      <div className="flex justify-between gap-2">
-        <div className="flex gap-2">
-          <Button 
-            type="button" 
-            variant="default"
-            onClick={() => handleNavigation('/dashboard/offers/new')} 
-            disabled={loading} 
-            className="h-8 text-xs"
-          >
-            <Plus className="mr-2 h-3 w-3" />
-            Nueva Oferta
-          </Button>
-          <DuplicateOfferButton 
-            offerId={savedOfferId ?? ''} 
-            variant="outline" 
-            size="sm" 
-            showLabel={true}
-            disabled={!savedOfferId && !offer?.id}
-            onClick={(e) => {
-              if (!savedOfferId && !offer?.id) {
-                e.preventDefault()
-                callbackRef.current = () => router.push(`/dashboard/offers/${savedOfferId}/duplicate`)
-                const form = document.querySelector('form') as HTMLFormElement | null
-                if (form) form.requestSubmit()
-              }
-            }}
-          />
-          <Button 
-            type="button" 
-            variant="outline" 
-            onClick={() => {
-              if (savedOfferId || offer?.id) {
-                router.push(`/dashboard/offers/${savedOfferId || offer?.id}`)
-              } else {
-                callbackRef.current = () => router.push(`/dashboard/offers/${savedOfferId}`)
-                const form = document.querySelector('form') as HTMLFormElement | null
-                if (form) form.requestSubmit()
-              }
-            }} 
-            disabled={loading} 
-            className="h-8 text-xs"
-            title={!savedOfferId && !offer?.id ? 'Guarda la oferta primero para poder verla' : undefined}
-          >
-            <Eye className="mr-2 h-3 w-3" />
-            Ver
-          </Button>
-          <GeneratePdfButton 
-            offerId={savedOfferId || offer?.id?.toString() || ''} 
-            offerNumber={offer?.offer_number || 0}
-            customerName={(offer as any)?.customer?.company_name || currentCustomer?.company_name}
-            offerTitle={offer?.title}
-            disabled={isPendingValidation || unsavedChanges}
-          />
-        </div>
-        <div className="flex gap-2">
-          <Button type="button" variant="outline" onClick={() => handleNavigation('/dashboard/offers')} disabled={loading} className="h-8 text-xs">
-            Cancelar
-          </Button>
-          <Button type="submit" disabled={loading} className="h-8 text-xs" data-save-button>
-            {loading && <Loader2 className="mr-2 h-3 w-3 animate-spin" />}
-            {offer ? 'Actualizar Oferta' : 'Guardar'}
-          </Button>
-        </div>
-      </div>
-    </form>
-    
-    <AlertDialog open={showExitDialog} onOpenChange={setShowExitDialog}>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Cambios sin guardar</AlertDialogTitle>
-          <AlertDialogDescription>
-            Tienes cambios sin guardar en esta oferta. ¿Qué deseas hacer?
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel onClick={handleExitWithoutSave}>
-            Salir sin guardar
-          </AlertDialogCancel>
-          <AlertDialogAction onClick={handleSaveAndExit}>
-            Guardar y salir
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+      <AlertDialog open={showExitDialog} onOpenChange={setShowExitDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cambios sin guardar</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tienes cambios sin guardar en esta oferta. ¿Qué deseas hacer?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleExitWithoutSave}>
+              Salir sin guardar
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleSaveAndExit}>
+              Guardar y salir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   )
 }

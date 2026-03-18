@@ -19,9 +19,18 @@ export function ValidateOfferButton({ offerId }: ValidateOfferButtonProps) {
   const handleValidate = async () => {
     setLoading(true)
     try {
+      const { data: { user } } = await supabase.auth.getUser()
+
       const { error } = await supabase
         .from('offers')
-        .update({ is_validated: true })
+        .update({
+          is_validated: true,
+          validated_by: user?.id ?? null,
+          validated_at: new Date().toISOString(),
+          // Clear any previous rejection
+          rejected_by: null,
+          rejected_at: null,
+        })
         .eq('id', offerId)
 
       if (error) throw error
@@ -36,8 +45,8 @@ export function ValidateOfferButton({ offerId }: ValidateOfferButtonProps) {
   }
 
   return (
-    <Button 
-      onClick={handleValidate} 
+    <Button
+      onClick={handleValidate}
       disabled={loading}
       className="bg-green-600 hover:bg-green-700 text-white"
     >
