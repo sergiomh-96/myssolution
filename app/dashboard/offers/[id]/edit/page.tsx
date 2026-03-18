@@ -6,6 +6,7 @@ import { notFound } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
+import { RefreshButton } from '@/components/offers/refresh-button'
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -88,18 +89,21 @@ export default async function EditOfferPage({ params }: PageProps) {
 
   return (
     <div className="max-w-[1800px] mx-auto space-y-6 px-4">
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" asChild>
-          <Link href="/dashboard/offers">
-            <ArrowLeft className="h-4 w-4" />
-          </Link>
-        </Button>
-        <div>
-          <h1 className="text-3xl font-semibold text-foreground">Editar Oferta</h1>
-          <p className="text-muted-foreground mt-1">
-            Modifica los detalles de la oferta comercial
-          </p>
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" asChild>
+            <Link href="/dashboard/offers">
+              <ArrowLeft className="h-4 w-4" />
+            </Link>
+          </Button>
+          <div>
+            <h1 className="text-3xl font-semibold text-foreground">Editar Oferta</h1>
+            <p className="text-muted-foreground mt-1">
+              Modifica los detalles de la oferta comercial
+            </p>
+          </div>
         </div>
+        <RefreshButton variant="outline" size="icon" />
       </div>
 
       <Card>
