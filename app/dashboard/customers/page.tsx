@@ -63,12 +63,14 @@ export default async function CustomersPage() {
             Manage your customer relationships
           </p>
         </div>
-        <Button asChild>
-          <Link href="/dashboard/customers/new">
-            <Plus className="w-4 h-4 mr-2" />
-            Add Customer
-          </Link>
-        </Button>
+        {profile.role !== 'viewer' && (
+          <Button asChild>
+            <Link href="/dashboard/customers/new">
+              <Plus className="w-4 h-4 mr-2" />
+              Add Customer
+            </Link>
+          </Button>
+        )}
       </div>
 
       {error ? (

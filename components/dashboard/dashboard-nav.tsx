@@ -37,7 +37,7 @@ const navItems = [
     href: '/dashboard/customers',
     label: 'Clientes',
     icon: Users,
-    allowedRoles: ['admin', 'manager', 'sales_rep']
+    allowedRoles: ['admin', 'manager', 'sales_rep', 'viewer']
   },
   {
     href: '/dashboard/products',
@@ -49,7 +49,7 @@ const navItems = [
     href: '/dashboard/offers',
     label: 'Ofertas',
     icon: FileText,
-    allowedRoles: ['admin', 'manager', 'sales_rep']
+    allowedRoles: ['admin', 'manager', 'sales_rep', 'viewer']
   },
   {
     href: '/dashboard/validations',
