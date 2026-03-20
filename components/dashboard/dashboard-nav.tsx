@@ -15,7 +15,8 @@ import {
   BarChart3,
   Package,
   UserCog,
-  Upload
+  Upload,
+  ClipboardCheck
 } from 'lucide-react'
 import { canManageOffers, canManageRequests, canViewAnalytics, canManageUsers } from '@/lib/auth'
 
@@ -49,6 +50,12 @@ const navItems = [
     label: 'Ofertas',
     icon: FileText,
     allowedRoles: ['admin', 'manager', 'sales_rep']
+  },
+  {
+    href: '/dashboard/validations',
+    label: 'Validaciones Pendientes',
+    icon: ClipboardCheck,
+    allowedRoles: ['admin']
   },
   {
     href: '/dashboard/requests',

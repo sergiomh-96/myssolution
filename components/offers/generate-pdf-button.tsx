@@ -18,6 +18,7 @@ interface GeneratePdfButtonProps {
   offerNumber: number
   customerName?: string
   offerTitle?: string
+  disabled?: boolean
 }
 
 type Company = 'mysair' | 'agfri'
@@ -31,7 +32,7 @@ const PDF_OPTIONS: Array<{ label: string; company: Company; priceType: PriceType
   { label: 'Oferta NETO (AGFRI)', company: 'agfri', priceType: 'neto' },
 ]
 
-export function GeneratePdfButton({ offerId, offerNumber, customerName = '', offerTitle = '' }: GeneratePdfButtonProps) {
+export function GeneratePdfButton({ offerId, offerNumber, customerName = '', offerTitle = '', disabled = false }: GeneratePdfButtonProps) {
   const [loading, setLoading] = useState(false)
 
   const handleGeneratePdf = async (company: Company, priceType: PriceType) => {
@@ -84,7 +85,7 @@ export function GeneratePdfButton({ offerId, offerNumber, customerName = '', off
       <DropdownMenuTrigger asChild>
         <Button
           variant="outline"
-          disabled={loading}
+          disabled={loading || disabled}
           className="h-8 text-xs"
         >
           {loading ? (
