@@ -14,6 +14,7 @@ export default async function DashboardPage() {
   const isManager = profile.role === 'manager'
   const isSalesRep = profile.role === 'sales_rep'
   const isSupportAgent = profile.role === 'support_agent'
+  const isViewer = profile.role === 'viewer'
 
   let customersQuery = supabase.from('customers').select('*', { count: 'exact', head: true })
   let offersQuery = supabase.from('offers').select('*', { count: 'exact', head: true })
@@ -75,7 +76,7 @@ export default async function DashboardPage() {
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {(isAdmin || isManager || isSalesRep) && (
+        {(isAdmin || isManager || isSalesRep || isViewer) && (
           <OffersChart userId={isSalesRep ? profile.id : undefined} />
         )}
         {(isAdmin || isManager || isSupportAgent) && (
@@ -84,7 +85,7 @@ export default async function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {(isAdmin || isManager || isSalesRep) && recentOffers && (
+        {(isAdmin || isManager || isSalesRep || isViewer) && recentOffers && (
           <RecentActivity
             title="Ofertas recientes"
             items={recentOffers.map(offer => ({

@@ -8,9 +8,10 @@ import { useState } from 'react'
 
 interface OffersPageHeaderProps {
   onExportClick: React.ReactNode
+  userRole?: string
 }
 
-export function OffersPageHeader({ onExportClick }: OffersPageHeaderProps) {
+export function OffersPageHeader({ onExportClick, userRole }: OffersPageHeaderProps) {
   const router = useRouter()
   const [isRefreshing, setIsRefreshing] = useState(false)
 
@@ -40,12 +41,14 @@ export function OffersPageHeader({ onExportClick }: OffersPageHeaderProps) {
           Actualizar
         </Button>
         {onExportClick}
-        <Button asChild>
-          <Link href="/dashboard/offers/new">
-            <Plus className="w-4 h-4 mr-2" />
-            Crear Oferta
-          </Link>
-        </Button>
+        {userRole !== 'viewer' && (
+          <Button asChild>
+            <Link href="/dashboard/offers/new">
+              <Plus className="w-4 h-4 mr-2" />
+              Crear Oferta
+            </Link>
+          </Button>
+        )}
       </div>
     </div>
   )

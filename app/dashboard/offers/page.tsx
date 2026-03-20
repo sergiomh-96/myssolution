@@ -57,7 +57,10 @@ export default async function OffersPage() {
 
   return (
     <div className="space-y-6">
-      <OffersPageHeader onExportClick={<ExportExcelButton offers={offersWithTotals} />} />
+      <OffersPageHeader 
+        onExportClick={<ExportExcelButton offers={offersWithTotals} />} 
+        userRole={profile.role}
+      />
 
       {error ? (
         <div className="text-destructive">Error cargando ofertas: {error.message}</div>
