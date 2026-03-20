@@ -377,6 +377,8 @@ function CustomerSearchInput({
 
 export function OfferForm({ offer, currentUserId, currentUserRole, customers, createdByName }: OfferFormProps) {
   const router = useRouter()
+  const isViewer = currentUserRole === 'viewer'
+
 
   // State declarations - all in one place
   const [loading, setLoading] = useState(false)
@@ -1372,6 +1374,15 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
   return (
     <>
       <form onSubmit={handleSubmit} className="space-y-4">
+        {isViewer && (
+          <Alert className="bg-blue-50 border-blue-200">
+            <Eye className="h-4 w-4 text-blue-600" />
+            <AlertDescription className="text-blue-800 text-xs">
+              Usted tiene el rol de <strong>Visualizador</strong>. Esta pantalla es de solo lectura y no se pueden realizar cambios.
+            </AlertDescription>
+          </Alert>
+        )}
+
         {error && (
           <Alert variant="destructive">
             <AlertDescription>{error}</AlertDescription>
@@ -1462,9 +1473,9 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
             <Select
               value={formData.tarifa_id?.toString() || ''}
               onValueChange={(value) => setFormData(prev => ({ ...prev, tarifa_id: parseInt(value) }))}
-              disabled={loading}
+              disabled={loading || isViewer}
             >
-              <SelectTrigger id="tarifa_id" className="h-9 text-sm">
+              <SelectTrigger id="tarifa_id" className="h-9 text-sm" disabled={loading || isViewer}>
                 <SelectValue placeholder="Seleccionar tarifa" />
               </SelectTrigger>
               <SelectContent>
@@ -1495,9 +1506,9 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
             <Select
               value={formData.status}
               onValueChange={(value) => setFormData({ ...formData, status: value as OfferStatus })}
-              disabled={loading}
+              disabled={loading || isViewer}
             >
-              <SelectTrigger id="status" className="h-9 text-sm">
+              <SelectTrigger id="status" className="h-9 text-sm" disabled={loading || isViewer}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -1541,7 +1552,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
                 const processedId = String(customerId).startsWith('free:') ? customerId : parseInt(String(customerId))
                 setFormData(prev => ({ ...prev, customer_id: processedId }))
               }}
-              disabled={loading}
+              disabled={loading || isViewer}
             />
           </div>
 
@@ -1550,7 +1561,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
             <Select
               value={formData.contact_id?.toString() || ''}
               onValueChange={(value) => setFormData(prev => ({ ...prev, contact_id: value ? parseInt(value) : null }))}
-              disabled={loading || !formData.customer_id || contactList.length === 0}
+              disabled={loading || isViewer || !formData.customer_id || contactList.length === 0}
             >
               <SelectTrigger id="contact_id" className="h-9 text-sm">
                 <SelectValue placeholder="Seleccionar contacto" />
@@ -1623,7 +1634,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
               type="date"
               value={formData.valid_until}
               onChange={(e) => setFormData({ ...formData, valid_until: e.target.value })}
-              disabled={loading}
+              disabled={loading || isViewer}
               className="h-9 text-sm"
             />
           </div>
@@ -1647,7 +1658,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               rows={4}
-              disabled={loading}
+              disabled={loading || isViewer}
               className="resize-none text-xs"
               placeholder="Descripción visible en la oferta"
             />
@@ -1660,7 +1671,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
               value={formData.notas_internas}
               onChange={(e) => setFormData({ ...formData, notas_internas: e.target.value })}
               rows={4}
-              disabled={loading}
+              disabled={loading || isViewer}
               className="resize-none text-xs"
               placeholder="Notas internas que no se mostrarán en la oferta"
             />
@@ -1708,7 +1719,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
                                 setAssignedUserIds(assignedUserIds.filter(id => id !== user.id))
                               }
                             }}
-                            disabled={loading}
+                            disabled={loading || isViewer}
                             className="sr-only"
                           />
                           <span className="text-sm truncate">{user.full_name || user.email}</span>
@@ -1729,13 +1740,17 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
           <div className="flex items-center justify-between">
             <Label className="text-xs">Artículos de la Oferta</Label>
             <div className="flex gap-2">
-              <Button type="button" variant="outline" size="sm" onClick={addItem} disabled={loading} className="h-7 text-xs">
-                <Plus className="w-3 h-3 mr-1" />
-                Añadir Línea
-              </Button>
-              <Button type="button" variant="outline" size="sm" onClick={() => window.open('https://docs.google.com/spreadsheets/d/12fjRD3s82M38YtwH0XkJe4iHUTR6S9WG/edit?usp=sharing&ouid=105945344502741152620&rtpof=true&sd=true', '_blank')} className="h-7 text-xs">
-                Calcular precio articulo
-              </Button>
+              {!isViewer && (
+                <Button type="button" variant="outline" size="sm" onClick={addItem} disabled={loading} className="h-7 text-xs">
+                  <Plus className="w-3 h-3 mr-1" />
+                  Añadir Línea
+                </Button>
+              )}
+                {!isViewer && (
+                  <Button type="button" variant="outline" size="sm" onClick={() => window.open('https://docs.google.com/spreadsheets/d/12fjRD3s82M38YtwH0XkJe4iHUTR6S9WG/edit?usp=sharing&ouid=105945344502741152620&rtpof=true&sd=true', '_blank')} className="h-7 text-xs">
+                    Calcular precio articulo
+                  </Button>
+                )}
             </div>
           </div>
 
@@ -1795,15 +1810,15 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
                       return (
                         <tr key={item.id}
                           className={`border-t border-border bg-[#1a2e4a] ${dragRowClass}`}
-                          onDragOver={(e) => handleDragOver(e, index)}
-                          onDrop={(e) => handleDrop(e, index)}
+                          onDragOver={(e) => !isViewer && handleDragOver(e, index)}
+                          onDrop={(e) => !isViewer && handleDrop(e, index)}
                         >
-                          <td className="px-1 py-1 w-6 cursor-grab active:cursor-grabbing select-none"
-                            draggable
-                            onDragStart={() => handleDragStart(index)}
+                          <td className={`px-1 py-1 w-6 ${!isViewer ? 'cursor-grab active:cursor-grabbing' : ''} select-none`}
+                            draggable={!isViewer}
+                            onDragStart={() => !isViewer && handleDragStart(index)}
                             onDragEnd={handleDragEnd}
                           >
-                            <GripVertical className="w-3.5 h-3.5 text-muted-foreground/50 hover:text-muted-foreground" />
+                            {!isViewer && <GripVertical className="w-3.5 h-3.5 text-muted-foreground/50 hover:text-muted-foreground" />}
                           </td>
                           <td colSpan={9} className="px-2 py-2">
                             <Input
@@ -1811,20 +1826,22 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
                               onChange={(e) => handleItemChange(index, 'description', e.target.value)}
                               placeholder="Título de sección"
                               className="h-7 text-xs font-semibold bg-[#1a2e4a] text-white placeholder:text-white/50 border-white/20"
-                              disabled={loading}
+                              disabled={loading || isViewer}
                             />
                           </td>
                           <td className="px-2 py-1 text-center">
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => removeItem(index)}
-                              disabled={loading}
-                              className="h-6 w-6 p-0"
-                            >
-                              <X className="w-3 h-3" />
-                            </Button>
+                            {!isViewer && (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => removeItem(index)}
+                                disabled={loading}
+                                className="h-6 w-6 p-0"
+                              >
+                                <X className="w-3 h-3" />
+                              </Button>
+                            )}
                           </td>
                         </tr>
                       )
@@ -1835,15 +1852,15 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
                       return (
                         <tr key={item.id}
                           className={`border-t border-border bg-yellow-100 ${dragRowClass}`}
-                          onDragOver={(e) => handleDragOver(e, index)}
-                          onDrop={(e) => handleDrop(e, index)}
+                          onDragOver={(e) => !isViewer && handleDragOver(e, index)}
+                          onDrop={(e) => !isViewer && handleDrop(e, index)}
                         >
-                          <td className="px-1 py-1 w-6 cursor-grab active:cursor-grabbing select-none"
-                            draggable
-                            onDragStart={() => handleDragStart(index)}
+                          <td className={`px-1 py-1 w-6 ${!isViewer ? 'cursor-grab active:cursor-grabbing' : ''} select-none`}
+                            draggable={!isViewer}
+                            onDragStart={() => !isViewer && handleDragStart(index)}
                             onDragEnd={handleDragEnd}
                           >
-                            <GripVertical className="w-3.5 h-3.5 text-muted-foreground/50 hover:text-muted-foreground" />
+                            {!isViewer && <GripVertical className="w-3.5 h-3.5 text-muted-foreground/50 hover:text-muted-foreground" />}
                           </td>
                           <td colSpan={9} className="px-2 py-2">
                             <Input
@@ -1851,20 +1868,22 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
                               onChange={(e) => handleItemChange(index, 'description', e.target.value)}
                               placeholder="Anotación"
                               className="h-7 text-xs italic bg-yellow-100 text-yellow-900 placeholder:text-yellow-700/60 border-yellow-300"
-                              disabled={loading}
+                              disabled={loading || isViewer}
                             />
                           </td>
                           <td className="px-2 py-1 text-center">
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => removeItem(index)}
-                              disabled={loading}
-                              className="h-6 w-6 p-0"
-                            >
-                              <X className="w-3 h-3" />
-                            </Button>
+                            {!isViewer && (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => removeItem(index)}
+                                disabled={loading}
+                                className="h-6 w-6 p-0"
+                              >
+                                <X className="w-3 h-3" />
+                              </Button>
+                            )}
                           </td>
                         </tr>
                       )
@@ -1875,10 +1894,16 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
                       return (
                         <tr key={item.id}
                           className={`border-t-2 border-border bg-[#1a2e4a] font-semibold ${dragRowClass}`}
-                          onDragOver={(e) => handleDragOver(e, index)}
-                          onDrop={(e) => handleDrop(e, index)}
+                          onDragOver={(e) => !isViewer && handleDragOver(e, index)}
+                          onDrop={(e) => !isViewer && handleDrop(e, index)}
                         >
-                          <td className="px-1 py-1 w-6 cursor-grab active:cursor-grabbing select-none" draggable onDragStart={() => handleDragStart(index)} onDragEnd={handleDragEnd}><GripVertical className="w-3.5 h-3.5 text-muted-foreground/50 hover:text-muted-foreground" /></td>
+                          <td className={`px-1 py-1 w-6 ${!isViewer ? 'cursor-grab active:cursor-grabbing' : ''} select-none`}
+                            draggable={!isViewer}
+                            onDragStart={() => !isViewer && handleDragStart(index)}
+                            onDragEnd={handleDragEnd}
+                          >
+                            {!isViewer && <GripVertical className="w-3.5 h-3.5 text-muted-foreground/50 hover:text-muted-foreground" />}
+                          </td>
                           <td colSpan={4} className="px-2 py-1.5 text-xs text-white italic">
                             {item.description || 'Resumen'}
                           </td>
@@ -1893,16 +1918,18 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
                             {formatNumber(item.neto_total2)}
                           </td>
                           <td className="px-2 py-1 text-center">
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => removeItem(index)}
-                              disabled={loading}
-                              className="h-6 w-6 p-0"
-                            >
-                              <X className="w-3 h-3" />
-                            </Button>
+                            {!isViewer && (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => removeItem(index)}
+                                disabled={loading}
+                                className="h-6 w-6 p-0"
+                              >
+                                <X className="w-3 h-3" />
+                              </Button>
+                            )}
                           </td>
                         </tr>
                       )
@@ -1913,17 +1940,23 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
                       return (
                         <tr key={item.id}
                           className={`border-t border-border hover:bg-muted/20 ${dragRowClass}`}
-                          onDragOver={(e) => handleDragOver(e, index)}
-                          onDrop={(e) => handleDrop(e, index)}
+                          onDragOver={(e) => !isViewer && handleDragOver(e, index)}
+                          onDrop={(e) => !isViewer && handleDrop(e, index)}
                         >
-                          <td className="px-1 py-1 w-6 cursor-grab active:cursor-grabbing select-none" draggable onDragStart={() => handleDragStart(index)} onDragEnd={handleDragEnd}><GripVertical className="w-3.5 h-3.5 text-muted-foreground/50 hover:text-muted-foreground" /></td>
+                          <td className={`px-1 py-1 w-6 ${!isViewer ? 'cursor-grab active:cursor-grabbing' : ''} select-none`}
+                            draggable={!isViewer}
+                            onDragStart={() => !isViewer && handleDragStart(index)}
+                            onDragEnd={handleDragEnd}
+                          >
+                            {!isViewer && <GripVertical className="w-3.5 h-3.5 text-muted-foreground/50 hover:text-muted-foreground" />}
+                          </td>
                           <td className="px-2 py-1">
                             <Input
                               value={item.external_ref ?? ''}
                               onChange={(e) => handleItemChange(index, 'external_ref', e.target.value)}
                               placeholder="Referencia libre"
                               className="h-7 text-xs font-medium"
-                              disabled={loading}
+                              disabled={loading || isViewer}
                             />
                           </td>
                           <td className="px-2 py-1">
@@ -1932,7 +1965,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
                               onChange={(e) => handleItemChange(index, 'description', e.target.value)}
                               placeholder="Descripción"
                               className="h-7 text-xs"
-                              disabled={loading}
+                              disabled={loading || isViewer}
                             />
                           </td>
                           <td className="px-2 py-1">
@@ -1943,7 +1976,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
                               value={item.quantity || ''}
                               onChange={(e) => handleItemChange(index, 'quantity', Number(e.target.value))}
                               className="h-7 text-xs text-right"
-                              disabled={loading}
+                              disabled={loading || isViewer}
                             />
                           </td>
                           <td className="px-2 py-1">
@@ -1954,7 +1987,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
                               value={item.pvp || ''}
                               onChange={(e) => handleItemChange(index, 'pvp', Number(e.target.value))}
                               className="h-7 text-xs text-right"
-                              disabled={loading}
+                              disabled={loading || isViewer}
                               placeholder="-"
                             />
                           </td>
@@ -1970,7 +2003,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
                               value={item.discount1 !== undefined && item.discount1 !== null ? item.discount1 : ''}
                               onChange={(e) => handleItemChange(index, 'discount1', Number(e.target.value))}
                               className="h-7 text-xs text-right"
-                              disabled={loading}
+                              disabled={loading || isViewer}
                               placeholder="-"
                             />
                           </td>
@@ -1983,7 +2016,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
                               value={item.discount2 || ''}
                               onChange={(e) => handleItemChange(index, 'discount2', Number(e.target.value))}
                               className="h-7 text-xs text-right"
-                              disabled={loading}
+                              disabled={loading || isViewer}
                               placeholder="-"
                             />
                           </td>
@@ -1994,16 +2027,18 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
                             {item.neto_total2 > 0 ? formatNumber(item.neto_total2) : '-'}
                           </td>
                           <td className="px-2 py-1 text-center">
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => removeItem(index)}
-                              disabled={loading}
-                              className="h-6 w-6 p-0"
-                            >
-                              <X className="w-3 h-3" />
-                            </Button>
+                            {!isViewer && (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => removeItem(index)}
+                                disabled={loading}
+                                className="h-6 w-6 p-0"
+                              >
+                                <X className="w-3 h-3" />
+                              </Button>
+                            )}
                           </td>
                         </tr>
                       )
@@ -2013,18 +2048,22 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
                     return (
                       <tr key={item.id}
                         className={`border-t border-border hover:bg-muted/20 ${dragOverIndex === index ? 'outline outline-2 outline-primary outline-offset-[-2px]' : ''}`}
-                        onDragOver={(e) => handleDragOver(e, index)}
-                        onDrop={(e) => handleDrop(e, index)}
+                        onDragOver={(e) => !isViewer && handleDragOver(e, index)}
+                        onDrop={(e) => !isViewer && handleDrop(e, index)}
                       >
-                        <td className="px-1 py-1 w-6 cursor-grab active:cursor-grabbing select-none" draggable onDragStart={() => handleDragStart(index)} onDragEnd={handleDragEnd}>
-                          <GripVertical className="w-3.5 h-3.5 text-muted-foreground/50 hover:text-muted-foreground" />
+                        <td className={`px-1 py-1 w-6 ${!isViewer ? 'cursor-grab active:cursor-grabbing' : ''} select-none`}
+                          draggable={!isViewer}
+                          onDragStart={() => !isViewer && handleDragStart(index)}
+                          onDragEnd={handleDragEnd}
+                        >
+                          {!isViewer && <GripVertical className="w-3.5 h-3.5 text-muted-foreground/50 hover:text-muted-foreground" />}
                         </td>
                         <td className="px-2 py-1">
                           <ProductSearchInput
                             value={item.product_id || ''}
                             products={products}
                             onSelect={(productId) => handleProductSelect(index, productId)}
-                            disabled={loading}
+                            disabled={loading || isViewer}
                           />
                         </td>
                         <td className="px-2 py-1">
@@ -2033,7 +2072,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
                             onChange={(e) => handleItemChange(index, 'description', e.target.value)}
                             placeholder="Descripción"
                             className="h-7 text-xs"
-                            disabled={loading}
+                            disabled={loading || isViewer}
                           />
                         </td>
                         <td className="px-2 py-1">
@@ -2044,7 +2083,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
                             value={item.quantity || ''}
                             onChange={(e) => handleItemChange(index, 'quantity', Number(e.target.value))}
                             className="h-7 text-xs text-right"
-                            disabled={loading}
+                            disabled={loading || isViewer}
                           />
                         </td>
                         <td className="px-2 py-1">
@@ -2055,7 +2094,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
                             value={item.pvp || ''}
                             onChange={(e) => handleItemChange(index, 'pvp', Number(e.target.value))}
                             className="h-7 text-xs text-right"
-                            disabled={loading}
+                            disabled={loading || isViewer}
                             placeholder="-"
                           />
                         </td>
@@ -2071,7 +2110,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
                             value={item.discount1 || ''}
                             onChange={(e) => handleItemChange(index, 'discount1', Number(e.target.value))}
                             className="h-7 text-xs text-right"
-                            disabled={loading}
+                            disabled={loading || isViewer}
                           />
                         </td>
                         <td className="px-2 py-1">
@@ -2083,7 +2122,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
                             value={item.discount2 || ''}
                             onChange={(e) => handleItemChange(index, 'discount2', Number(e.target.value))}
                             className="h-7 text-xs text-right"
-                            disabled={loading}
+                            disabled={loading || isViewer}
                           />
                         </td>
                         <td className="px-2 py-1 text-right font-medium text-xs">
@@ -2093,7 +2132,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
                           {item.pvp > 0 ? formatNumber(item.neto_total2) : '-'}
                         </td>
                         <td className="px-2 py-1 text-center">
-                          {items.length > 1 && (
+                          {!isViewer && items.length > 1 && (
                             <Button
                               type="button"
                               variant="ghost"
@@ -2148,71 +2187,81 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
           </div>
 
           <div className="flex gap-1 justify-start py-3 border-b border-border">
-            <Button type="button" variant="outline" size="sm" onClick={addExternalItem} disabled={loading} className="h-7 text-xs">
-              <Plus className="w-3 h-3 mr-1" />
-              Añadir Artículo Externo
-            </Button>
-            <Button type="button" variant="outline" size="sm" onClick={addSectionHeader} disabled={loading} className="h-7 text-xs">
-              <Plus className="w-3 h-3 mr-1" />
-              Añadir Título
-            </Button>
-            <Button type="button" variant="outline" size="sm" onClick={addNote} disabled={loading} className="h-7 text-xs">
-              <Plus className="w-3 h-3 mr-1" />
-              Añadir Anotación
-            </Button>
-            <Button type="button" variant="outline" size="sm" onClick={addSummary} disabled={loading} className="h-7 text-xs">
-              <Plus className="w-3 h-3 mr-1" />
-              Añadir Resumen
-            </Button>
-            {offer?.id && (
-              <ImportItemsDialog offerId={offer.id} onSuccess={() => loadOfferItems()} />
+            {!isViewer && (
+              <>
+                <Button type="button" variant="outline" size="sm" onClick={addExternalItem} disabled={loading} className="h-7 text-xs">
+                  <Plus className="w-3 h-3 mr-1" />
+                  Añadir Artículo Externo
+                </Button>
+                <Button type="button" variant="outline" size="sm" onClick={addSectionHeader} disabled={loading} className="h-7 text-xs">
+                  <Plus className="w-3 h-3 mr-1" />
+                  Añadir Título
+                </Button>
+                <Button type="button" variant="outline" size="sm" onClick={addNote} disabled={loading} className="h-7 text-xs">
+                  <Plus className="w-3 h-3 mr-1" />
+                  Añadir Anotación
+                </Button>
+                <Button type="button" variant="outline" size="sm" onClick={addSummary} disabled={loading} className="h-7 text-xs">
+                  <Plus className="w-3 h-3 mr-1" />
+                  Añadir Resumen
+                </Button>
+                {offer?.id && (
+                  <ImportItemsDialog offerId={offer.id} onSuccess={() => loadOfferItems()} />
+                )}
+              </>
             )}
-            <CalcularLarguerosDialog
-              items={items.filter(i => i.type === 'article' && i.product_id).map(i => {
-                const product = products.find(p => p.id === i.product_id)
-                return {
-                  product_id: i.product_id || '',
-                  quantity: i.quantity || 1,
-                  product: product ? {
-                    referencia: product.referencia || '',
-                    descripcion: product.descripcion || '',
-                    larguero_largo: product.larguero_largo || null,
-                    larguero_alto: product.larguero_alto || null,
-                  } : undefined,
-                }
-              })}
-              onAddItem={addItemByProductId}
-            />
+            {!isViewer && (
+              <CalcularLarguerosDialog
+                items={items.filter(i => i.type === 'article' && i.product_id).map(i => {
+                  const product = products.find(p => p.id === i.product_id)
+                  return {
+                    product_id: i.product_id || '',
+                    quantity: i.quantity || 1,
+                    product: product ? {
+                      referencia: product.referencia || '',
+                      descripcion: product.descripcion || '',
+                      larguero_largo: product.larguero_largo || null,
+                      larguero_alto: product.larguero_alto || null,
+                    } : undefined,
+                  }
+                })}
+                onAddItem={addItemByProductId}
+              />
+            )}
           </div>
         </div>
 
         <div className="flex justify-between gap-2">
           <div className="flex gap-2">
-            <Button
-              type="button"
-              variant="default"
-              onClick={() => handleNavigation('/dashboard/offers/new')}
-              disabled={loading}
-              className="h-8 text-xs"
-            >
-              <Plus className="mr-2 h-3 w-3" />
-              Nueva Oferta
-            </Button>
-            <DuplicateOfferButton
-              offerId={savedOfferId ?? ''}
-              variant="outline"
-              size="sm"
-              showLabel={true}
-              disabled={!savedOfferId && !offer?.id}
-              onClick={(e) => {
-                if (!savedOfferId && !offer?.id) {
-                  e.preventDefault()
-                  callbackRef.current = () => router.push(`/dashboard/offers/${savedOfferId}/duplicate`)
-                  const form = document.querySelector('form') as HTMLFormElement | null
-                  if (form) form.requestSubmit()
-                }
-              }}
-            />
+            {!isViewer && (
+              <Button
+                type="button"
+                variant="default"
+                onClick={() => handleNavigation('/dashboard/offers/new')}
+                disabled={loading}
+                className="h-8 text-xs"
+              >
+                <Plus className="mr-2 h-3 w-3" />
+                Nueva Oferta
+              </Button>
+            )}
+            {!isViewer && (
+              <DuplicateOfferButton
+                offerId={savedOfferId ?? ''}
+                variant="outline"
+                size="sm"
+                showLabel={true}
+                disabled={!savedOfferId && !offer?.id}
+                onClick={(e) => {
+                  if (!savedOfferId && !offer?.id) {
+                    e.preventDefault()
+                    callbackRef.current = () => router.push(`/dashboard/offers/${savedOfferId}/duplicate`)
+                    const form = document.querySelector('form') as HTMLFormElement | null
+                    if (form) form.requestSubmit()
+                  }
+                }}
+              />
+            )}
             <Button
               type="button"
               variant="outline"
@@ -2242,12 +2291,14 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
           </div>
           <div className="flex gap-2">
             <Button type="button" variant="outline" onClick={() => handleNavigation('/dashboard/offers')} disabled={loading} className="h-8 text-xs">
-              Cancelar
+              {isViewer ? 'Cerrar' : 'Cancelar'}
             </Button>
-            <Button type="submit" disabled={loading} className="h-8 text-xs" data-save-button>
-              {loading && <Loader2 className="mr-2 h-3 w-3 animate-spin" />}
-              {offer ? 'Actualizar Oferta' : 'Guardar'}
-            </Button>
+            {!isViewer && (
+              <Button type="submit" disabled={loading} className="h-8 text-xs" data-save-button>
+                {loading && <Loader2 className="mr-2 h-3 w-3 animate-spin" />}
+                {offer ? 'Actualizar Oferta' : 'Guardar'}
+              </Button>
+            )}
           </div>
         </div>
       </form>

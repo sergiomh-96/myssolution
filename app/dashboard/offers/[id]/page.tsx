@@ -86,7 +86,9 @@ export default async function OfferDetailPage({ params }: PageProps) {
               offerTitle={offer.title}
               disabled={isPendingValidation}
             />
-            <DuplicateOfferButton offerId={id} />
+            {profile.role !== 'viewer' && (
+              <DuplicateOfferButton offerId={id} />
+            )}
             <Button asChild>
               <Link href={`/dashboard/offers/${offer.id}/edit`}>
                 <Edit className="h-4 w-4 mr-2" />

@@ -256,7 +256,9 @@ export function OffersTable({ offers: initialOffers, userRole, userId }: OffersT
                       </TableCell>
                       <TableCell className="px-1 py-1 sticky right-0 bg-background z-5 min-w-[70px]">
                         <div className="flex items-center justify-end gap-0.5">
-                          <DuplicateOfferButton offerId={offer.id as string} size="sm" variant="ghost" showLabel={false} />
+                          {userRole !== 'viewer' && (
+                            <DuplicateOfferButton offerId={offer.id as string} size="sm" variant="ghost" showLabel={false} />
+                          )}
                           {(userRole === 'admin' || userRole === 'manager' || offer.created_by === userId) && (
                             <Button
                               variant="ghost"
