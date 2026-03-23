@@ -53,7 +53,7 @@ export default async function OfferDetailPage({ params }: PageProps) {
     if (item.type !== 'article' || !item.product?.familia) return false;
     
     let maxDiscount = 0;
-    if (item.product.familia === 'SISTEMAS') maxDiscount = offer.customer?.descuento_sistemas || 0;
+    if (item.product.familia === 'SISTEMAS' || item.product.familia === 'VMC') maxDiscount = offer.customer?.descuento_sistemas || 0;
     else if (item.product.familia === 'DIFUSIÓN') maxDiscount = offer.customer?.descuento_difusion || 0;
     else if (item.product.familia === 'HERRAMIENTA' || item.product.familia === 'MYSAir' || item.product.familia === 'AGFRI') maxDiscount = offer.customer?.descuento_agfri || 0;
 

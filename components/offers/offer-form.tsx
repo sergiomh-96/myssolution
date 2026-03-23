@@ -716,7 +716,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
 
       // Calculate new discount based on product family and current customer discounts
       let newDiscount = 0
-      if (product.familia === 'SISTEMAS') {
+      if (product.familia === 'SISTEMAS' || product.familia === 'VMC') {
         newDiscount = currentCustomer.descuento_sistemas || 0
       } else if (product.familia === 'DIFUSIÓN') {
         newDiscount = currentCustomer.descuento_difusion || 0
@@ -931,7 +931,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
     // Calculate automatic discount based on product family and customer discounts
     let automaticDiscount = 0
     if (currentCustomer) {
-      if (product.familia === 'SISTEMAS') {
+      if (product.familia === 'SISTEMAS' || product.familia === 'VMC') {
         automaticDiscount = currentCustomer.descuento_sistemas || 0
       } else if (product.familia === 'DIFUSIÓN') {
         automaticDiscount = currentCustomer.descuento_difusion || 0
@@ -1007,7 +1007,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
     const precioFromTarifa = product ? getPrecioForProduct(product.id) : null
     let automaticDiscount = 0
     if (product && currentCustomer) {
-      if (product.familia === 'SISTEMAS') automaticDiscount = currentCustomer.descuento_sistemas || 0
+      if (product.familia === 'SISTEMAS' || product.familia === 'VMC') automaticDiscount = currentCustomer.descuento_sistemas || 0
       else if (product.familia === 'DIFUSIÓN') automaticDiscount = currentCustomer.descuento_difusion || 0
       else if (product.familia === 'HERRAMIENTA') automaticDiscount = currentCustomer.descuento_agfri || 0
     }
@@ -1137,7 +1137,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
 
     let maxDiscount = 0;
     if (currentCustomer) {
-      if (product.familia === 'SISTEMAS') maxDiscount = currentCustomer.descuento_sistemas || 0;
+      if (product.familia === 'SISTEMAS' || product.familia === 'VMC') maxDiscount = currentCustomer.descuento_sistemas || 0;
       else if (product.familia === 'DIFUSIÓN') maxDiscount = currentCustomer.descuento_difusion || 0;
       else if (product.familia === 'HERRAMIENTA' || product.familia === 'MYSAir' || product.familia === 'AGFRI') maxDiscount = currentCustomer.descuento_agfri || 0;
     }

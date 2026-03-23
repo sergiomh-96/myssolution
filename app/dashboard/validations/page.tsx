@@ -31,7 +31,7 @@ export default async function ValidationsPage() {
     return items.some((item: any) => {
       if (item.type !== 'article' || !item.product?.familia) return false
       let maxDiscount = 0
-      if (item.product.familia === 'SISTEMAS') maxDiscount = offer.customer?.descuento_sistemas || 0
+      if (['SISTEMAS', 'VMC'].includes(item.product.familia)) maxDiscount = offer.customer?.descuento_sistemas || 0
       else if (item.product.familia === 'DIFUSIÓN') maxDiscount = offer.customer?.descuento_difusion || 0
       else if (['HERRAMIENTA', 'MYSAir', 'AGFRI'].includes(item.product.familia)) maxDiscount = offer.customer?.descuento_agfri || 0
       if (maxDiscount === 0) return false

@@ -113,9 +113,9 @@ export function AddOfferItem({ offerId, onItemAdded, customerDiscounts: initialD
     let calculatedDiscount = 0
     console.log('[v0] Product selected:', { familia: product.familia, customerDiscounts })
     
-    if (product.familia === 'SISTEMAS') {
+    if (product.familia === 'SISTEMAS' || product.familia === 'VMC') {
       calculatedDiscount = customerDiscounts.sistemas
-      console.log('[v0] Applying SISTEMAS discount:', calculatedDiscount)
+      console.log('[v0] Applying SISTEMAS/VMC discount:', calculatedDiscount)
     } else if (product.familia === 'DIFUSIÓN') {
       calculatedDiscount = customerDiscounts.difusion
       console.log('[v0] Applying DIFUSIÓN discount:', calculatedDiscount)

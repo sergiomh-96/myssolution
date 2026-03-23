@@ -18,15 +18,12 @@ import { Textarea } from '@/components/ui/textarea'
 import { AlertCircle, Check, ChevronLeft } from 'lucide-react'
 import { toast } from 'sonner'
 
-const FAMILIAS = ['Cortinas', 'Persianas', 'Paneles', 'Ventilación', 'Climatización', 'Control', 'Accesorios']
+const FAMILIAS = ['DIFUSIÓN', 'SISTEMAS', 'HERRAMIENTA', 'VMC']
 const SUBFAMILIAS: Record<string, string[]> = {
-  'Cortinas': ['Motorizadas', 'Manuales'],
-  'Persianas': ['Enrollables', 'Láminas'],
-  'Paneles': ['Solares', 'Térmicos'],
-  'Ventilación': ['Industriales', 'Residenciales'],
-  'Climatización': ['Humidificadores', 'Deshumidificadores'],
-  'Control': ['Inteligentes', 'Manuales'],
-  'Accesorios': ['Marcos', 'Difusores'],
+  'DIFUSIÓN': [],
+  'SISTEMAS': [],
+  'HERRAMIENTA': [],
+  'VMC': [],
 }
 
 interface ProductFormProps {
