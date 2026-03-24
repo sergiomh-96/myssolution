@@ -12,7 +12,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
-import { Copy, Loader2, Plus, X, CheckCircle, ChevronDown, Check, Search, Eye, FileText, AlertCircle, ChevronLeft, ChevronRight, GripVertical } from 'lucide-react'
+import { Copy, Loader2, Plus, X, CheckCircle, ChevronDown, Check, Search, Eye, FileText, AlertCircle, ChevronLeft, ChevronRight, GripVertical, Trash2 } from 'lucide-react'
 import { DuplicateOfferButton } from './duplicate-offer-button'
 import { CalcularLarguerosDialog } from './calcular-largueros-dialog'
 import { GeneratePdfButton } from './generate-pdf-button'
@@ -402,6 +402,8 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
   const [isValidated, setIsValidated] = useState<boolean>(offer?.is_validated ?? false)
   // Track if user has explicitly modified any discount field in this session
   const [userHasModifiedDiscounts, setUserHasModifiedDiscounts] = useState(false)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   const existingItems: OfferItem[] = []
 
@@ -864,9 +866,20 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
   }, [items])
 
   const handleNavigation = (path: string) => {
-    if (unsavedChanges && !loading) {
+    if (unsavedChanges && !loading && !isViewer) {
       setPendingNavigation(path)
-      setShowExitDialog(true)
+      // Guardar automáticamente antes de salir
+      callbackRef.current = () => {
+        router.push(path)
+      }
+      
+      // Seleccionar el botón de guardado y simular el click
+      const saveButton = document.querySelector('[data-save-button]') as HTMLButtonElement
+      if (saveButton) {
+        saveButton.click()
+      } else {
+        router.push(path)
+      }
     } else {
       router.push(path)
     }
@@ -948,7 +961,13 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
       discount1: automaticDiscount,
     }
     newItems[index] = calculateItemTotals(newItems[index])
-    setItems(newItems)
+    
+    // Auto-add row if we're filling the last or second to last row
+    if (index >= newItems.length - 2) {
+      newItems.push(createEmptyItem('article'))
+    }
+    
+    setItems(recalculateSummaries(newItems))
     setUserHasModifiedDiscounts(true)
   }
 
@@ -989,6 +1008,15 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
     }
 
     // Recalcular todos los resúmenes con los nuevos valores
+    
+    // Auto-add row if we're filling the last or second to last row with a reference or description
+    if ((field === 'product_id' || field === 'external_ref' || field === 'description') && index >= newItems.length - 2) {
+      // Check if it's already a significant change (not just an empty string)
+      if (value) {
+        newItems.push(createEmptyItem('article'))
+      }
+    }
+
     setItems(recalculateSummaries(newItems))
 
     // If discount fields are modified, track it separately from general unsavedChanges
@@ -1217,18 +1245,17 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
         ...(isPendingValidation ? { is_validated: false } : {}),
       }
 
-      let offerId: string | null = null
+      let offerId: string | null = (offer?.id || savedOfferId)?.toString() || null
 
-      if (offer) {
+      if (offer || savedOfferId) {
         // Update existing offer
-        offerId = offer.id.toString()
         const { error: updateError } = await supabase
           .from('offers')
           .update({
             ...offerData,
             updated_at: new Date().toISOString(),
           })
-          .eq('id', offer.id)
+          .eq('id', offer?.id || savedOfferId)
 
         if (updateError) throw updateError
 
@@ -1238,7 +1265,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
           const { error: deleteError } = await supabase
             .from('offer_items')
             .delete()
-            .eq('offer_id', offer.id)
+            .eq('offer_id', offer?.id || savedOfferId)
 
           if (deleteError) throw deleteError
 
@@ -1371,6 +1398,30 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
     }
   }
 
+  const handleDeleteOffer = async () => {
+    const offerIdToDelete = offer?.id || savedOfferId
+    if (!offerIdToDelete) return
+    
+    setIsDeleting(true)
+    try {
+      const supabase = createClient()
+      const { error } = await supabase
+        .from('offers')
+        .update({ visible: false })
+        .eq('id', offerIdToDelete)
+        
+      if (error) throw error
+      
+      router.push('/dashboard/offers')
+      router.refresh()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al eliminar la oferta')
+    } finally {
+      setIsDeleting(false)
+      setShowDeleteDialog(false)
+    }
+  }
+
   return (
     <>
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -1393,7 +1444,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
           <Alert className="border-green-200 bg-green-50">
             <CheckCircle className="h-4 w-4 text-green-600" />
             <AlertDescription className="text-green-800 font-medium">
-              Oferta creada correctamente
+              {(offer || savedOfferId) ? 'Oferta guardada correctamente' : 'Oferta creada correctamente'}
             </AlertDescription>
           </Alert>
         )}
@@ -1446,15 +1497,8 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
             </div>
           </div>
 
-          {/* Validación */}
-          <div className="space-y-0.5">
-            <Label className="text-xs">Validación</Label>
-            <div className={`h-9 px-3 py-2 rounded-md border flex items-center justify-center text-xs font-medium ${!needsValidation ? 'bg-muted border-input text-muted-foreground' :
-              (isPendingValidation ? 'bg-orange-100 border-orange-200 text-orange-800' : 'bg-green-100 border-green-200 text-green-800')
-              }`}>
-              {!needsValidation ? 'No requiere' : (isPendingValidation ? 'Pendiente' : 'Validada')}
-            </div>
-          </div>
+          {/* Espacio vacío para mantener el grid simétrico */}
+          <div className="hidden md:block"></div>
 
           {/* Creada por */}
           <div className="space-y-0.5">
@@ -1488,7 +1532,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
             </Select>
           </div>
 
-          {/* ── Fila 2: Título (2 cols) | Estado (1 col) | — | Fecha Creación (1 col) ── */}
+          {/* ── Fila 2: Título (2 cols) | Estado+Validación (1 col) | Fecha Creación (1 col) ── */}
           <div className="space-y-0.5 md:col-span-2">
             <Label htmlFor="title" className="text-xs">Título Oferta *</Label>
             <Input
@@ -1502,22 +1546,31 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
           </div>
 
           <div className="space-y-0.5">
-            <Label htmlFor="status" className="text-xs">Estado</Label>
-            <Select
-              value={formData.status}
-              onValueChange={(value) => setFormData({ ...formData, status: value as OfferStatus })}
-              disabled={loading || isViewer}
-            >
-              <SelectTrigger id="status" className="h-9 text-sm" disabled={loading || isViewer}>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="borrador">Borrador</SelectItem>
-                <SelectItem value="enviada">Enviada</SelectItem>
-                <SelectItem value="aceptada">Aceptada</SelectItem>
-                <SelectItem value="rechazada">Rechazada</SelectItem>
-              </SelectContent>
-            </Select>
+            <Label className="text-xs">Estado / Validación</Label>
+            <div className="grid grid-cols-2 gap-1.5 items-end">
+              <div className="w-full">
+                <Select
+                  value={formData.status}
+                  onValueChange={(value) => setFormData({ ...formData, status: value as OfferStatus })}
+                  disabled={loading || isViewer}
+                >
+                  <SelectTrigger id="status" className="h-9 text-sm w-full" disabled={loading || isViewer}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="borrador">Borrador</SelectItem>
+                    <SelectItem value="enviada">Enviada</SelectItem>
+                    <SelectItem value="aceptada">Aceptada</SelectItem>
+                    <SelectItem value="rechazada">Rechazada</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className={`h-9 w-full px-2 py-2 rounded-md border flex items-center justify-center text-[10px] font-medium leading-tight text-center ${!needsValidation ? 'bg-muted border-input text-muted-foreground' :
+                (isPendingValidation ? 'bg-orange-100 border-orange-200 text-orange-800' : 'bg-green-100 border-green-200 text-green-800')
+                }`}>
+                {!needsValidation ? 'No requiere' : (isPendingValidation ? 'Pendiente' : 'Validada')}
+              </div>
+            </div>
           </div>
 
           <div className="space-y-0.5">
@@ -2206,7 +2259,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
                   Añadir Resumen
                 </Button>
                 {offer?.id && (
-                  <ImportItemsDialog offerId={offer.id} onSuccess={() => loadOfferItems()} />
+                  <ImportItemsDialog offerId={offer.id.toString()} onSuccess={() => loadOfferItems()} />
                 )}
               </>
             )}
@@ -2252,15 +2305,20 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
                 size="sm"
                 showLabel={true}
                 disabled={!savedOfferId && !offer?.id}
-                onClick={(e) => {
-                  if (!savedOfferId && !offer?.id) {
-                    e.preventDefault()
-                    callbackRef.current = () => router.push(`/dashboard/offers/${savedOfferId}/duplicate`)
-                    const form = document.querySelector('form') as HTMLFormElement | null
-                    if (form) form.requestSubmit()
-                  }
-                }}
               />
+            )}
+            {!isViewer && (
+              <Button
+                type="button"
+                variant="destructive"
+                size="sm"
+                onClick={() => setShowDeleteDialog(true)}
+                disabled={loading || isDeleting || (!offer?.id && !savedOfferId)}
+                className="h-8 text-xs"
+              >
+                {isDeleting ? <Loader2 className="h-3 w-3 animate-spin" /> : <Trash2 className="mr-2 h-3 w-3" />}
+                Eliminar
+              </Button>
             )}
             <Button
               type="button"
@@ -2291,17 +2349,38 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
           </div>
           <div className="flex gap-2">
             <Button type="button" variant="outline" onClick={() => handleNavigation('/dashboard/offers')} disabled={loading} className="h-8 text-xs">
-              {isViewer ? 'Cerrar' : 'Cancelar'}
+              {isViewer ? 'Cerrar' : (loading ? 'Guardando...' : 'Atrás')}
             </Button>
             {!isViewer && (
               <Button type="submit" disabled={loading} className="h-8 text-xs" data-save-button>
                 {loading && <Loader2 className="mr-2 h-3 w-3 animate-spin" />}
-                {offer ? 'Actualizar Oferta' : 'Guardar'}
+                {(offer || savedOfferId) ? 'Actualizar Oferta' : 'Guardar'}
               </Button>
             )}
           </div>
         </div>
       </form>
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar oferta?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Se eliminará de la lista la oferta <strong>&ldquo;{offer?.title || formData.title}&rdquo;</strong>. Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteOffer}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? 'Eliminando...' : 'Eliminar'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog open={showExitDialog} onOpenChange={setShowExitDialog}>
         <AlertDialogContent>

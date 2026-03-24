@@ -1,7 +1,10 @@
 import { requireProfile } from '@/lib/auth'
 import { createClient } from '@/lib/supabase/server'
 import { OfferForm } from '@/components/offers/offer-form'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { ArrowLeft } from 'lucide-react'
+import Link from 'next/link'
 
 export default async function NewOfferPage() {
   const profile = await requireProfile()
@@ -57,11 +60,18 @@ export default async function NewOfferPage() {
 
   return (
     <div className="max-w-[1800px] mx-auto space-y-6 px-4">
-      <div>
-        <h1 className="text-3xl font-semibold text-foreground">Crear Nueva Oferta</h1>
-        <p className="text-muted-foreground mt-1">
-          Prepara una nueva propuesta comercial
-        </p>
+      <div className="flex items-center gap-4">
+        <Button variant="ghost" size="icon" asChild>
+          <Link href="/dashboard/offers">
+            <ArrowLeft className="h-4 w-4" />
+          </Link>
+        </Button>
+        <div>
+          <h1 className="text-3xl font-semibold text-foreground">Crear Nueva Oferta</h1>
+          <p className="text-muted-foreground mt-1">
+            Prepara una nueva propuesta comercial
+          </p>
+        </div>
       </div>
 
       <Card>
@@ -70,7 +80,7 @@ export default async function NewOfferPage() {
             currentUserId={profile.id}
             currentUserRole={profile.role}
             customers={customers}
-            createdByName={profile.full_name}
+            createdByName={profile.full_name || undefined}
           />
         </CardContent>
       </Card>
