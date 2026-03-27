@@ -58,14 +58,14 @@ function ProductSearchInput({
 }) {
   const [searchTerm, setSearchTerm] = useState('')
   const [isOpen, setIsOpen] = useState(false)
-  const [selectedProduct, setSelectedProduct] = useState<typeof products[0] | null>(null)
 
-  // Update selected product when value changes
+  // Update search term when value change from parent (initial load or manual sync)
   useEffect(() => {
     const product = products.find(p => String(p.id) === String(value))
-    setSelectedProduct(product || null)
     if (product) {
-      setSearchTerm('')
+      setSearchTerm(product.referencia)
+    } else if (!value && searchTerm === '') {
+      // Keep empty if no value
     }
   }, [value, products])
 
@@ -115,46 +115,38 @@ function ProductSearchInput({
   }, [filteredProducts.length, searchTerm])
 
   const handleProductSelect = (product: typeof products[0]) => {
-    onSelect(product.id)
-    setSelectedProduct(product)
-    setSearchTerm('')
+    setSearchTerm(product.referencia)
     setIsOpen(false)
+    onSelect(product.id)
     setHighlightedIndex(-1)
   }
 
-  const handleClear = () => {
-    onSelect('')
-    setSelectedProduct(null)
-    setSearchTerm('')
-    setHighlightedIndex(-1)
-    setTimeout(() => inputRef.current?.focus(), 0)
-  }
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (!isOpen || filteredProducts.length === 0) return
-
+  const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'ArrowDown') {
       e.preventDefault()
-      setHighlightedIndex(prev => (prev + 1) % filteredProducts.length)
+      setHighlightedIndex(prev => (prev < filteredProducts.length - 1 ? prev + 1 : prev))
     } else if (e.key === 'ArrowUp') {
       e.preventDefault()
-      setHighlightedIndex(prev => (prev <= 0 ? filteredProducts.length - 1 : prev - 1))
+      setHighlightedIndex(prev => (prev > 0 ? prev - 1 : 0))
     } else if (e.key === 'Enter') {
       e.preventDefault()
-      const idx = highlightedIndex >= 0 ? highlightedIndex : 0
-      handleProductSelect(filteredProducts[idx])
+      if (highlightedIndex >= 0 && filteredProducts[highlightedIndex]) {
+        handleProductSelect(filteredProducts[highlightedIndex])
+      } else if (filteredProducts.length > 0) {
+        handleProductSelect(filteredProducts[0])
+      } else if (searchTerm.trim()) {
+        // Force as custom selection if no results
+        onSelect(searchTerm)
+        setIsOpen(false)
+      }
     } else if (e.key === 'Tab') {
-      // Select first (or highlighted) result and move to next field
-      e.preventDefault()
-      const idx = highlightedIndex >= 0 ? highlightedIndex : 0
-      handleProductSelect(filteredProducts[idx])
-      const focusable = 'input, select, textarea, button, [tabindex]:not([tabindex="-1"])'
-      const all = Array.from(document.querySelectorAll<HTMLElement>(focusable)).filter(
-        el => !el.hasAttribute('disabled') && el.offsetParent !== null
-      )
-      const current = all.indexOf(inputRef.current as HTMLElement)
-      if (current !== -1 && all[current + 1]) {
-        all[current + 1].focus()
+      if (isOpen && filteredProducts.length > 0) {
+        const idx = highlightedIndex >= 0 ? highlightedIndex : 0
+        handleProductSelect(filteredProducts[idx])
+      } else if (searchTerm.trim() && !value) {
+        // Force as custom selection if no results and no product already selected
+        onSelect(searchTerm)
+        setIsOpen(false)
       }
     } else if (e.key === 'Escape') {
       setIsOpen(false)
@@ -164,78 +156,77 @@ function ProductSearchInput({
 
   return (
     <div className="relative" ref={containerRef}>
-      {selectedProduct ? (
-        <div className="flex items-center gap-1">
-          <div className="flex-1 h-7 px-2 py-1 border border-input rounded-md bg-background text-xs truncate">
-            {selectedProduct.referencia}
-          </div>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="h-7 w-7 p-0"
-            onClick={handleClear}
-            disabled={disabled}
-          >
-            <X className="w-3 h-3" />
-          </Button>
-        </div>
-      ) : (
+      <Input
+        ref={inputRef}
+        value={searchTerm}
+        onChange={(e) => {
+          const val = e.target.value
+          setSearchTerm(val)
+          setIsOpen(true)
+          if (inputRef.current) setDropdownRect(inputRef.current.getBoundingClientRect())
+          
+          if (!val) {
+            onSelect('')
+          }
+        }}
+        onFocus={() => {
+          setIsOpen(true)
+          if (inputRef.current) setDropdownRect(inputRef.current.getBoundingClientRect())
+        }}
+        onKeyDown={handleKeyDown}
+        placeholder="Referencia..."
+        className="h-7 text-xs pr-6"
+        disabled={disabled}
+      />
+      {searchTerm && (
+        <button
+          type="button"
+          onClick={() => {
+            setSearchTerm('')
+            onSelect('')
+            setIsOpen(false)
+            inputRef.current?.focus()
+          }}
+          className="absolute right-1 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+        >
+          <X className="w-3 h-3" />
+        </button>
+      )}
+      {isOpen && filteredProducts.length > 0 && dropdownRect && typeof document !== 'undefined' && ReactDOM.createPortal(
         <>
-          <Input
-            ref={inputRef}
-            value={searchTerm}
-            onChange={(e) => {
-              setSearchTerm(e.target.value)
-              setIsOpen(true)
-              if (inputRef.current) setDropdownRect(inputRef.current.getBoundingClientRect())
-            }}
-            onFocus={() => {
-              setIsOpen(true)
-              if (inputRef.current) setDropdownRect(inputRef.current.getBoundingClientRect())
-            }}
-            onKeyDown={handleKeyDown}
-            placeholder="Buscar por referencia o descripción..."
-            className="h-7 text-xs"
-            disabled={disabled}
+          <div
+            className="fixed inset-0 z-[9998]"
+            onClick={() => setIsOpen(false)}
           />
-          {isOpen && filteredProducts.length > 0 && dropdownRect && typeof document !== 'undefined' && ReactDOM.createPortal(
-            <>
-              <div
-                className="fixed inset-0 z-[9998]"
-                onClick={() => setIsOpen(false)}
-              />
-              <div
-                className="fixed z-[9999] bg-popover border border-border rounded-md shadow-xl overflow-y-auto"
-                style={{
-                  top: dropdownRect.bottom + 2,
-                  left: dropdownRect.left,
-                  width: dropdownRect.width,
-                  maxHeight: '240px',
-                }}
+          <div
+            className="fixed z-[9999] bg-popover border border-border rounded-md shadow-xl overflow-y-auto"
+            style={{
+              top: dropdownRect.bottom + 2,
+              left: dropdownRect.left,
+              width: dropdownRect.width,
+              maxHeight: '240px',
+            }}
+          >
+            {filteredProducts.map((product, idx) => (
+              <button
+                key={product.id}
+                type="button"
+                className={`w-full text-left px-2 py-1.5 text-xs cursor-pointer ${idx === highlightedIndex
+                  ? 'bg-accent text-accent-foreground'
+                  : 'hover:bg-accent'
+                  }`}
+                onMouseEnter={() => setHighlightedIndex(idx)}
+                onClick={() => handleProductSelect(product)}
               >
-                {filteredProducts.map((product, idx) => (
-                  <button
-                    key={product.id}
-                    type="button"
-                    className={`w-full text-left px-2 py-1.5 text-xs cursor-pointer ${idx === highlightedIndex
-                      ? 'bg-accent text-accent-foreground'
-                      : 'hover:bg-accent'
-                      }`}
-                    onMouseEnter={() => setHighlightedIndex(idx)}
-                    onClick={() => handleProductSelect(product)}
-                  >
-                    <div className="font-medium">{product.referencia}</div>
-                    <div className="text-muted-foreground truncate text-[10px]">
-                      {product.modelo_nombre && `${product.modelo_nombre} - `}{product.descripcion}
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </>,
-            document.body
-          )}
-        </>
+                <div className="font-medium">{product.referencia}</div>
+                <div className="text-muted-foreground truncate text-[10px]">
+                  {product.modelo_nombre && `${product.modelo_nombre} - `}{product.descripcion}
+                </div>
+              </button>
+            ))}
+          </div>
+        </>,
+        document.body
       )}
     </div>
   )
@@ -936,9 +927,26 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
 
   const handleProductSelect = (index: number, productId: string) => {
     const product = products.find(p => String(p.id) === String(productId))
-    if (!product) return
-
+    
     const newItems = [...items]
+
+    if (!product) {
+      if (!productId) {
+        newItems[index] = { ...newItems[index], product_id: null, description: '' }
+        setItems(recalculateSummaries(newItems))
+        return
+      }
+
+      // Automatically convert to external item if no product is found
+      newItems[index] = {
+        ...createEmptyItem('external'),
+        external_ref: productId,
+        quantity: newItems[index].quantity || 1,
+      }
+      setItems(recalculateSummaries(newItems))
+      return
+    }
+
     const precioFromTarifa = getPrecioForProduct(product.id)
 
     // Calculate automatic discount based on product family and customer discounts
@@ -1026,7 +1034,28 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
   }
 
   const addItem = () => {
-    setItems([...items, createEmptyItem('article')])
+    const newItems = [...items]
+    const insertIndex = getInsertIndex(newItems)
+    newItems.splice(insertIndex, 0, createEmptyItem('article'))
+    setItems(newItems)
+  }
+
+  const getInsertIndex = (currentItems: OfferItem[]) => {
+    let lastDataIndex = -1
+    for (let i = currentItems.length - 1; i >= 0; i--) {
+      const item = currentItems[i]
+      const hasData = 
+        item.type !== 'article' || 
+        item.product_id || 
+        (item.description && item.description.trim() !== '') || 
+        (item.external_ref && item.external_ref.trim() !== '')
+      
+      if (hasData) {
+        lastDataIndex = i
+        break
+      }
+    }
+    return lastDataIndex + 1
   }
 
   const addItemByProductId = (productId: string, quantity: number) => {
@@ -1048,8 +1077,12 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
       quantity,
       discount1: automaticDiscount,
     }
-    const updatedItems = [...items, calculateItemTotals(newItem)]
-    setItems(recalculateSummaries(updatedItems))
+    
+    const newItems = [...items]
+    const insertIndex = getInsertIndex(newItems)
+    newItems.splice(insertIndex, 0, calculateItemTotals(newItem))
+    
+    setItems(recalculateSummaries(newItems))
     setUserHasModifiedDiscounts(true)
   }
 
@@ -1058,15 +1091,24 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
       ...createEmptyItem('external'),
       external_ref: '',
     }
-    setItems([...items, item])
+    const newItems = [...items]
+    const insertIndex = getInsertIndex(newItems)
+    newItems.splice(insertIndex, 0, item)
+    setItems(newItems)
   }
 
   const addSectionHeader = () => {
-    setItems([...items, createEmptyItem('section_header')])
+    const newItems = [...items]
+    const insertIndex = getInsertIndex(newItems)
+    newItems.splice(insertIndex, 0, createEmptyItem('section_header'))
+    setItems(newItems)
   }
 
   const addNote = () => {
-    setItems([...items, createEmptyItem('note')])
+    const newItems = [...items]
+    const insertIndex = getInsertIndex(newItems)
+    newItems.splice(insertIndex, 0, createEmptyItem('note'))
+    setItems(newItems)
   }
 
   const addSummary = () => {
@@ -1102,7 +1144,10 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
       neto_total2: summaryNeto2,
     }
 
-    setItems([...items, summaryItem])
+    const newItems = [...items]
+    const insertIndex = getInsertIndex(newItems)
+    newItems.splice(insertIndex, 0, summaryItem)
+    setItems(newItems)
   }
 
   const removeItem = (index: number) => {
@@ -1808,8 +1853,8 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
           </div>
 
           <div className="border border-border rounded-lg overflow-hidden flex flex-col">
-            <div>
-              <table className="w-full text-xs" style={{ tableLayout: 'fixed' }}>
+            <div className="overflow-x-auto overflow-y-auto" style={{ maxHeight: 'calc(2.5rem * 10 + 2.5rem)' }}>
+              <table className="w-full text-xs" style={{ tableLayout: 'fixed', minWidth: '1200px' }}>
                 <colgroup>
                   <col style={{ width: '1.5rem' }} />
                   <col style={{ width: '225px' }} />
@@ -1823,38 +1868,21 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
                   <col style={{ width: '8rem' }} />
                   <col style={{ width: '3rem' }} />
                 </colgroup>
-                <thead className="bg-muted/50 sticky top-0 z-10">
-                  <tr>
-                    <th className="px-1 py-1"></th>
-                    <th className="px-2 py-1 text-left font-medium text-xs">Artículo</th>
-                    <th className="px-2 py-1 text-left font-medium text-xs">Descripción</th>
-                    <th className="px-2 py-1 text-right font-medium text-xs">Cantidad</th>
-                    <th className="px-2 py-1 text-right font-medium text-xs">PVP</th>
-                    <th className="px-2 py-1 text-right font-medium text-xs">PVP Total</th>
-                    <th className="px-2 py-1 text-right font-medium text-xs">Desc. 1 (%)</th>
-                    <th className="px-2 py-1 text-right font-medium text-xs">Desc. 2 (%)</th>
-                    <th className="px-2 py-1 text-right font-medium text-xs">Neto Total 1</th>
-                    <th className="px-2 py-1 text-right font-medium text-xs">Neto Total 2</th>
-                    <th className="px-2 py-1 text-center font-medium text-xs"></th>
+                <thead className="bg-muted/50 sticky top-0 z-20">
+                  <tr className="bg-muted/50">
+                    <th className="px-1 py-2 h-9"></th>
+                    <th className="px-2 py-2 h-9 text-left font-medium text-xs">Artículo</th>
+                    <th className="px-2 py-2 h-9 text-left font-medium text-xs">Descripción</th>
+                    <th className="px-2 py-2 h-9 text-right font-medium text-xs">Cantidad</th>
+                    <th className="px-2 py-2 h-9 text-right font-medium text-xs">PVP</th>
+                    <th className="px-2 py-2 h-9 text-right font-medium text-xs">PVP Total</th>
+                    <th className="px-2 py-2 h-9 text-right font-medium text-xs">Desc. 1 (%)</th>
+                    <th className="px-2 py-2 h-9 text-right font-medium text-xs">Desc. 2 (%)</th>
+                    <th className="px-2 py-2 h-9 text-right font-medium text-xs">Neto Total 1</th>
+                    <th className="px-2 py-2 h-9 text-right font-medium text-xs">Neto Total 2</th>
+                    <th className="px-2 py-2 h-9 text-center font-medium text-xs"></th>
                   </tr>
                 </thead>
-              </table>
-            </div>
-            <div className="overflow-y-auto" style={{ maxHeight: 'calc(2.5rem * 10)' }}>
-              <table className="w-full text-xs" style={{ tableLayout: 'fixed' }}>
-                <colgroup>
-                  <col style={{ width: '1.5rem' }} />
-                  <col style={{ width: '225px' }} />
-                  <col style={{ width: '350px' }} />
-                  <col style={{ width: '6rem' }} />
-                  <col style={{ width: '7rem' }} />
-                  <col style={{ width: '7rem' }} />
-                  <col style={{ width: '7rem' }} />
-                  <col style={{ width: '7rem' }} />
-                  <col style={{ width: '8rem' }} />
-                  <col style={{ width: '8rem' }} />
-                  <col style={{ width: '3rem' }} />
-                </colgroup>
                 <tbody>
                   {items.map((item, index) => {
                     const isDragOver = dragOverIndex === index
@@ -2004,13 +2032,18 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
                             {!isViewer && <GripVertical className="w-3.5 h-3.5 text-muted-foreground/50 hover:text-muted-foreground" />}
                           </td>
                           <td className="px-2 py-1">
-                            <Input
-                              value={item.external_ref ?? ''}
-                              onChange={(e) => handleItemChange(index, 'external_ref', e.target.value)}
-                              placeholder="Referencia libre"
-                              className="h-7 text-xs font-medium"
-                              disabled={loading || isViewer}
-                            />
+                            <div className="relative">
+                              <Input
+                                value={item.external_ref ?? ''}
+                                onChange={(e) => handleItemChange(index, 'external_ref', e.target.value)}
+                                placeholder="Referencia libre"
+                                className="h-7 text-xs font-medium pl-6 bg-blue-50/50 border-blue-200 focus-visible:ring-blue-500"
+                                disabled={loading || isViewer}
+                              />
+                              <div className="absolute left-1.5 top-1/2 -translate-y-1/2">
+                                <FileText className="w-3 h-3 text-blue-600" />
+                              </div>
+                            </div>
                           </td>
                           <td className="px-2 py-1">
                             <Input
