@@ -17,6 +17,7 @@ export interface Profile {
   department: string | null
   phone: string | null
   is_active: boolean
+  default_privacy_mode: boolean
   created_at: string
   updated_at: string
 }

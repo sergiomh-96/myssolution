@@ -91,7 +91,7 @@ const navItems = [
     href: '/dashboard/settings',
     label: 'Configuración',
     icon: Settings,
-    allowedRoles: ['admin']
+    allowedRoles: ['admin', 'sales_rep', 'support_agent']
   },
 ]
 
