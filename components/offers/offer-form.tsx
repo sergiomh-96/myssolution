@@ -421,12 +421,13 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
   const [previousOfferId, setPreviousOfferId] = useState<string | null>(null)
   const [nextOfferId, setNextOfferId] = useState<string | null>(null)
 
-  // Format number to Spanish locale (1.000,50)
+  // Format number to Spanish locale (100.024,23€)
   const formatNumber = (value: number, decimals = 2) => {
-    return new Intl.NumberFormat('es-ES', {
+    const formatted = new Intl.NumberFormat('es-ES', {
       minimumFractionDigits: decimals,
       maximumFractionDigits: decimals,
     }).format(value)
+    return `${formatted}€`
   }
 
   const loadAdjacentOffers = async () => {
@@ -504,7 +505,16 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
     return date.toISOString().split('T')[0]
   }
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    title: string;
+    description: string;
+    notas_internas: any;
+    customer_id: number | string | null;
+    contact_id: number | null;
+    tarifa_id: number | null;
+    status: OfferStatus;
+    valid_until: string;
+  }>({
     title: offer?.title || '',
     description: offer?.description || '',
     notas_internas: (offer as any)?.notas_internas || '',
@@ -1873,8 +1883,8 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
                 </colgroup>
                 <thead className="bg-muted/50 sticky top-0 z-20">
                   <tr className="bg-muted/50">
-                    <th className="px-1 py-2 h-9"></th>
-                    <th className="px-2 py-2 h-9 text-left font-medium text-xs">Artículo</th>
+                    <th className="px-1 py-2 h-9 sticky left-0 z-30 bg-muted/50 border-r border-border/50"></th>
+                    <th className="px-2 py-2 h-9 text-left font-medium text-xs sticky left-6 z-30 bg-muted/50 border-r border-border/50">Artículo</th>
                     <th className="px-2 py-2 h-9 text-left font-medium text-xs">Descripción</th>
                     <th className="px-2 py-2 h-9 text-right font-medium text-xs">Cantidad</th>
                     <th className="px-2 py-2 h-9 text-right font-medium text-xs">PVP</th>
@@ -1897,14 +1907,14 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
                           onDragOver={(e) => !isViewer && handleDragOver(e, index)}
                           onDrop={(e) => !isViewer && handleDrop(e, index)}
                         >
-                          <td className={`px-1 py-1 w-6 ${!isViewer ? 'cursor-grab active:cursor-grabbing' : ''} select-none`}
+                          <td className={`px-1 py-1 w-6 sticky left-0 z-10 bg-[#1a2e4a] border-r border-white/10 ${!isViewer ? 'cursor-grab active:cursor-grabbing' : ''} select-none`}
                             draggable={!isViewer}
                             onDragStart={() => !isViewer && handleDragStart(index)}
                             onDragEnd={handleDragEnd}
                           >
-                            {!isViewer && <GripVertical className="w-3.5 h-3.5 text-muted-foreground/50 hover:text-muted-foreground" />}
+                            {!isViewer && <GripVertical className="w-3.5 h-3.5 text-white/50 hover:text-white" />}
                           </td>
-                          <td colSpan={9} className="px-2 py-2">
+                          <td colSpan={9} className="px-2 py-2 sticky left-6 z-10 bg-[#1a2e4a] border-r border-white/10">
                             <Input
                               value={item.description}
                               onChange={(e) => handleItemChange(index, 'description', e.target.value)}
@@ -1939,14 +1949,14 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
                           onDragOver={(e) => !isViewer && handleDragOver(e, index)}
                           onDrop={(e) => !isViewer && handleDrop(e, index)}
                         >
-                          <td className={`px-1 py-1 w-6 ${!isViewer ? 'cursor-grab active:cursor-grabbing' : ''} select-none`}
+                          <td className={`px-1 py-1 w-6 sticky left-0 z-10 bg-yellow-100 border-r border-yellow-200 ${!isViewer ? 'cursor-grab active:cursor-grabbing' : ''} select-none`}
                             draggable={!isViewer}
                             onDragStart={() => !isViewer && handleDragStart(index)}
                             onDragEnd={handleDragEnd}
                           >
-                            {!isViewer && <GripVertical className="w-3.5 h-3.5 text-muted-foreground/50 hover:text-muted-foreground" />}
+                            {!isViewer && <GripVertical className="w-3.5 h-3.5 text-yellow-700/50 hover:text-yellow-700" />}
                           </td>
-                          <td colSpan={9} className="px-2 py-2">
+                          <td colSpan={9} className="px-2 py-2 sticky left-6 z-10 bg-yellow-100 border-r border-yellow-200">
                             <Input
                               value={item.description}
                               onChange={(e) => handleItemChange(index, 'description', e.target.value)}
@@ -1981,14 +1991,14 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
                           onDragOver={(e) => !isViewer && handleDragOver(e, index)}
                           onDrop={(e) => !isViewer && handleDrop(e, index)}
                         >
-                          <td className={`px-1 py-1 w-6 ${!isViewer ? 'cursor-grab active:cursor-grabbing' : ''} select-none`}
+                          <td className={`px-1 py-1 w-6 sticky left-0 z-10 bg-[#1a2e4a] border-r border-white/10 ${!isViewer ? 'cursor-grab active:cursor-grabbing' : ''} select-none`}
                             draggable={!isViewer}
                             onDragStart={() => !isViewer && handleDragStart(index)}
                             onDragEnd={handleDragEnd}
                           >
-                            {!isViewer && <GripVertical className="w-3.5 h-3.5 text-muted-foreground/50 hover:text-muted-foreground" />}
+                            {!isViewer && <GripVertical className="w-3.5 h-3.5 text-white/50 hover:text-white" />}
                           </td>
-                          <td colSpan={4} className="px-2 py-1.5 text-xs text-white italic">
+                          <td colSpan={4} className="px-2 py-1.5 text-xs text-white italic sticky left-6 z-10 bg-[#1a2e4a] border-r border-white/10">
                             {item.description || 'Resumen'}
                           </td>
                           <td className="px-2 py-1.5 text-right text-xs text-white">
@@ -2027,23 +2037,23 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
                           onDragOver={(e) => !isViewer && handleDragOver(e, index)}
                           onDrop={(e) => !isViewer && handleDrop(e, index)}
                         >
-                          <td className={`px-1 py-1 w-6 ${!isViewer ? 'cursor-grab active:cursor-grabbing' : ''} select-none`}
+                          <td className={`px-1 py-1 w-6 sticky left-0 z-10 bg-background border-r border-border/50 ${!isViewer ? 'cursor-grab active:cursor-grabbing' : ''} select-none`}
                             draggable={!isViewer}
                             onDragStart={() => !isViewer && handleDragStart(index)}
                             onDragEnd={handleDragEnd}
                           >
                             {!isViewer && <GripVertical className="w-3.5 h-3.5 text-muted-foreground/50 hover:text-muted-foreground" />}
                           </td>
-                          <td className="px-2 py-1">
+                          <td className="px-2 py-1 sticky left-6 z-10 bg-background border-r border-border/50">
                             <div className="relative">
                               <Input
                                 value={item.external_ref ?? ''}
                                 onChange={(e) => handleItemChange(index, 'external_ref', e.target.value)}
                                 placeholder="Referencia libre"
-                                className="h-7 text-xs font-medium pl-6 bg-blue-50/50 border-blue-200 focus-visible:ring-blue-500"
+                                className="h-7 text-xs font-medium pr-6 bg-blue-50/50 border-blue-200 focus-visible:ring-blue-500"
                                 disabled={loading || isViewer}
                               />
-                              <div className="absolute left-1.5 top-1/2 -translate-y-1/2">
+                              <div className="absolute right-1.5 top-1/2 -translate-y-1/2" title="Referencia fuera de tarifa. Revisar PVP y descuento">
                                 <FileText className="w-3 h-3 text-blue-600" />
                               </div>
                             </div>
@@ -2064,6 +2074,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
                               step="1"
                               value={item.quantity || ''}
                               onChange={(e) => handleItemChange(index, 'quantity', Number(e.target.value))}
+                              onWheel={(e) => e.currentTarget.blur()}
                               className="h-7 text-xs text-right"
                               disabled={loading || isViewer}
                             />
@@ -2075,6 +2086,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
                               step="0.01"
                               value={item.pvp || ''}
                               onChange={(e) => handleItemChange(index, 'pvp', Number(e.target.value))}
+                              onWheel={(e) => e.currentTarget.blur()}
                               className="h-7 text-xs text-right"
                               disabled={loading || isViewer}
                               placeholder="-"
@@ -2091,6 +2103,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
                               step="0.01"
                               value={item.discount1 !== undefined && item.discount1 !== null ? item.discount1 : ''}
                               onChange={(e) => handleItemChange(index, 'discount1', Number(e.target.value))}
+                              onWheel={(e) => e.currentTarget.blur()}
                               className="h-7 text-xs text-right"
                               disabled={loading || isViewer}
                               placeholder="-"
@@ -2104,6 +2117,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
                               step="0.01"
                               value={item.discount2 || ''}
                               onChange={(e) => handleItemChange(index, 'discount2', Number(e.target.value))}
+                              onWheel={(e) => e.currentTarget.blur()}
                               className="h-7 text-xs text-right"
                               disabled={loading || isViewer}
                               placeholder="-"
@@ -2140,14 +2154,14 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
                         onDragOver={(e) => !isViewer && handleDragOver(e, index)}
                         onDrop={(e) => !isViewer && handleDrop(e, index)}
                       >
-                        <td className={`px-1 py-1 w-6 ${!isViewer ? 'cursor-grab active:cursor-grabbing' : ''} select-none`}
+                        <td className={`px-1 py-1 w-6 sticky left-0 z-10 bg-background border-r border-border/50 ${!isViewer ? 'cursor-grab active:cursor-grabbing' : ''} select-none`}
                           draggable={!isViewer}
                           onDragStart={() => !isViewer && handleDragStart(index)}
                           onDragEnd={handleDragEnd}
                         >
                           {!isViewer && <GripVertical className="w-3.5 h-3.5 text-muted-foreground/50 hover:text-muted-foreground" />}
                         </td>
-                        <td className="px-2 py-1">
+                        <td className="px-2 py-1 sticky left-6 z-10 bg-background border-r border-border/50">
                           <ProductSearchInput
                             value={item.product_id || ''}
                             products={products}
@@ -2171,6 +2185,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
                             step="1"
                             value={item.quantity || ''}
                             onChange={(e) => handleItemChange(index, 'quantity', Number(e.target.value))}
+                            onWheel={(e) => e.currentTarget.blur()}
                             className="h-7 text-xs text-right"
                             disabled={loading || isViewer}
                           />
@@ -2182,6 +2197,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
                             step="0.01"
                             value={item.pvp || ''}
                             onChange={(e) => handleItemChange(index, 'pvp', Number(e.target.value))}
+                            onWheel={(e) => e.currentTarget.blur()}
                             className="h-7 text-xs text-right"
                             disabled={loading || isViewer}
                             placeholder="-"
@@ -2198,6 +2214,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
                             step="0.01"
                             value={item.discount1 || ''}
                             onChange={(e) => handleItemChange(index, 'discount1', Number(e.target.value))}
+                            onWheel={(e) => e.currentTarget.blur()}
                             className="h-7 text-xs text-right"
                             disabled={loading || isViewer}
                           />
@@ -2210,6 +2227,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
                             step="0.01"
                             value={item.discount2 || ''}
                             onChange={(e) => handleItemChange(index, 'discount2', Number(e.target.value))}
+                            onWheel={(e) => e.currentTarget.blur()}
                             className="h-7 text-xs text-right"
                             disabled={loading || isViewer}
                           />
@@ -2245,10 +2263,10 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
                 <tr>
                   <td colSpan={7}></td>
                   <td className="px-2 py-1 text-right font-semibold text-xs">
-                    Total PVP: <span className="font-bold text-sm">EUR {formatNumber(totalPVP)}</span>
+                    Total PVP: <span className="font-bold text-sm">{formatNumber(totalPVP)}</span>
                   </td>
                   <td className="px-2 py-1 text-right font-semibold text-xs">
-                    Total NETO: <span className="font-bold text-sm text-primary">EUR {formatNumber(totalNeto)}</span>
+                    Total NETO: <span className="font-bold text-sm text-primary">{formatNumber(totalNeto)}</span>
                   </td>
                 </tr>
               </tfoot>

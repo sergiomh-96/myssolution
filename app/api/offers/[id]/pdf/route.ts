@@ -231,15 +231,26 @@ export async function GET(
   const descuentoHeader = priceType === 'all' ? 'Descuento' : ''
   const netoHeader = priceType === 'all' ? 'Neto Total' : ''
 
+  // Formatting helper for currency in PDF
+  const formatCurrency = (val: number) => {
+    return val.toLocaleString('es-ES', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }) + '€'
+  }
+
   const tableRows = offerItems.map((item) => {
-    const pvpTotal = Number(item.pvp_total || 0).toFixed(2)
-    const netoTotal = Number(item.neto_total2 || 0).toFixed(2)
-    const descuento = item.type === 'article' ? (item.discount1 || 0).toFixed(2) : '-'
-    const unitPrice = priceType === 'neto'
-      ? (Number(item.neto_total2 || 0) / Math.max(Number(item.quantity || 1), 1)).toFixed(2)
-      : priceType === 'all'
-      ? Number(item.pvp || 0).toFixed(2)
-      : Number(item.pvp || 0).toFixed(2)
+    const pvpTotalNum = Number(item.pvp_total || 0)
+    const netoTotalNum = Number(item.neto_total2 || 0)
+    const discountNum = item.type === 'article' ? (item.discount1 || 0) : 0
+    
+    // Unit price calculation
+    let unitPriceNum = 0
+    if (priceType === 'neto') {
+      unitPriceNum = (netoTotalNum / Math.max(Number(item.quantity || 1), 1))
+    } else {
+      unitPriceNum = Number(item.pvp || 0)
+    }
 
     if (item.type === 'summary') {
       if (priceType === 'all') {
@@ -247,14 +258,14 @@ export async function GET(
           { content: item.description || 'Resumen', colSpan: 3, styles: { fontStyle: 'bold' as const, textColor: navyText, fillColor: navyBg } },
           { content: '', styles: { textColor: navyText, fillColor: navyBg } },
           { content: '', styles: { textColor: navyText, fillColor: navyBg } },
-          { content: `€${netoTotal}`, styles: { fontStyle: 'bold' as const, halign: 'right' as const, textColor: navyText, fillColor: navyBg } },
+          { content: formatCurrency(netoTotalNum), styles: { fontStyle: 'bold' as const, halign: 'right' as const, textColor: navyText, fillColor: navyBg } },
         ]
       }
       return [
         { content: item.description || 'Resumen', colSpan: 2, styles: { fontStyle: 'bold' as const, textColor: navyText, fillColor: navyBg } },
         { content: '', styles: { textColor: navyText, fillColor: navyBg } },
         { content: '', styles: { textColor: navyText, fillColor: navyBg } },
-        { content: `€${priceType === 'neto' ? netoTotal : pvpTotal}`, styles: { fontStyle: 'bold' as const, halign: 'right' as const, textColor: navyText, fillColor: navyBg } },
+        { content: formatCurrency(priceType === 'neto' ? netoTotalNum : pvpTotalNum), styles: { fontStyle: 'bold' as const, halign: 'right' as const, textColor: navyText, fillColor: navyBg } },
       ]
     }
     if (item.type === 'section_header') {
@@ -273,9 +284,9 @@ export async function GET(
         item.product?.referencia || item.external_ref || '-',
         item.description || item.product?.descripcion || '-',
         String(item.quantity ?? 1),
-        `€${unitPrice}`,
-        `${descuento}%`,
-        `€${netoTotal}`,
+        formatCurrency(unitPriceNum),
+        `${discountNum.toFixed(2)}%`,
+        formatCurrency(netoTotalNum),
       ]
     }
     
@@ -283,8 +294,8 @@ export async function GET(
       item.product?.referencia || item.external_ref || '-',
       item.description || item.product?.descripcion || '-',
       String(item.quantity ?? 1),
-      `€${unitPrice}`,
-      `€${priceType === 'neto' ? netoTotal : pvpTotal}`,
+      formatCurrency(unitPriceNum),
+      formatCurrency(priceType === 'neto' ? netoTotalNum : pvpTotalNum),
     ]
   })
 
@@ -302,10 +313,10 @@ export async function GET(
 
   const tableFoot = priceType === 'all'
     ? [
-        ['', '', '', '', { content: 'TOTAL PVP:', halign: 'right' }, { content: `€${totalPVP.toFixed(2)}`, halign: 'center' }],
-        ['', '', '', '', { content: 'TOTAL NETO:', halign: 'right' }, { content: `€${totalNeto.toFixed(2)}`, halign: 'center' }]
+        ['', '', '', '', { content: 'TOTAL PVP:', halign: 'right' }, { content: formatCurrency(totalPVP), halign: 'center' }],
+        ['', '', '', '', { content: 'TOTAL NETO:', halign: 'right' }, { content: formatCurrency(totalNeto), halign: 'center' }]
       ]
-    : [['', '', '', { content: 'TOTAL:', halign: 'center' }, { content: `€${(priceType === 'neto' ? totalNeto : totalPVP).toFixed(2)}`, halign: 'center' }]]
+    : [['', '', '', { content: 'TOTAL:', halign: 'center' }, { content: formatCurrency(priceType === 'neto' ? totalNeto : totalPVP), halign: 'center' }]]
 
   autoTable(doc, {
     startY: tableTop,

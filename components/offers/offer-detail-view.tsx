@@ -33,6 +33,13 @@ export function OfferDetailView({ offer, items, onPrint, onDownload }: OfferView
     day: '2-digit'
   })
 
+  const formatNumber = (value: number, decimals = 2) => {
+    return new Intl.NumberFormat('es-ES', {
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals,
+    }).format(value) + '€'
+  }
+
   return (
     <div className="min-h-screen bg-background">
       {/* Toolbar */}
@@ -194,7 +201,7 @@ export function OfferDetailView({ offer, items, onPrint, onDownload }: OfferView
                       <td className="py-2 px-3 text-[0.65rem] text-center text-white"></td>
                       <td className="py-2 px-3 text-[0.65rem] text-right text-white"></td>
                       <td className="py-2 px-3 text-[0.65rem] text-right font-bold text-white">
-                        {Number(item.neto_total2).toFixed(2)} €
+                        {formatNumber(item.neto_total2)}
                       </td>
                     </tr>
                   )
@@ -213,10 +220,10 @@ export function OfferDetailView({ offer, items, onPrint, onDownload }: OfferView
                       {item.quantity}
                     </td>
                     <td className="py-2 px-3 text-[0.65rem] text-right text-foreground border border-border">
-                      {Number(item.pvp).toFixed(2)} €
+                      {formatNumber(item.pvp)}
                     </td>
                     <td className="py-2 px-3 text-[0.65rem] text-right font-semibold text-foreground border border-border">
-                      {(Number(item.neto_total2) / Math.max(Number(item.quantity || 1), 1)).toFixed(2)} €
+                      {formatNumber(Number(item.neto_total2))}
                     </td>
                   </tr>
                 )
@@ -226,7 +233,7 @@ export function OfferDetailView({ offer, items, onPrint, onDownload }: OfferView
                   Total:
                 </td>
                 <td className="py-3 px-3 text-sm text-right text-foreground border border-border">
-                  {totalAmount.toFixed(2)} €
+                  {formatNumber(totalAmount)}
                 </td>
               </tr>
             </tbody>
