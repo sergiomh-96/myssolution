@@ -1078,11 +1078,13 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
       discount1: automaticDiscount,
     }
     
-    const newItems = [...items]
-    const insertIndex = getInsertIndex(newItems)
-    newItems.splice(insertIndex, 0, calculateItemTotals(newItem))
+    setItems(currentItems => {
+      const newItems = [...currentItems]
+      const insertIndex = getInsertIndex(newItems)
+      newItems.splice(insertIndex, 0, calculateItemTotals(newItem))
+      return recalculateSummaries(newItems)
+    })
     
-    setItems(recalculateSummaries(newItems))
     setUserHasModifiedDiscounts(true)
   }
 

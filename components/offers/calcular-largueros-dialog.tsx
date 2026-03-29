@@ -15,7 +15,6 @@ interface LargueroRow {
   productId: string
   referencia: string       // e.g. "MA45 1000"
   descripcion: string
-  tipo: 'largo' | 'alto'
   unidadesNecesarias: number
   multiplo12: number
   pvp: number
@@ -70,8 +69,8 @@ export function CalcularLarguerosDialog({ items, onAddItem }: Props) {
       const prodMap: Record<string, { referencia: string; larguero_largo: string | null; larguero_alto: string | null }> = {}
       productData?.forEach(p => { prodMap[String(p.id)] = p })
 
-      // Accumulate totals keyed by larguero referencia string
-      const totals: Record<string, { referencia: string; tipo: 'largo' | 'alto'; unidades: number }> = {}
+      // Accumulate totals keyed by larguero referencia string (unifying largo/alto)
+      const totals: Record<string, { referencia: string; unidades: number }> = {}
 
       for (const item of items) {
         if (!item.product_id) continue
@@ -82,21 +81,17 @@ export function CalcularLarguerosDialog({ items, onAddItem }: Props) {
         addLog(`  ${prod.referencia} × ${qty} ud(s)`)
 
         if (prod.larguero_largo) {
-          const key = `largo_${prod.larguero_largo}`
-          if (!totals[key]) totals[key] = { referencia: prod.larguero_largo, tipo: 'largo', unidades: 0 }
-          totals[key].unidades += qty * 2
-          addLog(`    larguero_largo = "${prod.larguero_largo}" → +${qty * 2} uds (total: ${totals[key].unidades})`, 'ok')
-        } else {
-          addLog(`    Sin larguero_largo`, 'warn')
+          const ref = prod.larguero_largo
+          if (!totals[ref]) totals[ref] = { referencia: ref, unidades: 0 }
+          totals[ref].unidades += qty * 2
+          addLog(`    larguero_largo = "${ref}" → +${qty * 2} uds (total: ${totals[ref].unidades})`, 'ok')
         }
 
         if (prod.larguero_alto) {
-          const key = `alto_${prod.larguero_alto}`
-          if (!totals[key]) totals[key] = { referencia: prod.larguero_alto, tipo: 'alto', unidades: 0 }
-          totals[key].unidades += qty * 2
-          addLog(`    larguero_alto = "${prod.larguero_alto}" → +${qty * 2} uds (total: ${totals[key].unidades})`, 'ok')
-        } else {
-          addLog(`    Sin larguero_alto`, 'warn')
+          const ref = prod.larguero_alto
+          if (!totals[ref]) totals[ref] = { referencia: ref, unidades: 0 }
+          totals[ref].unidades += qty * 2
+          addLog(`    larguero_alto = "${ref}" → +${qty * 2} uds (total: ${totals[ref].unidades})`, 'ok')
         }
       }
 
@@ -128,24 +123,23 @@ export function CalcularLarguerosDialog({ items, onAddItem }: Props) {
         const lp = largueroProds?.find(p => p.referencia === entry.referencia)
         if (!lp) { addLog(`  "${entry.referencia}" no encontrado en productos`, 'warn'); continue }
         
-        const key = `${lp.id}_${entry.tipo}`
+        const key = String(lp.id)
         
         if (grouped[key]) {
           // Reference already exists, accumulate units
           grouped[key].unidadesNecesarias += entry.unidades
-          addLog(`  ${lp.referencia} (${entry.tipo}): +${entry.unidades} uds (total acumulado: ${grouped[key].unidadesNecesarias})`, 'ok')
+          addLog(`  ${lp.referencia}: +${entry.unidades} uds (total acumulado: ${grouped[key].unidadesNecesarias})`, 'ok')
         } else {
           // New reference, create entry
           grouped[key] = {
             productId: String(lp.id),
             referencia: lp.referencia,
             descripcion: lp.descripcion || '',
-            tipo: entry.tipo,
             unidadesNecesarias: entry.unidades,
             multiplo12: 0,
             pvp: 0,
           }
-          addLog(`  ${lp.referencia} (${entry.tipo}): ${entry.unidades} uds`, 'ok')
+          addLog(`  ${lp.referencia}: ${entry.unidades} uds`, 'ok')
         }
       }
       
@@ -244,14 +238,12 @@ export function CalcularLarguerosDialog({ items, onAddItem }: Props) {
                             <Plus className="w-2.5 h-2.5 mr-0.5" />
                             Unitario
                           </Button>
-                          {row.multiplo12 !== row.unidadesNecesarias && (
-                            <Button type="button" size="sm" variant="default"
-                              className="h-6 px-2.5 text-[10px]"
-                              onClick={() => onAddItem(row.productId, row.multiplo12)}>
-                              <Plus className="w-2.5 h-2.5 mr-0.5" />
-                              Múltiplo
-                            </Button>
-                          )}
+                          <Button type="button" size="sm" variant="default"
+                            className="h-6 px-2.5 text-[10px]"
+                            onClick={() => onAddItem(row.productId, row.multiplo12)}>
+                            <Plus className="w-2.5 h-2.5 mr-0.5" />
+                            Múltiplo
+                          </Button>
                         </div>
                       </td>
                     </tr>
