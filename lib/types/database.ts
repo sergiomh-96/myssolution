@@ -59,7 +59,7 @@ export interface Offer {
   contact_id: number | null
   tarifa_id: number | null
   offer_number: number
-  total_amount: number
+  amount: number
   currency: string
   status: OfferStatus
   valid_until: string | null
@@ -74,6 +74,7 @@ export interface Offer {
   rejected_by: string | null
   rejected_at: string | null
   validation_required_at: string | null
+  assigned_to: string | null
   created_at: string
   updated_at: string
 }
@@ -81,8 +82,16 @@ export interface Offer {
 export interface OfferAssignment {
   id: number
   offer_id: number
-  assigned_to: string
-  assigned_by: string
+  user_id: string
+  assigned_by: string | null
+  created_at: string
+}
+
+export interface CustomerProfileAssignment {
+  id: number
+  customer_id: number
+  profile_id: string
+  assigned_by: string | null
   created_at: string
 }
 

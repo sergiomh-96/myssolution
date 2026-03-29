@@ -38,7 +38,7 @@ export default function DashboardPage() {
 
       // Define roles to filter data for
       // Handle both backend types (sales_rep, support_agent) and potential localized strings
-      const role = profileData?.role?.toLowerCase() || ''
+      const role = profileData?.role?.toLowerCase().replace(/\s+/g, '_') || ''
       const isSensitiveRole = ['sales_rep', 'vendedor', 'support_agent', 'support', 'soporte', 'technical_support'].includes(role)
 
       const now = new Date()
@@ -46,21 +46,32 @@ export default function DashboardPage() {
       const thisMonthStart = startOfMonth(now).toISOString()
       const lastMonthStart = startOfMonth(subMonths(now, 1)).toISOString()
 
-      // Fetch Offer Assignments first to include them in queries if needed
+      // Fetch all types of assignments first to include them in queries
       let assignedOfferIds: number[] = []
+      let assignedCustomerIds: number[] = []
+      
       if (isSensitiveRole) {
-        const { data: assignments } = await supabase
-          .from('offer_assignments')
-          .select('offer_id')
-          .eq('assigned_to', user.id)
+        const [offerAssRes, customerAssRes] = await Promise.all([
+          supabase.from('offer_assignments').select('offer_id').eq('user_id', user.id),
+          supabase.from('customer_profile_assignments').select('customer_id').eq('profile_id', user.id)
+        ])
         
-        assignedOfferIds = assignments?.map(a => a.offer_id) || []
+        assignedOfferIds = (offerAssRes.data || []).map(a => Number(a.offer_id)).filter(id => !isNaN(id))
+        assignedCustomerIds = (customerAssRes.data || []).map(a => Number(a.customer_id)).filter(id => !isNaN(id))
       }
 
-      const userFilterOR = `created_by.eq.${user.id},assigned_to.eq.${user.id}`
-      const offerFilterOR = assignedOfferIds.length > 0 
-        ? `created_by.eq.${user.id},id.in.(${assignedOfferIds.join(',')})`
-        : `created_by.eq.${user.id}`
+      // 1. Build optimized filters for role-based access
+      // For customers: created by, directly assigned to, or assigned via profile assignments table
+      let customerFilterOR = `created_by.eq.${user.id},assigned_to.eq.${user.id}`
+      if (assignedCustomerIds.length > 0) {
+        customerFilterOR += `,id.in.(${assignedCustomerIds.join(',')})`
+      }
+
+      // For offers: created by, directly assigned to, or assigned via offer_assignments table
+      let offerFilterOR = `created_by.eq.${user.id},assigned_to.eq.${user.id}`
+      if (assignedOfferIds.length > 0) {
+        offerFilterOR += `,id.in.(${assignedOfferIds.join(',')})`
+      }
 
       // 1. Fetch KPI basic counts & Breakdown
       let customersQuery = supabase.from('customers').select('*', { count: 'exact', head: true })
@@ -71,19 +82,21 @@ export default function DashboardPage() {
       let distribuidoresQuery = supabase.from('customers').select('*', { count: 'exact', head: true }).ilike('industry', '%distribuidor%')
 
       if (isSensitiveRole) {
-        // Customers: created by or assigned to
-        customersQuery = customersQuery.or(userFilterOR)
-        instaladoresQuery = instaladoresQuery.or(userFilterOR)
-        distribuidoresQuery = distribuidoresQuery.or(userFilterOR)
-        
-        // Offers: created by or assigned to
+        customersQuery = customersQuery.or(customerFilterOR)
+        instaladoresQuery = instaladoresQuery.or(customerFilterOR)
+        distribuidoresQuery = distribuidoresQuery.or(customerFilterOR)
         offersQuery = offersQuery.or(offerFilterOR)
       }
 
       // 2. Fetch Offers for Month-over-Month comparison
       let offersMonthQuery = supabase
         .from('offers')
-        .select('created_at, total_amount')
+        .select(`
+          id, 
+          created_at, 
+          amount,
+          items:offer_items(pvp_total)
+        `)
         .gte('created_at', lastMonthStart)
 
       if (isSensitiveRole) {
@@ -93,7 +106,13 @@ export default function DashboardPage() {
       // 3. Fetch all offers from current year for Amount Breakdown and Customer Value Chart
       let offersYearQuery = supabase
         .from('offers')
-        .select('status, total_amount, customer:customers(company_name)')
+        .select(`
+          id, 
+          status, 
+          amount, 
+          customer:customers(company_name),
+          items:offer_items(pvp_total)
+        `)
         .gte('created_at', currentYearStart)
 
       if (isSensitiveRole) {
@@ -103,7 +122,7 @@ export default function DashboardPage() {
       // 4. Fetch Recent Offers (top 10)
       let recentOffersQuery = supabase
         .from('offers')
-        .select('*, customer:customers(company_name)')
+        .select('*, customer:customers(company_name), items:offer_items(pvp_total)')
         .order('created_at', { ascending: false })
         .limit(10)
 
@@ -141,18 +160,44 @@ export default function DashboardPage() {
         distribuidoresRes
       ] = results
 
+      // --- Helper and Deduplication ---
+      const calculateAmount = (o: any) => {
+        const items = (o.items as any[]) || []
+        if (items.length > 0) {
+          return items.reduce((sum, item) => sum + (Number(item.pvp_total) || 0), 0)
+        }
+        return Number(o.amount) || 0
+      }
+
+      const deduplicateAndCompute = (raw: any[]) => {
+        const seen = new Set()
+        const deduplicated: any[] = []
+        for (const o of raw) {
+          if (!seen.has(o.id)) {
+            seen.add(o.id)
+            deduplicated.push({
+              ...o,
+              computed_amount: calculateAmount(o)
+            })
+          }
+        }
+        return deduplicated
+      }
+
+      const offersMonthData = deduplicateAndCompute(offersMonthRes.data || [])
+      const offersYearData = deduplicateAndCompute(offersYearRes.data || [])
+      const recentOffersData = deduplicateAndCompute(recentOffersRes.data || [])
+
       // --- Process Month-over-Month KPI ---
-      const offersMonthData = offersMonthRes.data || []
       const currentMonthOffers = offersMonthData.filter(o => o.created_at >= thisMonthStart)
       const lastMonthOffers = offersMonthData.filter(o => o.created_at < thisMonthStart && o.created_at >= lastMonthStart)
       
       const countCurrent = currentMonthOffers.length
       const countLast = lastMonthOffers.length
-      const totalAmountCurrentMonth = currentMonthOffers.reduce((sum, o) => sum + (o.total_amount || 0), 0)
+      const totalAmountCurrentMonth = currentMonthOffers.reduce((sum, o) => sum + o.computed_amount, 0)
       const percentageChange = countLast === 0 ? (countCurrent > 0 ? 100 : 0) : ((countCurrent - countLast) / countLast) * 100
 
       // --- Process Amount Breakdown and Customer Chart Data ---
-      const offersYearData = offersYearRes.data || []
       const breakdown = {
         borrador: 0,
         enviada: 0,
@@ -163,10 +208,11 @@ export default function DashboardPage() {
 
       offersYearData.forEach(offer => {
         const status = offer.status as keyof typeof breakdown
+        const amount = offer.computed_amount
         if (status in breakdown) {
-          breakdown[status] += offer.total_amount || 0
-          totalAmountYear += offer.total_amount || 0
+          breakdown[status] += amount
         }
+        totalAmountYear += amount
       })
 
       // Customer Value Data
@@ -175,12 +221,10 @@ export default function DashboardPage() {
       const distribuidoresCount = distribuidoresRes.count || 0
 
       // Add is_assigned flag to recent offers
-      const recentOffers = (recentOffersRes.data || []).map((o: any) => ({
+      const recentOffers = recentOffersData.map((o: any) => ({
         ...o,
-        is_assigned: assignedOfferIds.includes(o.id)
+        is_assigned: o.assigned_to === user.id || assignedOfferIds.includes(Number(o.id))
       }))
-
-      console.log('Role:', role, 'User ID:', user.id, 'Assigned Offers:', assignedOfferIds)
 
       setDashboardData({
         customersCount: totalCustomers,
@@ -204,6 +248,8 @@ export default function DashboardPage() {
         recentOffers,
         notifications: notificationsRes.data || []
       })
+
+      console.log('Role:', role, 'User ID:', user.id, 'Assigned Offers:', assignedOfferIds)
       
       setIsLoading(false)
     }
