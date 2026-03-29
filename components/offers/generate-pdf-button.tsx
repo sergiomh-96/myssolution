@@ -46,7 +46,6 @@ export function GeneratePdfButton({ offerId, offerNumber, customerName = '', off
       }
 
       const blob = await response.blob()
-      const url = URL.createObjectURL(blob)
       
       // Construir nombre del archivo: 2026-nº oferta + cliente + título + tipo precio
       const year = new Date().getFullYear()
@@ -61,18 +60,50 @@ export function GeneratePdfButton({ offerId, offerNumber, customerName = '', off
       const type = priceType === 'neto' ? 'Neto' : priceType === 'all' ? 'Completo' : 'PVP'
       const filename = `${year}-${offerNum}-${client}-${title}-${type}.pdf`
       
-      // Crear enlace con atributo download para mostrar diálogo "Guardar como"
-      const a = document.createElement('a')
-      a.href = url
-      a.download = filename
-      document.body.appendChild(a)
-      a.click()
-      a.remove()
-      
-      // Limpiar URL después de 500ms
-      setTimeout(() => URL.revokeObjectURL(url), 500)
-
-      toast.success('PDF generado correctamente')
+      // Intentar usar la API de File System Access para mostrar el diálogo "Guardar como"
+      if ('showSaveFilePicker' in window) {
+        try {
+          const handle = await (window as any).showSaveFilePicker({
+            suggestedName: filename,
+            types: [{
+              description: 'Archivo PDF',
+              accept: { 'application/pdf': ['.pdf'] },
+            }],
+          })
+          const writable = await handle.createWritable()
+          await writable.write(blob)
+          await writable.close()
+          toast.success('PDF guardado correctamente')
+        } catch (err: any) {
+          // Si el usuario cancela (AbortError), no hacemos nada
+          if (err.name !== 'AbortError') {
+            console.error('Error saving file:', err)
+            // Si falla el picker, intentamos el método tradicional como último recurso
+            const url = URL.createObjectURL(blob)
+            const a = document.createElement('a')
+            a.href = url
+            a.download = filename
+            document.body.appendChild(a)
+            a.click()
+            a.remove()
+            setTimeout(() => URL.revokeObjectURL(url), 500)
+            toast.success('PDF generado correctamente')
+          }
+        }
+      } else {
+        // Fallback para navegadores que no soportan showSaveFilePicker
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = filename
+        document.body.appendChild(a)
+        a.click()
+        a.remove()
+        
+        // Limpiar URL después de 500ms
+        setTimeout(() => URL.revokeObjectURL(url), 500)
+        toast.success('PDF generado correctamente')
+      }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Error generando el PDF')
     } finally {
