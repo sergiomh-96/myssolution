@@ -54,22 +54,22 @@ export async function GET(
   // Palette based on company
   const palette = company === 'agfri' 
     ? {
-        primary: [220, 20, 20],      // Red for AGFRI
-        headerBg: [255, 200, 200],
-        borderColor: [255, 150, 150],
-        textDark: [25, 25, 25],
-        textMuted: [110, 110, 110],
-        rowAlt: [255, 245, 245],
-        totalBg: [255, 220, 220],
+        primary: [220, 20, 20] as [number, number, number],      // Red for AGFRI
+        headerBg: [255, 200, 200] as [number, number, number],
+        borderColor: [255, 150, 150] as [number, number, number],
+        textDark: [25, 25, 25] as [number, number, number],
+        textMuted: [110, 110, 110] as [number, number, number],
+        rowAlt: [255, 245, 245] as [number, number, number],
+        totalBg: [255, 220, 220] as [number, number, number],
       }
     : {
-        primary: [41, 128, 185],      // Blue for MYSAIR
-        headerBg: [214, 234, 248],
-        borderColor: [189, 215, 238],
-        textDark: [25, 25, 25],
-        textMuted: [110, 110, 110],
-        rowAlt: [246, 249, 252],
-        totalBg: [232, 240, 248],
+        primary: [41, 128, 185] as [number, number, number],      // Blue for MYSAIR
+        headerBg: [214, 234, 248] as [number, number, number],
+        borderColor: [189, 215, 238] as [number, number, number],
+        textDark: [25, 25, 25] as [number, number, number],
+        textMuted: [110, 110, 110] as [number, number, number],
+        rowAlt: [246, 249, 252] as [number, number, number],
+        totalBg: [232, 240, 248] as [number, number, number],
       }
 
   // ---- Pre-calculate offer number and date (used in cover + header) ----
@@ -288,20 +288,24 @@ export async function GET(
     ]
   })
 
-  const total = offerItems
+  const totalPVP = offerItems
     .filter(i => i.type === 'article' || i.type === 'external' || !i.type)
-    .reduce((s, i) => {
-      const value = priceType === 'neto' ? Number(i.neto_total2 || 0) : Number(i.pvp_total || 0)
-      return s + value
-    }, 0)
+    .reduce((s, i) => s + Number(i.pvp_total || 0), 0)
+
+  const totalNeto = offerItems
+    .filter(i => i.type === 'article' || i.type === 'external' || !i.type)
+    .reduce((s, i) => s + Number(i.neto_total2 || 0), 0)
 
   const tableHead = priceType === 'all'
     ? ['Referencia', 'Observaciones', 'Cant.', 'PVP', 'Desc%', 'Neto Total']
-    : ['Referencia', 'Observaciones', 'Cant.', priceType === 'neto' ? 'Neto' : 'PVP', priceHeader]
+    : ['Referencia', 'Observaciones', 'Cant.', priceType === 'neto' ? 'Neto' : 'PVP', priceType === 'neto' ? 'Neto Total' : 'PVP Total']
 
   const tableFoot = priceType === 'all'
-    ? [['', '', '', '', { content: 'TOTAL:', halign: 'center' }, { content: `€${total.toFixed(2)}`, halign: 'center' }]]
-    : [['', '', '', { content: 'TOTAL:', halign: 'center' }, { content: `€${total.toFixed(2)}`, halign: 'center' }]]
+    ? [
+        ['', '', '', '', { content: 'TOTAL PVP:', halign: 'right' }, { content: `€${totalPVP.toFixed(2)}`, halign: 'center' }],
+        ['', '', '', '', { content: 'TOTAL NETO:', halign: 'right' }, { content: `€${totalNeto.toFixed(2)}`, halign: 'center' }]
+      ]
+    : [['', '', '', { content: 'TOTAL:', halign: 'center' }, { content: `€${(priceType === 'neto' ? totalNeto : totalPVP).toFixed(2)}`, halign: 'center' }]]
 
   autoTable(doc, {
     startY: tableTop,
@@ -332,18 +336,18 @@ export async function GET(
       lineWidth: 0,
     },
     columnStyles: priceType === 'all' ? {
-      0: { cellWidth: 28, halign: 'left', fontStyle: 'bold', headHalign: 'left' },
-      1: { cellWidth: 'auto', halign: 'left', headHalign: 'left' },
+      0: { cellWidth: 28, halign: 'left', fontStyle: 'bold' },
+      1: { cellWidth: 'auto', halign: 'left' },
       2: { cellWidth: 16, halign: 'center' },
       3: { cellWidth: 18, halign: 'center' },
       4: { cellWidth: 16, halign: 'center' },
-      5: { cellWidth: 20, halign: 'center', fontStyle: 'bold', headHalign: 'center' },
+      5: { cellWidth: 20, halign: 'center', fontStyle: 'bold' },
     } : {
-      0: { cellWidth: 32, halign: 'left', fontStyle: 'bold', headHalign: 'left' },
-      1: { cellWidth: 'auto', halign: 'left', headHalign: 'left' },
+      0: { cellWidth: 32, halign: 'left', fontStyle: 'bold' },
+      1: { cellWidth: 'auto', halign: 'left' },
       2: { cellWidth: 18, halign: 'center' },
       3: { cellWidth: 22, halign: 'center' },
-      4: { cellWidth: 26, halign: 'center', fontStyle: 'bold', headHalign: 'center' },
+      4: { cellWidth: 26, halign: 'center', fontStyle: 'bold' },
     },
     alternateRowStyles: { fillColor: palette.rowAlt },
     showFoot: 'lastPage',

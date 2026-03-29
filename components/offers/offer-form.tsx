@@ -17,6 +17,7 @@ import { DuplicateOfferButton } from './duplicate-offer-button'
 import { CalcularLarguerosDialog } from './calcular-largueros-dialog'
 import { GeneratePdfButton } from './generate-pdf-button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { ExportItemsExcelButton } from './export-items-excel-button'
 import { ImportItemsDialog } from './import-items'
 import type { Offer, OfferStatus, UserRole } from '@/lib/types/database'
 import { formatOfferNumber } from '@/lib/utils/offer'
@@ -2277,10 +2278,6 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
           <div className="flex gap-1 justify-start py-3 border-b border-border">
             {!isViewer && (
               <>
-                <Button type="button" variant="outline" size="sm" onClick={addExternalItem} disabled={loading} className="h-7 text-xs">
-                  <Plus className="w-3 h-3 mr-1" />
-                  Añadir Artículo Externo
-                </Button>
                 <Button type="button" variant="outline" size="sm" onClick={addSectionHeader} disabled={loading} className="h-7 text-xs">
                   <Plus className="w-3 h-3 mr-1" />
                   Añadir Título
@@ -2293,8 +2290,17 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
                   <Plus className="w-3 h-3 mr-1" />
                   Añadir Resumen
                 </Button>
-                {offer?.id && (
-                  <ImportItemsDialog offerId={offer.id.toString()} onSuccess={() => loadOfferItems()} />
+                {/* Import/Export buttons */}
+                {(offer?.id || savedOfferId) && (
+                  <>
+                    <ImportItemsDialog offerId={(offer?.id || savedOfferId)!.toString()} onSuccess={() => loadOfferItems()} />
+                    <ExportItemsExcelButton
+                      items={items}
+                      offerNumber={offer?.offer_number || 0}
+                      customerName={(offer as any)?.customer?.company_name || currentCustomer?.company_name}
+                      disabled={loading || items.length === 0}
+                    />
+                  </>
                 )}
               </>
             )}

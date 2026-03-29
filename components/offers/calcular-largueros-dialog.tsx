@@ -170,9 +170,9 @@ export function CalcularLarguerosDialog({ items, onAddItem }: Props) {
 
   return (
     <>
-      <Button type="button" variant="outline" size="sm" className="h-8 text-xs gap-1"
+      <Button type="button" variant="outline" size="sm" className="h-7 text-xs"
         onClick={() => handleOpen(true)}>
-        <Calculator className="w-3.5 h-3.5" />
+        <Calculator className="w-3 h-3 mr-1" />
         Calcular Largueros
       </Button>
 
@@ -250,6 +250,14 @@ export function CalcularLarguerosDialog({ items, onAddItem }: Props) {
                   ))}
                 </tbody>
               </table>
+
+              {/* Informative notes */}
+              <div className="mt-4 p-3 bg-blue-50/50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/30 rounded-md text-[10px] text-muted-foreground space-y-1.5 leading-relaxed">
+                <p>1) El cálculo de largueros solo tiene en cuenta las referencias de catálogo.</p>
+                <p>2) Medida fuera de catálogo requiere añadir largueros manualmente.</p>
+                <p>3) Solo las referencias con fijación <strong>clip</strong> y <strong>pestillo</strong> incluyen Largueros.</p>
+                <p>4) Fijación con <strong>tornillo</strong> no compatible.</p>
+              </div>
 
               {/* Add all buttons */}
               <div className="flex gap-2 mt-4 pt-3 border-t border-border">
