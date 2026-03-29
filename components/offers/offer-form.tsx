@@ -486,7 +486,9 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
             ...loadedItems,
             ...Array.from({ length: 5 - loadedItems.length }, () => createEmptyItem('article'))
           ]
+        isInitialMount.current = true
         setItems(itemsToSet)
+        setUnsavedChanges(false)
       }
     } catch (err) {
       console.error('Error:', err)
@@ -496,6 +498,8 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
   useEffect(() => {
     loadOfferItems()
     loadAdjacentOffers()
+    // Mark that we are NOT in initial user change state
+    setUnsavedChanges(false)
   }, [offer?.id])
 
   // Helper to add 30 days to a date
@@ -525,17 +529,51 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
     valid_until: offer?.valid_until ? offer.valid_until.split('T')[0] : addDays(new Date().toISOString().split('T')[0], 30),
   })
 
-  // Load active products and tarifas
+  // Phase 1: Load essential UI metadata (tarifas, settings) immediately
   useEffect(() => {
-    const loadData = async () => {
+    const loadMetadata = async () => {
       const supabase = createClient()
+      const [tarifasResponse, settingsResponse] = await Promise.all([
+        supabase.from('tarifas').select('id_tarifa, nombre').order('nombre'),
+        supabase.from('app_settings').select('default_tarifa_id').eq('id', 1).single(),
+      ])
 
+      const { data: tarifasData } = tarifasResponse
+      if (tarifasData) {
+        setTarifas(tarifasData)
+
+        const { data: settingsData } = settingsResponse
+        let defaultTarifaId: number | null = null
+
+        if (settingsData?.default_tarifa_id) {
+          defaultTarifaId = settingsData.default_tarifa_id
+        } else {
+          const mysairTarifa = tarifasData.find(t => t.nombre === 'Tarifa_MYSAIR_2026')
+          defaultTarifaId = mysairTarifa ? mysairTarifa.id_tarifa : (tarifasData.length > 0 ? tarifasData[0].id_tarifa : null)
+        }
+
+        if (defaultTarifaId && !offer?.id) {
+          setDefaultTarifa(defaultTarifaId)
+          setFormData(prev => {
+            if (!prev.tarifa_id) {
+              return { ...prev, tarifa_id: defaultTarifaId }
+            }
+            return prev
+          })
+        }
+      }
+    }
+    loadMetadata()
+  }, [offer?.id])
+
+  // Phase 2: Load heavy data (products) in the background
+  useEffect(() => {
+    const loadProducts = async () => {
+      const supabase = createClient()
       const BATCH = 1000
       const MAX_PRODUCTS = 50000
 
-      // Helper: fetch all products in parallel batches to bypass the 1000-row limit
       const fetchAllProducts = async (columns: string) => {
-        // First batch to know total count
         const first = await supabase
           .from('products')
           .select(columns, { count: 'exact' })
@@ -545,10 +583,8 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
         const total = first.count ?? BATCH
         const pages = Math.min(Math.ceil(total / BATCH), MAX_PRODUCTS / BATCH)
 
-        // If only one page, return immediately
         if (pages <= 1) return first.data ?? []
 
-        // Fetch remaining pages in parallel
         const rest = await Promise.all(
           Array.from({ length: pages - 1 }, (_, i) =>
             supabase
@@ -565,55 +601,39 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
         ]
       }
 
-      // ── Phase 1: load only referencia (minimal payload) — shows references immediately
+      // Step 2.1: Load only referencies (fast)
       const refsOnly = await fetchAllProducts('id, referencia')
       if (refsOnly.length > 0) {
         setProducts(refsOnly as any[])
       }
 
-      // ── Phase 2: enrich with full columns + load tarifas/settings in parallel
-      const [fullProducts, tarifasResponse, settingsResponse] = await Promise.all([
-        fetchAllProducts('id, referencia, descripcion, modelo_nombre, familia, larguero_largo, larguero_alto'),
-        supabase.from('tarifas').select('id_tarifa, nombre').order('nombre'),
-        supabase.from('app_settings').select('default_tarifa_id').eq('id', 1).single(),
-      ])
-
+      // Step 2.2: Load full product details (slow)
+      const fullProducts = await fetchAllProducts('id, referencia, descripcion, modelo_nombre, familia, larguero_largo, larguero_alto')
       if (fullProducts.length > 0) {
         setProducts(fullProducts as any[])
       }
-
-      const { data: tarifasData } = tarifasResponse
-      if (tarifasData) {
-        setTarifas(tarifasData)
-
-        const { data: settingsData } = settingsResponse
-        let defaultTarifaId: number | null = null
-
-        if (settingsData?.default_tarifa_id) {
-          defaultTarifaId = settingsData.default_tarifa_id
-        } else {
-          const mysairTarifa = tarifasData.find(t => t.nombre === 'Tarifa_MYSAIR_2026')
-          defaultTarifaId = mysairTarifa ? mysairTarifa.id_tarifa : (tarifasData.length > 0 ? tarifasData[0].id_tarifa : null)
-        }
-
-        if (defaultTarifaId) {
-          setDefaultTarifa(defaultTarifaId)
-          setFormData(prev => {
-            if (!prev.tarifa_id) {
-              return { ...prev, tarifa_id: defaultTarifaId }
-            }
-            return prev
-          })
-        }
-      }
     }
-    loadData()
+    loadProducts()
   }, [])
 
   // Sync isValidated from server when offer prop is refreshed (e.g. via router.refresh())
   useEffect(() => {
     setIsValidated(offer?.is_validated ?? false)
-  }, [offer?.is_validated])
+    if (offer) {
+      setFormData({
+        title: offer.title || '',
+        description: offer.description || '',
+        notas_internas: (offer as any).notas_internas || '',
+        customer_id: offer.customer_id || null,
+        contact_id: offer.contact_id || null,
+        tarifa_id: offer.tarifa_id || null,
+        status: (offer.status || 'borrador') as OfferStatus,
+        valid_until: offer.valid_until ? offer.valid_until.split('T')[0] : addDays(new Date().toISOString().split('T')[0], 30),
+      })
+    }
+    // When offer changes (load/refresh), definitely NO unsaved changes yet
+    setUnsavedChanges(false)
+  }, [offer?.is_validated, offer?.id])
 
   // Calculate next offer number for new offers
   useEffect(() => {
@@ -860,8 +880,16 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
     return () => window.removeEventListener('beforeunload', handleBeforeUnload)
   }, [unsavedChanges])
 
+  const isInitialMount = useRef(true)
+
   // Mark changes as unsaved when form data changes
   useEffect(() => {
+    if (isInitialMount.current) {
+      // First mount doesn't count as user change
+      isInitialMount.current = false
+      return
+    }
+    // If we're loading data, don't set unsavedChanges
     if (!loading && !success) {
       setUnsavedChanges(true)
     }
@@ -1573,8 +1601,12 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
           <div className="space-y-0.5">
             <Label htmlFor="tarifa_id" className="text-xs">Tarifa *</Label>
             <Select
+              key={`tarifa-${formData.tarifa_id}-${tarifas.length}`}
               value={formData.tarifa_id?.toString() || ''}
-              onValueChange={(value) => setFormData(prev => ({ ...prev, tarifa_id: parseInt(value) }))}
+              onValueChange={(value) => {
+                setFormData(prev => ({ ...prev, tarifa_id: parseInt(value) }))
+                setUnsavedChanges(true)
+              }}
               disabled={loading || isViewer}
             >
               <SelectTrigger id="tarifa_id" className="h-9 text-sm" disabled={loading || isViewer}>
@@ -1596,7 +1628,10 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
             <Input
               id="title"
               value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              onChange={(e) => {
+                setFormData({ ...formData, title: e.target.value })
+                setUnsavedChanges(true)
+              }}
               required
               disabled={loading}
               className="h-9 text-sm"
@@ -1609,7 +1644,10 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
               <div className="w-full">
                 <Select
                   value={formData.status}
-                  onValueChange={(value) => setFormData({ ...formData, status: value as OfferStatus })}
+                  onValueChange={(value) => {
+                    setFormData({ ...formData, status: value as OfferStatus })
+                    setUnsavedChanges(true)
+                  }}
                   disabled={loading || isViewer}
                 >
                   <SelectTrigger id="status" className="h-9 text-sm w-full" disabled={loading || isViewer}>
@@ -1662,6 +1700,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
                 // Keep free-text format as-is, only parse numbers
                 const processedId = String(customerId).startsWith('free:') ? customerId : parseInt(String(customerId))
                 setFormData(prev => ({ ...prev, customer_id: processedId }))
+                setUnsavedChanges(true)
               }}
               disabled={loading || isViewer}
             />
@@ -1671,7 +1710,10 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
             <Label htmlFor="contact_id" className="text-xs">Contacto</Label>
             <Select
               value={formData.contact_id?.toString() || ''}
-              onValueChange={(value) => setFormData(prev => ({ ...prev, contact_id: value ? parseInt(value) : null }))}
+              onValueChange={(value) => {
+                setFormData(prev => ({ ...prev, contact_id: value ? parseInt(value) : null }))
+                setUnsavedChanges(true)
+              }}
               disabled={loading || isViewer || !formData.customer_id || contactList.length === 0}
             >
               <SelectTrigger id="contact_id" className="h-9 text-sm">
@@ -1744,7 +1786,10 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
               id="valid_until"
               type="date"
               value={formData.valid_until}
-              onChange={(e) => setFormData({ ...formData, valid_until: e.target.value })}
+              onChange={(e) => {
+                setFormData({ ...formData, valid_until: e.target.value })
+                setUnsavedChanges(true)
+              }}
               disabled={loading || isViewer}
               className="h-9 text-sm"
             />
@@ -1767,7 +1812,10 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
             <Textarea
               id="description"
               value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              onChange={(e) => {
+                setFormData({ ...formData, description: e.target.value })
+                setUnsavedChanges(true)
+              }}
               rows={4}
               disabled={loading || isViewer}
               className="resize-none text-xs"
@@ -1780,7 +1828,10 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
             <Textarea
               id="notas_internas"
               value={formData.notas_internas}
-              onChange={(e) => setFormData({ ...formData, notas_internas: e.target.value })}
+              onChange={(e) => {
+                setFormData({ ...formData, notas_internas: e.target.value })
+                setUnsavedChanges(true)
+              }}
               rows={4}
               disabled={loading || isViewer}
               className="resize-none text-xs"
@@ -2403,7 +2454,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
               offerNumber={offer?.offer_number || 0}
               customerName={(offer as any)?.customer?.company_name || currentCustomer?.company_name}
               offerTitle={offer?.title}
-              disabled={isPendingValidation || unsavedChanges}
+              disabled={isPendingValidation}
             />
           </div>
           <div className="flex gap-2">
@@ -2411,7 +2462,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
               {isViewer ? 'Cerrar' : (loading ? 'Guardando...' : 'Atrás')}
             </Button>
             {!isViewer && (
-              <Button type="submit" disabled={loading} className="h-8 text-xs" data-save-button>
+              <Button type="submit" disabled={loading || !unsavedChanges} className="h-8 text-xs" data-save-button>
                 {loading && <Loader2 className="mr-2 h-3 w-3 animate-spin" />}
                 {(offer || savedOfferId) ? 'Actualizar Oferta' : 'Guardar'}
               </Button>
