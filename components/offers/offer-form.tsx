@@ -43,6 +43,7 @@ interface OfferItem {
   neto_total1: number
   neto_total2: number
   external_ref?: string  // Free-text reference for external articles
+  is_pvp_modified?: boolean // Track if PVP was manually changed
 }
 
 // Product Search Input Component
@@ -961,6 +962,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
       pvp_total,
       neto_total1,
       neto_total2,
+      is_pvp_modified: item.is_pvp_modified,
     }
   }
 
@@ -1006,6 +1008,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
       description: product.descripcion || '',
       pvp: precioFromTarifa !== null ? precioFromTarifa : 0,
       discount1: automaticDiscount,
+      is_pvp_modified: false,
     }
     newItems[index] = calculateItemTotals(newItems[index])
     
@@ -1051,6 +1054,9 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
 
     // Recalcular totales cuando cambian campos relevantes
     if (['quantity', 'pvp', 'discount1', 'discount2'].includes(field)) {
+      if (field === 'pvp') {
+        newItems[index] = { ...newItems[index], is_pvp_modified: true }
+      }
       newItems[index] = calculateItemTotals(newItems[index])
     }
 
@@ -1115,6 +1121,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
       pvp: precioFromTarifa !== null ? precioFromTarifa : 0,
       quantity,
       discount1: automaticDiscount,
+      is_pvp_modified: false,
     }
     
     setItems(currentItems => {
@@ -1377,6 +1384,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
               discount2: parseFloat(String(item.discount2)) || 0,
               neto_total1: parseFloat(String(item.neto_total1)) || 0,
               neto_total2: parseFloat(String(item.neto_total2)) || 0,
+              is_pvp_modified: item.is_pvp_modified || false,
             }))
 
           if (itemsToInsert.length > 0) {
@@ -1427,6 +1435,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
               discount2: parseFloat(String(item.discount2)) || 0,
               neto_total1: parseFloat(String(item.neto_total1)) || 0,
               neto_total2: parseFloat(String(item.neto_total2)) || 0,
+              is_pvp_modified: item.is_pvp_modified || false,
             }))
 
           if (itemsToInsert.length > 0) {
@@ -2138,7 +2147,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
                               value={item.pvp || ''}
                               onChange={(e) => handleItemChange(index, 'pvp', Number(e.target.value))}
                               onWheel={(e) => e.currentTarget.blur()}
-                              className="h-7 text-xs text-right"
+                              className={`h-7 text-xs text-right ${item.is_pvp_modified ? 'bg-blue-50/50 border-blue-200 focus-visible:ring-blue-500' : ''}`}
                               disabled={loading || isViewer}
                               placeholder="-"
                             />
@@ -2249,7 +2258,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
                             value={item.pvp || ''}
                             onChange={(e) => handleItemChange(index, 'pvp', Number(e.target.value))}
                             onWheel={(e) => e.currentTarget.blur()}
-                            className="h-7 text-xs text-right"
+                            className={`h-7 text-xs text-right ${item.is_pvp_modified ? 'bg-blue-50/50 border-blue-200 focus-visible:ring-blue-500' : ''}`}
                             disabled={loading || isViewer}
                             placeholder="-"
                           />
