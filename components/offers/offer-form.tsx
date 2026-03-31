@@ -15,6 +15,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Copy, Loader2, Plus, X, CheckCircle, ChevronDown, Check, Search, Eye, FileText, AlertCircle, ChevronLeft, ChevronRight, GripVertical, Trash2 } from 'lucide-react'
 import { DuplicateOfferButton } from './duplicate-offer-button'
 import { CalcularLarguerosDialog } from './calcular-largueros-dialog'
+import { CalcularMedidasEspecialesDialog } from './calcular-medidas-especiales-dialog'
 import { GeneratePdfButton } from './generate-pdf-button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { ExportItemsExcelButton } from './export-items-excel-button'
@@ -43,6 +44,7 @@ interface OfferItem {
   neto_total1: number
   neto_total2: number
   external_ref?: string  // Free-text reference for external articles
+  custom_ref?: string    // Custom reference for special measurements (article type)
   is_pvp_modified?: boolean // Track if PVP was manually changed
 }
 
@@ -378,6 +380,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
   const [savedOfferId, setSavedOfferId] = useState<string | null>(offer?.id?.toString() ?? null)
+  const [savedOfferNumber, setSavedOfferNumber] = useState<number | null>(offer?.offer_number ?? null)
   const [products, setProducts] = useState<any[]>([])
   const [tarifas, setTarifas] = useState<any[]>([])
   const [nextOfferNumber, setNextOfferNumber] = useState<number | null>(null)
@@ -1103,7 +1106,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
     return lastDataIndex + 1
   }
 
-  const addItemByProductId = (productId: string, quantity: number) => {
+  const addItemByProductId = (productId: string, quantity: number, customDescription?: string, customPrice?: number) => {
     const product = products.find(p => String(p.id) === String(productId))
 
     const precioFromTarifa = product ? getPrecioForProduct(product.id) : null
@@ -1117,11 +1120,12 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
     const newItem = {
       ...createEmptyItem('article'),
       product_id: String(productId),
+      custom_ref: customDescription,
       description: product ? product.descripcion || '' : '',
-      pvp: precioFromTarifa !== null ? precioFromTarifa : 0,
+      pvp: customPrice !== undefined ? customPrice : (precioFromTarifa !== null ? precioFromTarifa : 0),
       quantity,
       discount1: automaticDiscount,
-      is_pvp_modified: false,
+      is_pvp_modified: customPrice !== undefined,
     }
     
     setItems(currentItems => {
@@ -1376,6 +1380,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
               type: item.type,
               product_id: item.product_id ? Number(item.product_id) : null,
               external_ref: item.type === 'external' ? (item.external_ref || null) : null,
+              custom_ref: item.custom_ref || null,
               description: item.description || null,
               quantity: item.type === 'summary' ? 0 : (parseInt(String(item.quantity)) || 0),
               pvp: parseFloat(String(item.pvp)) || 0,
@@ -1411,6 +1416,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
         if (!newOfferData) throw new Error('Failed to create offer')
 
         offerId = newOfferData.id.toString()
+        setSavedOfferNumber(newOfferData.offer_number)
 
         // Insert offer items
         if (items.length > 0) {
@@ -1427,6 +1433,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
               type: item.type,
               product_id: item.product_id ? Number(item.product_id) : null,
               external_ref: item.type === 'external' ? (item.external_ref || null) : null,
+              custom_ref: item.custom_ref || null,
               description: item.description || null,
               quantity: item.type === 'summary' ? 0 : (parseInt(String(item.quantity)) || 0),
               pvp: parseFloat(String(item.pvp)) || 0,
@@ -1561,8 +1568,8 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
             <Label className="text-xs">Nº Oferta</Label>
             <div className="flex items-center gap-1">
               <div className="flex-1 h-9 px-3 py-2 bg-muted rounded-md border border-input flex items-center text-sm font-medium justify-center">
-                {offer
-                  ? formatOfferNumber(offer.offer_number, new Date(offer.created_at).getFullYear())
+                {savedOfferNumber || offer?.offer_number
+                  ? formatOfferNumber(offer?.offer_number || savedOfferNumber || 0, new Date(offer?.created_at || new Date()).getFullYear())
                   : nextOfferNumber
                     ? formatOfferNumber(nextOfferNumber, new Date().getFullYear())
                     : 'Calculando...'}
@@ -1910,18 +1917,24 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <Label className="text-xs">Artículos de la Oferta</Label>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="flex items-center gap-1">
+                <CalcularMedidasEspecialesDialog
+                  tarifaId={formData.tarifa_id ? Number(formData.tarifa_id) : null}
+                  onAddItem={(productId: string, quantity: number, customDescription?: string, customPrice?: number) => {
+                    addItemByProductId(productId, quantity, customDescription, customPrice)
+                  }}
+                />
+              </div>
+              
+              <div className="h-4 w-px bg-border mx-1 hidden sm:block"></div>
+              
               {!isViewer && (
                 <Button type="button" variant="outline" size="sm" onClick={addItem} disabled={loading} className="h-7 text-xs">
                   <Plus className="w-3 h-3 mr-1" />
                   Añadir Línea
                 </Button>
               )}
-                {!isViewer && (
-                  <Button type="button" variant="outline" size="sm" onClick={() => window.open('https://docs.google.com/spreadsheets/d/12fjRD3s82M38YtwH0XkJe4iHUTR6S9WG/edit?usp=sharing&ouid=105945344502741152620&rtpof=true&sd=true', '_blank')} className="h-7 text-xs">
-                    Calcular precio articulo
-                  </Button>
-                )}
             </div>
           </div>
 
@@ -2222,12 +2235,18 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
                           {!isViewer && <GripVertical className="w-3.5 h-3.5 text-muted-foreground/50 hover:text-muted-foreground" />}
                         </td>
                         <td className="px-2 py-1 sticky left-6 z-10 bg-background border-r border-border/50">
-                          <ProductSearchInput
-                            value={item.product_id || ''}
-                            products={products}
-                            onSelect={(productId) => handleProductSelect(index, productId)}
-                            disabled={loading || isViewer}
-                          />
+                          {item.custom_ref ? (
+                            <div className="h-7 px-2 flex items-center text-[10px] font-bold text-blue-700 bg-blue-50/80 border border-blue-200 rounded-md truncate" title={item.custom_ref}>
+                              {item.custom_ref}
+                            </div>
+                          ) : (
+                            <ProductSearchInput
+                              value={item.product_id || ''}
+                              products={products}
+                              onSelect={(productId) => handleProductSelect(index, productId)}
+                              disabled={loading || isViewer}
+                            />
+                          )}
                         </td>
                         <td className="px-2 py-1">
                           <Input
@@ -2460,9 +2479,9 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
             </Button>
             <GeneratePdfButton
               offerId={savedOfferId || offer?.id?.toString() || ''}
-              offerNumber={offer?.offer_number || 0}
+              offerNumber={savedOfferNumber || offer?.offer_number || 0}
               customerName={(offer as any)?.customer?.company_name || currentCustomer?.company_name}
-              offerTitle={offer?.title}
+              offerTitle={formData.title || offer?.title}
               disabled={isPendingValidation}
             />
           </div>
