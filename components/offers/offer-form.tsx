@@ -1106,7 +1106,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
     return lastDataIndex + 1
   }
 
-  const addItemByProductId = (productId: string, quantity: number, customDescription?: string, customPrice?: number) => {
+  const addItemByProductId = (productId: string, quantity: number, customDescription?: string, customPrice?: number, customLongDescription?: string) => {
     const product = products.find(p => String(p.id) === String(productId))
 
     const precioFromTarifa = product ? getPrecioForProduct(product.id) : null
@@ -1121,7 +1121,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
       ...createEmptyItem('article'),
       product_id: String(productId),
       custom_ref: customDescription,
-      description: product ? product.descripcion || '' : '',
+      description: customLongDescription || (product ? product.descripcion || '' : ''),
       pvp: customPrice !== undefined ? customPrice : (precioFromTarifa !== null ? precioFromTarifa : 0),
       quantity,
       discount1: automaticDiscount,
@@ -1379,8 +1379,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
               offer_id: offerId,
               type: item.type,
               product_id: item.product_id ? Number(item.product_id) : null,
-              external_ref: item.type === 'external' ? (item.external_ref || null) : null,
-              custom_ref: item.custom_ref || null,
+              external_ref: item.type === 'external' ? (item.external_ref || null) : (item.custom_ref || null),
               description: item.description || null,
               quantity: item.type === 'summary' ? 0 : (parseInt(String(item.quantity)) || 0),
               pvp: parseFloat(String(item.pvp)) || 0,
@@ -1389,7 +1388,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
               discount2: parseFloat(String(item.discount2)) || 0,
               neto_total1: parseFloat(String(item.neto_total1)) || 0,
               neto_total2: parseFloat(String(item.neto_total2)) || 0,
-              is_pvp_modified: item.is_pvp_modified || false,
+              // is_pvp_modified: item.is_pvp_modified || false,
             }))
 
           if (itemsToInsert.length > 0) {
@@ -1432,8 +1431,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
               offer_id: offerId,
               type: item.type,
               product_id: item.product_id ? Number(item.product_id) : null,
-              external_ref: item.type === 'external' ? (item.external_ref || null) : null,
-              custom_ref: item.custom_ref || null,
+              external_ref: item.type === 'external' ? (item.external_ref || null) : (item.custom_ref || null),
               description: item.description || null,
               quantity: item.type === 'summary' ? 0 : (parseInt(String(item.quantity)) || 0),
               pvp: parseFloat(String(item.pvp)) || 0,
@@ -1442,7 +1440,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
               discount2: parseFloat(String(item.discount2)) || 0,
               neto_total1: parseFloat(String(item.neto_total1)) || 0,
               neto_total2: parseFloat(String(item.neto_total2)) || 0,
-              is_pvp_modified: item.is_pvp_modified || false,
+              // is_pvp_modified: item.is_pvp_modified || false,
             }))
 
           if (itemsToInsert.length > 0) {
@@ -1921,8 +1919,8 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
               <div className="flex items-center gap-1">
                 <CalcularMedidasEspecialesDialog
                   tarifaId={formData.tarifa_id ? Number(formData.tarifa_id) : null}
-                  onAddItem={(productId: string, quantity: number, customDescription?: string, customPrice?: number) => {
-                    addItemByProductId(productId, quantity, customDescription, customPrice)
+                  onAddItem={(productId: string, quantity: number, customDescription?: string, customPrice?: number, customLongDescription?: string) => {
+                    addItemByProductId(productId, quantity, customDescription, customPrice, customLongDescription)
                   }}
                 />
               </div>
@@ -2235,9 +2233,9 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
                           {!isViewer && <GripVertical className="w-3.5 h-3.5 text-muted-foreground/50 hover:text-muted-foreground" />}
                         </td>
                         <td className="px-2 py-1 sticky left-6 z-10 bg-background border-r border-border/50">
-                          {item.custom_ref ? (
-                            <div className="h-7 px-2 flex items-center text-[10px] font-bold text-blue-700 bg-blue-50/80 border border-blue-200 rounded-md truncate" title={item.custom_ref}>
-                              {item.custom_ref}
+                          {item.custom_ref || (item.type === 'article' && item.external_ref) ? (
+                            <div className="h-7 px-2 flex items-center text-[10px] font-bold text-blue-700 bg-blue-50/80 border border-blue-200 rounded-md truncate" title={item.custom_ref || item.external_ref}>
+                              {item.custom_ref || item.external_ref}
                             </div>
                           ) : (
                             <ProductSearchInput

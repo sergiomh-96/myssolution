@@ -32,7 +32,7 @@ const MODEL_CONFIG: Record<string, any> = {
 
 interface Props {
   tarifaId: number | null
-  onAddItem: (productId: string, quantity: number, customDescription?: string, customPrice?: number) => void
+  onAddItem: (productId: string, quantity: number, customDescription?: string, customPrice?: number, customLongDescription?: string) => void
 }
 
 interface CalcResult {
@@ -95,7 +95,7 @@ export function CalcularMedidasEspecialesDialog({ tarifaId, onAddItem }: Props) 
       setGeneratedRef('')
       setError(null)
     }
-  }, [modelo, variante, ancho, alto, vias, acabado, fijacion, aislamiento, hasCalculated])
+  }, [modelo, variante, ancho, alto, vias, acabado, fijacion, aislamiento, incremento, hasCalculated])
 
   const handleOpen = (val: boolean) => {
     setOpen(val)
@@ -337,10 +337,30 @@ export function CalcularMedidasEspecialesDialog({ tarifaId, onAddItem }: Props) 
     // Calculate final price with increment
     const finalPrice = totalPrice * (1 + incremento / 100)
     
-    // We use the first product ID to keep category/discount properties, 
-    // but override the description and price
-    const mainProductId = results[0].product.id
-    onAddItem(mainProductId.toString(), 1, generatedRef, finalPrice)
+    // Customize description from the base product
+    const baseProduct = results[0].product
+    let customLongDescription = baseProduct.descripcion || ''
+    
+    const nAncho = parseDimension(ancho)
+    const nAlto = parseDimension(alto)
+    
+    // Find measures in original description (skipping model name digits if possible)
+    // We look for patterns like 1000X100, 1000x100 or standalone large numbers
+    const measureMatch = customLongDescription.match(/\d{2,}([Xx]\d{2,})?/gi)
+    if (measureMatch && measureMatch.length > 0) {
+      // Typically the last or penultimate match is the dimension
+      const lastMeasure = measureMatch[measureMatch.length - 1]
+      const newMeasure = nAlto > 0 ? `${nAncho}X${nAlto}` : `${nAncho}`
+      
+      const index = customLongDescription.toLowerCase().lastIndexOf(lastMeasure.toLowerCase())
+      if (index !== -1) {
+        const baseText = customLongDescription.substring(0, index)
+        const parts = [fijacion, acabado, vias, aislamiento === 'S' ? 'AISLADO' : ''].filter(p => p && p !== ' ' && p !== 'NO').join(' ')
+        customLongDescription = `${baseText}${newMeasure} ${parts}`.trim()
+      }
+    }
+    
+    onAddItem(baseProduct.id.toString(), 1, generatedRef, finalPrice, customLongDescription)
     
     setOpen(false)
   }
