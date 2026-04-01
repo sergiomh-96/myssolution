@@ -2235,8 +2235,13 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
                         </td>
                         <td className="px-2 py-1 sticky left-6 z-10 bg-background border-r border-border/50">
                           {item.custom_ref || (item.type === 'article' && item.external_ref) ? (
-                            <div className="h-7 px-2 flex items-center text-[10px] font-bold text-blue-700 bg-blue-50/80 border border-blue-200 rounded-md truncate" title={item.custom_ref || item.external_ref}>
-                              {item.custom_ref || item.external_ref}
+                            <div className="relative">
+                              <div className="h-7 px-2 flex items-center text-xs font-medium pr-6 bg-blue-50/50 border border-blue-200 rounded-md truncate text-foreground" title={item.custom_ref || item.external_ref}>
+                                {item.custom_ref || item.external_ref}
+                              </div>
+                              <div className="absolute right-1.5 top-1/2 -translate-y-1/2" title="Artículo de medida especial o con referencia personalizada">
+                                <FileText className="w-3 h-3 text-blue-600" />
+                              </div>
                             </div>
                           ) : (
                             <ProductSearchInput
