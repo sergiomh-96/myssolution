@@ -2397,6 +2397,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
                     <ImportItemsDialog offerId={(offer?.id || savedOfferId)!.toString()} onSuccess={() => loadOfferItems()} />
                     <ExportItemsExcelButton
                       items={items}
+                      products={products}
                       offerNumber={offer?.offer_number || 0}
                       customerName={(offer as any)?.customer?.company_name || currentCustomer?.company_name}
                       disabled={loading || items.length === 0}

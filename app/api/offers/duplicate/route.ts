@@ -57,6 +57,7 @@ export async function POST(request: Request) {
         created_by: profile.id,
         contact_id: offer.contact_id || null,
         assigned_to: offer.assigned_to || null,
+        valid_until: offer.valid_until || null,
       })
       .select()
       .single()
@@ -70,13 +71,16 @@ export async function POST(request: Request) {
       .from('offer_items')
       .select('*')
       .eq('offer_id', id)
+      .order('id') // Maintain order
 
     if (itemsError) {
       // non-fatal, continue
     } else if (items && items.length > 0) {
       const itemsToInsert = items.map((item: any) => ({
         offer_id: newOffer.id,
+        type: item.type || 'article',
         product_id: item.product_id,
+        external_ref: item.external_ref || null,
         description: item.description || '',
         quantity: item.quantity,
         pvp: item.pvp,
@@ -85,6 +89,7 @@ export async function POST(request: Request) {
         neto_total1: item.neto_total1,
         neto_total2: item.neto_total2,
         pvp_total: item.pvp_total,
+        is_pvp_modified: item.is_pvp_modified || false,
       }))
 
       const { error: insertError } = await supabase

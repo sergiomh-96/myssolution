@@ -7,6 +7,7 @@ import { FileSpreadsheet } from 'lucide-react'
 
 interface ExportItemsExcelButtonProps {
   items: any[]
+  products?: any[]
   offerNumber?: number | string
   customerName?: string
   disabled?: boolean
@@ -14,6 +15,7 @@ interface ExportItemsExcelButtonProps {
 
 export function ExportItemsExcelButton({ 
   items, 
+  products,
   offerNumber, 
   customerName, 
   disabled 
@@ -25,29 +27,46 @@ export function ExportItemsExcelButton({
     // Prepare data for Excel
     const data = items.map((item) => {
       // Header/Summary rows
-      if (item.type === 'header' || item.type === 'summary') {
+      if (item.type === 'section_header' || item.type === 'note' || item.type === 'summary') {
+        const typeLabel = item.type === 'section_header' ? 'TÍTULO' : (item.type === 'note' ? 'ANOTACIÓN' : 'RESUMEN')
         return {
-          'Referencia': '',
-          'Descripción': (item.description || item.product?.descripcion || '').toUpperCase(),
+          'Referencia': typeLabel,
+          'Descripción': (item.description || '').toUpperCase(),
           'Cantidad': null,
           'PVP Unit.': null,
-          'Desc %': null,
-          'Total Neto': null,
+          'PVP Total': item.type === 'summary' ? item.pvp_total : null,
+          'Desc 1 %': null,
+          'Desc 2 %': null,
+          'Neto Total 1': item.type === 'summary' ? item.neto_total1 : null,
+          'Neto Total 2': item.type === 'summary' ? item.neto_total2 : null,
         }
       }
 
-      const pvp = Number(item.pvp_unit || 0)
+      const pvp = Number(item.pvp || 0)
+      const pvpTotal = Number(item.pvp_total || 0)
       const qty = Number(item.quantity || 1)
-      const descuento = Number(item.discount || 0)
-      const netoTotal = Number(item.neto_total2 || 0)
+      const descuento1 = Number(item.discount1 || 0)
+      const descuento2 = Number(item.discount2 || 0)
+      const netoTotal1 = Number(item.neto_total1 || 0)
+      const netoTotal2 = Number(item.neto_total2 || 0)
+
+      // Find product reference if we have the products catalog
+      let reference = item.external_ref || item.custom_ref || ''
+      if (!reference && item.product_id && products) {
+        const product = products.find(p => String(p.id) === String(item.product_id))
+        reference = product?.referencia || ''
+      }
 
       return {
-        'Referencia': item.product?.referencia || item.external_ref || '',
-        'Descripción': item.description || item.product?.descripcion || '',
+        'Referencia': reference,
+        'Descripción': item.description || '',
         'Cantidad': qty,
         'PVP Unit.': pvp,
-        'Desc %': descuento,
-        'Total Neto': netoTotal,
+        'PVP Total': pvpTotal,
+        'Desc 1 %': descuento1,
+        'Desc 2 %': descuento2,
+        'Neto Total 1': netoTotal1,
+        'Neto Total 2': netoTotal2,
       }
     })
 
@@ -56,12 +75,15 @@ export function ExportItemsExcelButton({
     
     // Set column widths
     const maxWidths = [
-      { wch: 20 }, // Referencia
+      { wch: 15 }, // Referencia
       { wch: 60 }, // Descripción
       { wch: 10 }, // Cantidad
       { wch: 12 }, // PVP Unit.
-      { wch: 10 }, // Desc %
-      { wch: 15 }, // Total Neto
+      { wch: 12 }, // PVP Total
+      { wch: 10 }, // Desc 1 %
+      { wch: 10 }, // Desc 2 %
+      { wch: 15 }, // Neto Total 1
+      { wch: 15 }, // Neto Total 2
     ]
     ws['!cols'] = maxWidths
 
