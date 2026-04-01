@@ -736,8 +736,9 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
   useEffect(() => {
     if (!currentCustomer || items.length === 0) return
 
-    const updatedItems = items.map(item => {
-      if (!item.product_id) return item
+    setItems(currentItems => currentItems.map(item => {
+      // Ignorar artículos de medida especial, artículos externos o con PVP manual
+      if (!item.product_id || item.external_ref || item.custom_ref || item.is_pvp_modified) return item
 
       const product = products.find(p => p.id === item.product_id)
       if (!product) return item
@@ -759,9 +760,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
       }
 
       return item
-    })
-
-    setItems(updatedItems)
+    }))
   }, [currentCustomer])
 
   // Load precios when tarifa changes
@@ -846,19 +845,21 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
   useEffect(() => {
     if (precios.length === 0 || items.length === 0) return
 
-    const updatedItems = items.map((item) => {
-      if (!item.product_id) return item
+    setItems(currentItems => currentItems.map((item) => {
+      // Ignorar artículos de medida especial, artículos externos o con PVP manual
+      if (!item.product_id || item.external_ref || item.custom_ref || item.is_pvp_modified) return item
 
       const newPrecio = precios.find(p => p.id_producto === parseInt(item.product_id || '0'))
 
-      const updatedItem = {
-        ...item,
-        pvp: newPrecio ? newPrecio.precio : 0,
+      if (newPrecio && newPrecio.precio !== item.pvp) {
+        const updatedItem = {
+          ...item,
+          pvp: newPrecio.precio,
+        }
+        return calculateItemTotals(updatedItem)
       }
-      return calculateItemTotals(updatedItem)
-    })
-
-    setItems(updatedItems)
+      return item
+    }))
   }, [precios])
 
   // Execute callback action after successful save
@@ -1388,7 +1389,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
               discount2: parseFloat(String(item.discount2)) || 0,
               neto_total1: parseFloat(String(item.neto_total1)) || 0,
               neto_total2: parseFloat(String(item.neto_total2)) || 0,
-              // is_pvp_modified: item.is_pvp_modified || false,
+              is_pvp_modified: item.is_pvp_modified || false,
             }))
 
           if (itemsToInsert.length > 0) {
@@ -1440,7 +1441,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
               discount2: parseFloat(String(item.discount2)) || 0,
               neto_total1: parseFloat(String(item.neto_total1)) || 0,
               neto_total2: parseFloat(String(item.neto_total2)) || 0,
-              // is_pvp_modified: item.is_pvp_modified || false,
+              is_pvp_modified: item.is_pvp_modified || false,
             }))
 
           if (itemsToInsert.length > 0) {
