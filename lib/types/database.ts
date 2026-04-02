@@ -140,13 +140,13 @@ export interface ChatMember {
 }
 
 export interface Notification {
-  id: number
+  id: string
   user_id: string
   type: NotificationType
   title: string
-  content: string | null
+  message: string | null
   link: string | null
-  is_read: boolean
+  read: boolean
   created_at: string
 }
 

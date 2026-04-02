@@ -132,6 +132,27 @@ export function CustomerForm({
             })))
           if (assignError) throw assignError
         }
+
+        if (newCustomer) {
+          const { data: admins } = await supabase.from('profiles').select('id').eq('role', 'admin')
+          
+          if (admins && admins.length > 0) {
+            const notificationsToInsert = admins
+              .filter(admin => admin.id !== currentUserId)
+              .map(admin => ({
+                user_id: admin.id,
+                type: 'system' as any,
+                title: 'Nuevo cliente creado',
+                message: `Se ha creado un nuevo cliente: ${newCustomer.company_name}. Pulsa para ver`,
+                link: `/dashboard/customers/${newCustomer.id}/edit`,
+                read: false
+              }))
+            
+            if (notificationsToInsert.length > 0) {
+              await supabase.from('notifications').insert(notificationsToInsert)
+            }
+          }
+        }
       }
 
       router.push('/dashboard/customers')

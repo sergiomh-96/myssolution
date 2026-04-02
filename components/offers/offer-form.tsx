@@ -1488,9 +1488,9 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
               user_id: userId,
               type: 'offer_assigned' as any,
               title: 'Oferta asignada',
-              content: `${currentUserName || createdByName || 'Un usuario'} te ha asignado la oferta ${formattedOfferNumber}. Pulsa para ver`,
+              message: `${currentUserName || createdByName || 'Un usuario'} te ha asignado la oferta ${formattedOfferNumber}. Pulsa para ver`,
               link: `/dashboard/offers/${offerId}`,
-              is_read: false
+              read: false
             }))
             
             await supabase.from('notifications').insert(notificationsToInsert)
@@ -1510,9 +1510,9 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
               user_id: admin.id,
               type: 'validation_requested' as any,
               title: 'Validación requerida',
-              content: `${currentUserName || createdByName || 'Un usuario'} solicita validación para la oferta con nº ${formattedOfferNumber}. Pulsa para ver`,
+              message: `${currentUserName || createdByName || 'Un usuario'} solicita validación para la oferta con nº ${formattedOfferNumber}. Pulsa para ver`,
               link: '/dashboard/validations',
-              is_read: false
+              read: false
             }))
           
           if (notificationsToInsert.length > 0) {

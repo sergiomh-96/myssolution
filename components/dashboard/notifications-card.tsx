@@ -12,9 +12,9 @@ import { cn } from '@/lib/utils'
 interface NotificationItem {
   id: number
   title: string
-  content: string | null
+  message: string | null
   link: string | null
-  is_read: boolean
+  read: boolean
   created_at: string
   type: string
 }
@@ -28,8 +28,8 @@ export function NotificationsCard({ notifications = [], isSensitiveVisible = tru
   const [filter, setFilter] = useState<'all' | 'unread' | 'read'>('all')
 
   const filteredNotifications = notifications.filter(n => {
-    if (filter === 'unread') return !n.is_read
-    if (filter === 'read') return n.is_read
+    if (filter === 'unread') return !n.read
+    if (filter === 'read') return n.read
     return true
   })
 
@@ -64,7 +64,7 @@ export function NotificationsCard({ notifications = [], isSensitiveVisible = tru
               >
                 <div className="flex items-center gap-3">
                   <div className="flex-shrink-0">
-                    {!notification.is_read ? (
+                    {!notification.read ? (
                       <Circle className="w-2 h-2 fill-primary text-primary" />
                     ) : (
                       <Circle className="w-2 h-2 text-muted-foreground opacity-20" />
@@ -73,7 +73,7 @@ export function NotificationsCard({ notifications = [], isSensitiveVisible = tru
                   <div className="flex-1 min-w-0">
                     <p className={cn(
                       "text-xs font-semibold truncate transition-all duration-300",
-                      notification.is_read ? 'text-muted-foreground' : 'text-foreground',
+                      notification.read ? 'text-muted-foreground' : 'text-foreground',
                       !isSensitiveVisible && "blur-md select-none opacity-40"
                     )}>
                       {notification.title}
@@ -83,7 +83,7 @@ export function NotificationsCard({ notifications = [], isSensitiveVisible = tru
                         "text-[10px] text-muted-foreground truncate flex-1 transition-all duration-300",
                         !isSensitiveVisible && "blur-sm opacity-40 select-none"
                       )}>
-                        {notification.content || 'Sin descripción'}
+                        {notification.message || 'Sin descripción'}
                       </p>
                       <span className="text-[10px] text-muted-foreground italic whitespace-nowrap">
                         {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true, locale: es })}
