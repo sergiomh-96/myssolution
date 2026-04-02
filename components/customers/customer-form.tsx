@@ -45,6 +45,7 @@ export function CustomerForm({
   const [selectedProfileIds, setSelectedProfileIds] = useState<string[]>(
     assignedProfiles.map(ap => ap.profile_id)
   )
+  const [unsavedChanges, setUnsavedChanges] = useState(false)
   const [profileToAdd, setProfileToAdd] = useState<string>('')
 
   // Use exact DB column names
@@ -69,15 +70,22 @@ export function CustomerForm({
     descuento_agfri: customer?.descuento_agfri || 0,
   })
 
+  const handleInputChange = (field: string, value: any) => {
+    setFormData(prev => ({ ...prev, [field]: value }))
+    setUnsavedChanges(true)
+  }
+
   const addProfile = () => {
     if (profileToAdd && !selectedProfileIds.includes(profileToAdd)) {
       setSelectedProfileIds(prev => [...prev, profileToAdd])
       setProfileToAdd('')
+      setUnsavedChanges(true)
     }
   }
 
   const removeProfile = (id: string) => {
     setSelectedProfileIds(prev => prev.filter(p => p !== id))
+    setUnsavedChanges(true)
   }
 
   const getProfileName = (id: string) => {
@@ -181,7 +189,7 @@ export function CustomerForm({
           <Input
             id="company_name"
             value={formData.company_name}
-            onChange={(e) => setFormData({ ...formData, company_name: e.target.value })}
+            onChange={(e) => handleInputChange('company_name', e.target.value)}
             required
             disabled={loading}
             className="h-8 text-sm"
@@ -193,7 +201,7 @@ export function CustomerForm({
           <Input
             id="nif"
             value={formData.nif}
-            onChange={(e) => setFormData({ ...formData, nif: e.target.value })}
+            onChange={(e) => handleInputChange('nif', e.target.value)}
             disabled={loading}
             className="h-8 text-sm"
           />
@@ -216,7 +224,7 @@ export function CustomerForm({
           <Input
             id="contact_name"
             value={formData.contact_name}
-            onChange={(e) => setFormData({ ...formData, contact_name: e.target.value })}
+            onChange={(e) => handleInputChange('contact_name', e.target.value)}
             disabled={loading}
             className="h-8 text-sm"
           />
@@ -228,7 +236,7 @@ export function CustomerForm({
             id="contact_email"
             type="email"
             value={formData.contact_email}
-            onChange={(e) => setFormData({ ...formData, contact_email: e.target.value })}
+            onChange={(e) => handleInputChange('contact_email', e.target.value)}
             disabled={loading}
             className="h-8 text-sm"
           />
@@ -240,7 +248,7 @@ export function CustomerForm({
             id="contact_phone"
             type="tel"
             value={formData.contact_phone}
-            onChange={(e) => setFormData({ ...formData, contact_phone: e.target.value })}
+            onChange={(e) => handleInputChange('contact_phone', e.target.value)}
             disabled={loading}
             className="h-8 text-sm"
           />
@@ -252,7 +260,7 @@ export function CustomerForm({
             id="website"
             placeholder="https://example.com"
             value={formData.website}
-            onChange={(e) => setFormData({ ...formData, website: e.target.value })}
+            onChange={(e) => handleInputChange('website', e.target.value)}
             disabled={loading}
             className="h-8 text-sm"
           />
@@ -263,7 +271,7 @@ export function CustomerForm({
           <Input
             id="industry"
             value={formData.industry}
-            onChange={(e) => setFormData({ ...formData, industry: e.target.value })}
+            onChange={(e) => handleInputChange('industry', e.target.value)}
             disabled={loading}
             className="h-8 text-sm"
           />
@@ -273,7 +281,7 @@ export function CustomerForm({
           <Label htmlFor="status" className="text-sm">Estado</Label>
           <Select
             value={formData.status}
-            onValueChange={(value) => setFormData({ ...formData, status: value as CustomerStatus })}
+            onValueChange={(value) => handleInputChange('status', value as CustomerStatus)}
             disabled={loading}
           >
             <SelectTrigger id="status" className="h-8 text-sm">
@@ -294,7 +302,7 @@ export function CustomerForm({
           <Input
             id="address"
             value={formData.address}
-            onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+            onChange={(e) => handleInputChange('address', e.target.value)}
             disabled={loading}
             className="h-8 text-sm"
           />
@@ -305,7 +313,7 @@ export function CustomerForm({
           <Input
             id="ciudad"
             value={formData.ciudad}
-            onChange={(e) => setFormData({ ...formData, ciudad: e.target.value })}
+            onChange={(e) => handleInputChange('ciudad', e.target.value)}
             disabled={loading}
             className="h-8 text-sm"
           />
@@ -316,7 +324,7 @@ export function CustomerForm({
           <Input
             id="provincia"
             value={formData.provincia}
-            onChange={(e) => setFormData({ ...formData, provincia: e.target.value })}
+            onChange={(e) => handleInputChange('provincia', e.target.value)}
             disabled={loading}
             className="h-8 text-sm"
           />
@@ -327,7 +335,7 @@ export function CustomerForm({
           <Input
             id="codigo_postal"
             value={formData.codigo_postal}
-            onChange={(e) => setFormData({ ...formData, codigo_postal: e.target.value })}
+            onChange={(e) => handleInputChange('codigo_postal', e.target.value)}
             disabled={loading}
             className="h-8 text-sm"
           />
@@ -338,7 +346,7 @@ export function CustomerForm({
           <Input
             id="pais"
             value={formData.pais}
-            onChange={(e) => setFormData({ ...formData, pais: e.target.value })}
+            onChange={(e) => handleInputChange('pais', e.target.value)}
             disabled={loading}
             className="h-8 text-sm"
           />
@@ -350,7 +358,7 @@ export function CustomerForm({
         <Textarea
           id="notas_cliente"
           value={formData.notas_cliente}
-          onChange={(e) => setFormData({ ...formData, notas_cliente: e.target.value })}
+          onChange={(e) => handleInputChange('notas_cliente', e.target.value)}
           rows={2}
           disabled={loading}
           className="text-sm"
@@ -375,7 +383,7 @@ export function CustomerForm({
               max="100"
               step="0.01"
               value={formData.descuento_sistemas}
-              onChange={(e) => setFormData({ ...formData, descuento_sistemas: parseFloat(e.target.value) || 0 })}
+              onChange={(e) => handleInputChange('descuento_sistemas', parseFloat(e.target.value) || 0)}
               disabled={loading || currentUserRole !== 'admin'}
               className={`h-8 text-sm ${currentUserRole !== 'admin' ? 'bg-muted' : ''}`}
             />
@@ -389,7 +397,7 @@ export function CustomerForm({
               max="100"
               step="0.01"
               value={formData.descuento_difusion}
-              onChange={(e) => setFormData({ ...formData, descuento_difusion: parseFloat(e.target.value) || 0 })}
+              onChange={(e) => handleInputChange('descuento_difusion', parseFloat(e.target.value) || 0)}
               disabled={loading || currentUserRole !== 'admin'}
               className={`h-8 text-sm ${currentUserRole !== 'admin' ? 'bg-muted' : ''}`}
             />
@@ -403,7 +411,7 @@ export function CustomerForm({
               max="100"
               step="0.01"
               value={formData.descuento_agfri}
-              onChange={(e) => setFormData({ ...formData, descuento_agfri: parseFloat(e.target.value) || 0 })}
+              onChange={(e) => handleInputChange('descuento_agfri', parseFloat(e.target.value) || 0)}
               disabled={loading || currentUserRole !== 'admin'}
               className={`h-8 text-sm ${currentUserRole !== 'admin' ? 'bg-muted' : ''}`}
             />
@@ -487,7 +495,7 @@ export function CustomerForm({
       )}
 
       <div className="flex gap-2 pt-1">
-        <Button type="submit" disabled={loading} className="h-8 text-sm px-4">
+        <Button type="submit" disabled={loading || (!!customer && !unsavedChanges)} className="h-8 text-sm px-4">
           {loading ? (
             <>
               <Loader2 className="mr-2 h-3 w-3 animate-spin" />

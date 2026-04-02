@@ -67,6 +67,20 @@ export function ValidationsList({ pendingOffers: initialPending, historyOffers }
           console.warn('[Validations] Fallback used - audit columns may not exist yet:', error.message)
         }
 
+        // Send notification to the creator
+        const { data: adminProfile } = await supabase.from('profiles').select('full_name').eq('id', user?.id).single()
+        const adminName = adminProfile?.full_name || 'Un administrador'
+        const formattedOfferNumber = formatOfferNumber(offer.offer_number, new Date(offer.created_at).getFullYear())
+
+        await supabase.from('notifications').insert({
+          user_id: offer.created_by,
+          type: 'offer_approved' as any,
+          title: 'Oferta validada',
+          message: `La oferta nº ${formattedOfferNumber} ha sido validada por ${adminName}`,
+          link: `/dashboard/offers/${offer.id}`,
+          read: false
+        })
+
         toast.success('Oferta validada y aprobada')
         setProcessedOffers(prev => [{
           ...offer,
@@ -90,6 +104,20 @@ export function ValidationsList({ pendingOffers: initialPending, historyOffers }
           if (fallbackError) throw fallbackError
           console.warn('[Validations] Fallback used - audit columns may not exist yet:', error.message)
         }
+
+        // Send notification to the creator
+        const { data: adminProfile } = await supabase.from('profiles').select('full_name').eq('id', user?.id).single()
+        const adminName = adminProfile?.full_name || 'Un administrador'
+        const formattedOfferNumber = formatOfferNumber(offer.offer_number, new Date(offer.created_at).getFullYear())
+
+        await supabase.from('notifications').insert({
+          user_id: offer.created_by,
+          type: 'offer_rejected' as any,
+          title: 'Oferta rechazada',
+          message: `La oferta nº ${formattedOfferNumber} ha sido rechazada por ${adminName}`,
+          link: `/dashboard/offers/${offer.id}`,
+          read: false
+        })
 
         toast.success('Oferta rechazada')
         setProcessedOffers(prev => [{
