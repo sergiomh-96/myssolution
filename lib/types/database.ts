@@ -144,9 +144,9 @@ export interface Notification {
   user_id: string
   type: NotificationType
   title: string
-  message: string | null
+  content: string | null
   link: string | null
-  read: boolean
+  is_read: boolean
   created_at: string
 }
 

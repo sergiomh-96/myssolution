@@ -36,7 +36,7 @@ export function NotificationsPopover({ userId }: NotificationsPopoverProps) {
 
       if (data) {
         setNotifications(data)
-        setUnreadCount(data.filter(n => !n.read).length)
+        setUnreadCount(data.filter(n => !n.is_read).length)
       }
     }
 
@@ -67,11 +67,11 @@ export function NotificationsPopover({ userId }: NotificationsPopoverProps) {
     const supabase = createClient()
     await supabase
       .from('notifications')
-      .update({ read: true })
+      .update({ is_read: true })
       .eq('id', id)
 
     setNotifications(prev =>
-      prev.map(n => (n.id === Number(id) ? { ...n, read: true } : n))
+      prev.map(n => (n.id === id ? { ...n, is_read: true } : n))
     )
     setUnreadCount(prev => Math.max(0, prev - 1))
   }
@@ -80,11 +80,11 @@ export function NotificationsPopover({ userId }: NotificationsPopoverProps) {
     const supabase = createClient()
     await supabase
       .from('notifications')
-      .update({ read: true })
+      .update({ is_read: true })
       .eq('user_id', userId)
-      .eq('read', false)
+      .eq('is_read', false)
 
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })))
+    setNotifications(prev => prev.map(n => ({ ...n, is_read: true })))
     setUnreadCount(0)
   }
 
@@ -125,7 +125,7 @@ export function NotificationsPopover({ userId }: NotificationsPopoverProps) {
                 <div
                   key={notification.id}
                   className={`p-4 hover:bg-accent transition-colors ${
-                    !notification.read ? 'bg-muted/50' : ''
+                    !notification.is_read ? 'bg-muted/50' : ''
                   }`}
                 >
                   <div className="flex items-start justify-between gap-2">
@@ -133,9 +133,9 @@ export function NotificationsPopover({ userId }: NotificationsPopoverProps) {
                       <p className="text-sm font-medium leading-tight">
                         {notification.title}
                       </p>
-                      {notification.message && (
+                      {notification.content && (
                         <p className="text-sm text-muted-foreground">
-                          {notification.message}
+                          {notification.content}
                         </p>
                       )}
                       <p className="text-xs text-muted-foreground">
@@ -144,12 +144,12 @@ export function NotificationsPopover({ userId }: NotificationsPopoverProps) {
                         })}
                       </p>
                     </div>
-                    {!notification.read && (
+                    {!notification.is_read && (
                       <Button
                         variant="ghost"
                         size="icon"
                         className="h-6 w-6 shrink-0"
-                        onClick={() => markAsRead(notification.id.toString())}
+                        onClick={() => markAsRead(notification.id)}
                       >
                         <X className="w-4 h-4" />
                       </Button>

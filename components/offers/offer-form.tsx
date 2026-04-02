@@ -22,7 +22,6 @@ import { ExportItemsExcelButton } from './export-items-excel-button'
 import { ImportItemsDialog } from './import-items'
 import type { Offer, OfferStatus, UserRole } from '@/lib/types/database'
 import { formatOfferNumber } from '@/lib/utils/offer'
-import { sendMultipleNotifications } from '@/app/_actions/notifications'
 
 interface OfferFormProps {
   offer?: Offer
@@ -1486,14 +1485,15 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
           if (newAssignees.length > 0) {
             const formattedOfferNumber = formatOfferNumber(savedOfferNumber || offer?.offer_number || 0)
             const notificationsToInsert = newAssignees.map(userId => ({
-              userId,
+              user_id: userId,
               type: 'offer_assigned' as any,
               title: 'Oferta asignada',
-              message: `${currentUserName || createdByName || 'Un usuario'} te ha asignado la oferta ${formattedOfferNumber}. Pulsa para ver`,
-              link: `/dashboard/offers/${offerId}`
+              content: `${currentUserName || createdByName || 'Un usuario'} te ha asignado la oferta ${formattedOfferNumber}. Pulsa para ver`,
+              link: `/dashboard/offers/${offerId}`,
+              is_read: false
             }))
             
-            await sendMultipleNotifications(notificationsToInsert)
+            await supabase.from('notifications').insert(notificationsToInsert)
           }
         }
       }
@@ -1516,13 +1516,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
             }))
           
           if (notificationsToInsert.length > 0) {
-            await sendMultipleNotifications(notificationsToInsert.map(n => ({
-              userId: n.user_id,
-              type: n.type as any,
-              title: n.title,
-              message: n.content, // Since n was mapping to 'content' before, now it's message
-              link: n.link
-            })))
+            await supabase.from('notifications').insert(notificationsToInsert)
           }
         }
       }
