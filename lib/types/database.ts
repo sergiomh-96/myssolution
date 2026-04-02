@@ -25,8 +25,8 @@ export interface Profile {
 export interface Customer {
   id: number
   company_name: string
-  contact_name: string
-  contact_email: string
+  contact_name: string | null
+  contact_email: string | null
   contact_phone: string | null
   address: string | null
   website: string | null

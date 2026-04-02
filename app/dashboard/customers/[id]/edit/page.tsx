@@ -39,15 +39,15 @@ export default async function EditCustomerPage({ params }: PageProps) {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div>
-        <h1 className="text-3xl font-semibold text-foreground">Edit Customer</h1>
+        <h1 className="text-3xl font-semibold text-foreground">Editar Cliente</h1>
         <p className="text-muted-foreground mt-1">
-          Update customer information and assigned profiles
+          Actualizar la información del cliente y los perfiles asignados
         </p>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Customer Information</CardTitle>
+          <CardTitle>Información del Cliente</CardTitle>
         </CardHeader>
         <CardContent>
           <CustomerForm

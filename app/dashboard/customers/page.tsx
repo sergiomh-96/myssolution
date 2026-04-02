@@ -58,16 +58,16 @@ export default async function CustomersPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-semibold text-foreground">Customers</h1>
+          <h1 className="text-3xl font-semibold text-foreground">Clientes</h1>
           <p className="text-muted-foreground mt-1">
-            Manage your customer relationships
+            Gestiona las relaciones con tus clientes
           </p>
         </div>
         {profile.role !== 'viewer' && (
           <Button asChild>
             <Link href="/dashboard/customers/new">
               <Plus className="w-4 h-4 mr-2" />
-              Add Customer
+              Añadir Cliente
             </Link>
           </Button>
         )}

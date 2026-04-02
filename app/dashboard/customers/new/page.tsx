@@ -23,15 +23,15 @@ export default async function NewCustomerPage() {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div>
-        <h1 className="text-3xl font-semibold text-foreground">Add New Customer</h1>
+        <h1 className="text-3xl font-semibold text-foreground">Añadir Nuevo Cliente</h1>
         <p className="text-muted-foreground mt-1">
-          Create a new customer record
+          Crear un nuevo registro de cliente
         </p>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Customer Information</CardTitle>
+          <CardTitle>Información del Cliente</CardTitle>
         </CardHeader>
         <CardContent>
           <CustomerForm

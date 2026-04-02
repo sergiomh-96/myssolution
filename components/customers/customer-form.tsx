@@ -191,25 +191,23 @@ export function CustomerForm({
         )}
 
         <div className="space-y-1">
-          <Label htmlFor="contact_name" className="text-sm">Nombre de contacto *</Label>
+          <Label htmlFor="contact_name" className="text-sm">Nombre de contacto</Label>
           <Input
             id="contact_name"
             value={formData.contact_name}
             onChange={(e) => setFormData({ ...formData, contact_name: e.target.value })}
-            required
             disabled={loading}
             className="h-8 text-sm"
           />
         </div>
 
         <div className="space-y-1">
-          <Label htmlFor="contact_email" className="text-sm">Email de contacto *</Label>
+          <Label htmlFor="contact_email" className="text-sm">Email de contacto</Label>
           <Input
             id="contact_email"
             type="email"
             value={formData.contact_email}
             onChange={(e) => setFormData({ ...formData, contact_email: e.target.value })}
-            required
             disabled={loading}
             className="h-8 text-sm"
           />

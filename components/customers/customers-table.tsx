@@ -80,7 +80,7 @@ export function CustomersTable({ customers, userRole }: CustomersTableProps) {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
-              placeholder="Search customers..."
+              placeholder="Buscar clientes..."
               value={searchQuery}
               onChange={(e) => handleSearch(e.target.value)}
               className="pl-10"
@@ -102,15 +102,15 @@ export function CustomersTable({ customers, userRole }: CustomersTableProps) {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-12">#</TableHead>
-                    <TableHead>Company</TableHead>
-                    <TableHead>Contact</TableHead>
+                    <TableHead>Empresa</TableHead>
+                    <TableHead>Contacto</TableHead>
                     <TableHead>Provincia</TableHead>
-                    <TableHead>Industry</TableHead>
-                    <TableHead>Status</TableHead>
+                    <TableHead>Sector</TableHead>
+                    <TableHead>Estado</TableHead>
                     <TableHead>Creado Por</TableHead>
                     <TableHead>Perfiles</TableHead>
-                    <TableHead>Created</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead>Creado</TableHead>
+                    <TableHead className="text-right">Acciones</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -186,11 +186,11 @@ export function CustomersTable({ customers, userRole }: CustomersTableProps) {
                           <Button asChild variant="ghost" size="sm">
                             <Link href={`/dashboard/customers/${customer.id}/edit`}>
                               <Edit className="h-4 w-4 mr-2" />
-                              Edit
+                              Editar
                             </Link>
                           </Button>
                           <Button asChild variant="ghost" size="sm">
-                            <Link href={`/dashboard/customers/${customer.id}`}>View</Link>
+                            <Link href={`/dashboard/customers/${customer.id}`}>Ver</Link>
                           </Button>
                         </div>
                       </TableCell>
