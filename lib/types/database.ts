@@ -147,6 +147,7 @@ export interface Notification {
   message: string | null
   link: string | null
   read: boolean
+  visible: boolean
   created_at: string
 }
 

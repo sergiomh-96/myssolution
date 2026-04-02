@@ -135,6 +135,7 @@ export default function DashboardPage() {
         .from('notifications')
         .select('*')
         .eq('user_id', user.id)
+        .eq('visible', true)
         .order('created_at', { ascending: false })
         .limit(10)
 

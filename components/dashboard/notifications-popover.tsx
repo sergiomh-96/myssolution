@@ -13,6 +13,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { createClient } from '@/lib/supabase/client'
 import type { Notification } from '@/lib/types/database'
 import { formatDistanceToNow } from 'date-fns'
+import { es } from 'date-fns/locale'
 
 interface NotificationsPopoverProps {
   userId: string
@@ -31,6 +32,7 @@ export function NotificationsPopover({ userId }: NotificationsPopoverProps) {
         .from('notifications')
         .select('*')
         .eq('user_id', userId)
+        .eq('visible', true)
         .order('created_at', { ascending: false })
         .limit(20)
 
@@ -63,17 +65,28 @@ export function NotificationsPopover({ userId }: NotificationsPopoverProps) {
     }
   }, [userId])
 
-  const markAsRead = async (id: string) => {
+  const toggleRead = async (id: string, currentRead: boolean) => {
     const supabase = createClient()
     await supabase
       .from('notifications')
-      .update({ read: true })
+      .update({ read: !currentRead })
       .eq('id', id)
 
     setNotifications(prev =>
-      prev.map(n => (n.id === id ? { ...n, read: true } : n))
+      prev.map(n => (n.id === id ? { ...n, read: !currentRead } : n))
     )
-    setUnreadCount(prev => Math.max(0, prev - 1))
+    setUnreadCount(prev => currentRead ? prev + 1 : Math.max(0, prev - 1))
+  }
+
+  const deleteNotification = async (id: string, wasRead: boolean) => {
+    const supabase = createClient()
+    await supabase
+      .from('notifications')
+      .update({ visible: false })
+      .eq('id', id)
+
+    setNotifications(prev => prev.filter(n => n.id !== id))
+    if (!wasRead) setUnreadCount(prev => Math.max(0, prev - 1))
   }
 
   const markAllAsRead = async () => {
@@ -105,11 +118,11 @@ export function NotificationsPopover({ userId }: NotificationsPopoverProps) {
       </PopoverTrigger>
       <PopoverContent className="w-96 p-0" align="end">
         <div className="flex items-center justify-between p-4 border-b border-border">
-          <h3 className="font-semibold">Notifications</h3>
+          <h3 className="font-semibold">Notificaciones</h3>
           {unreadCount > 0 && (
             <Button variant="ghost" size="sm" onClick={markAllAsRead}>
               <Check className="w-4 h-4 mr-1" />
-              Mark all read
+              Marcar todas como leídas
             </Button>
           )}
         </div>
@@ -117,7 +130,7 @@ export function NotificationsPopover({ userId }: NotificationsPopoverProps) {
           {notifications.length === 0 ? (
             <div className="p-8 text-center text-muted-foreground">
               <Bell className="w-12 h-12 mx-auto mb-2 opacity-20" />
-              <p>No notifications yet</p>
+              <p>No hay notificaciones</p>
             </div>
           ) : (
             <div className="divide-y divide-border">
@@ -141,19 +154,36 @@ export function NotificationsPopover({ userId }: NotificationsPopoverProps) {
                       <p className="text-xs text-muted-foreground">
                         {formatDistanceToNow(new Date(notification.created_at), {
                           addSuffix: true,
+                          locale: es,
                         })}
                       </p>
                     </div>
-                    {!notification.read && (
+                    <div className="flex flex-col gap-1 shrink-0">
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-6 w-6 shrink-0"
-                        onClick={() => markAsRead(notification.id)}
+                        className="h-7 w-7"
+                        title={notification.read ? "Marcar como no leído" : "Marcar como leído"}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          toggleRead(notification.id, notification.read)
+                        }}
                       >
-                        <X className="w-4 h-4" />
+                        {notification.read ? <Bell className="w-3.5 h-3.5" /> : <Check className="w-3.5 h-3.5" />}
                       </Button>
-                    )}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
+                        title="Eliminar notificación"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          deleteNotification(notification.id, notification.read)
+                        }}
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
               ))}

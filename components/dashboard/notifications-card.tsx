@@ -3,18 +3,21 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Bell, Circle } from 'lucide-react'
+import { Bell, Circle, BookmarkCheck, Bookmark, Trash2 } from 'lucide-react'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { formatDistanceToNow } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { cn } from '@/lib/utils'
+import { createClient } from '@/lib/supabase/client'
+import { Button } from '@/components/ui/button'
 
 interface NotificationItem {
-  id: number
+  id: string | number
   title: string
   message: string | null
   link: string | null
   read: boolean
+  visible: boolean
   created_at: string
   type: string
 }
@@ -24,10 +27,33 @@ interface NotificationsCardProps {
   isSensitiveVisible?: boolean
 }
 
-export function NotificationsCard({ notifications = [], isSensitiveVisible = true }: NotificationsCardProps) {
+export function NotificationsCard({ notifications: initialNotifications = [], isSensitiveVisible = true }: NotificationsCardProps) {
   const [filter, setFilter] = useState<'all' | 'unread' | 'read'>('all')
+  const [localNotifications, setLocalNotifications] = useState(initialNotifications)
 
-  const filteredNotifications = notifications.filter(n => {
+  const toggleRead = async (id: string | number, currentRead: boolean) => {
+    const supabase = createClient()
+    await supabase
+      .from('notifications')
+      .update({ read: !currentRead })
+      .eq('id', id)
+
+    setLocalNotifications(prev =>
+      prev.map(n => (n.id === id ? { ...n, read: !currentRead } : n))
+    )
+  }
+
+  const deleteNotification = async (id: string | number) => {
+    const supabase = createClient()
+    await supabase
+      .from('notifications')
+      .update({ visible: false })
+      .eq('id', id)
+
+    setLocalNotifications(prev => prev.filter(n => n.id !== id))
+  }
+
+  const filteredNotifications = localNotifications.filter(n => {
     if (filter === 'unread') return !n.read
     if (filter === 'read') return n.read
     return true
@@ -55,43 +81,78 @@ export function NotificationsCard({ notifications = [], isSensitiveVisible = tru
              <p className="text-[10px] italic">Sin notificaciones</p>
           </div>
         ) : (
-          <div className="divide-y divide-border/30 max-h-[350px] overflow-y-auto custom-scrollbar">
+          <div className="divide-y divide-border/30 max-h-[350px] overflow-y-auto custom-scrollbar text-left">
             {filteredNotifications.map((notification) => (
-              <Link
-                key={notification.id}
-                href={notification.link || '#'}
-                className="block py-2 px-4 hover:bg-accent/50 transition-all group relative overflow-hidden"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="flex-shrink-0">
-                    {!notification.read ? (
-                      <Circle className="w-2 h-2 fill-primary text-primary" />
-                    ) : (
-                      <Circle className="w-2 h-2 text-muted-foreground opacity-20" />
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className={cn(
-                      "text-xs font-semibold truncate transition-all duration-300",
-                      notification.read ? 'text-muted-foreground' : 'text-foreground',
-                      !isSensitiveVisible && "blur-md select-none opacity-40"
-                    )}>
-                      {notification.title}
-                    </p>
-                    <div className="flex items-center gap-2 mt-0.5">
+              <div key={notification.id} className="relative group/notif">
+                <Link
+                  href={notification.link || '#'}
+                  className="block py-2.5 px-4 hover:bg-accent/50 transition-all relative overflow-hidden"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="flex-shrink-0">
+                      {!notification.read ? (
+                        <Circle className="w-2 h-2 fill-primary text-primary" />
+                      ) : (
+                        <Circle className="w-2 h-2 text-muted-foreground opacity-20" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0 pr-16">
                       <p className={cn(
-                        "text-[10px] text-muted-foreground truncate flex-1 transition-all duration-300",
-                        !isSensitiveVisible && "blur-sm opacity-40 select-none"
+                        "text-xs font-semibold truncate transition-all duration-300",
+                        notification.read ? 'text-muted-foreground' : 'text-foreground',
+                        !isSensitiveVisible && "blur-md select-none opacity-40"
                       )}>
-                        {notification.message || 'Sin descripción'}
+                        {notification.title}
                       </p>
-                      <span className="text-[10px] text-muted-foreground italic whitespace-nowrap">
-                        {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true, locale: es })}
-                      </span>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <p className={cn(
+                          "text-[10px] text-muted-foreground truncate flex-1 transition-all duration-300",
+                          !isSensitiveVisible && "blur-sm opacity-40 select-none"
+                        )}>
+                          {notification.message || 'Sin descripción'}
+                        </p>
+                        <span className="text-[10px] text-muted-foreground italic whitespace-nowrap">
+                          {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true, locale: es })}
+                        </span>
+                      </div>
                     </div>
                   </div>
+                </Link>
+                
+                {/* Notification Actions Overlay */}
+                <div className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover/notif:opacity-100 flex items-center gap-1 transition-all bg-background/80 backdrop-blur-sm p-1 rounded-md border border-border/40 shadow-sm z-10">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 rounded-full hover:bg-muted"
+                    title={notification.read ? "Marcar como no leído" : "Marcar como leído"}
+                    onClick={(e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      toggleRead(notification.id, notification.read)
+                    }}
+                  >
+                    {notification.read ? (
+                      <Bookmark className="w-3.5 h-3.5 text-muted-foreground" />
+                    ) : (
+                      <BookmarkCheck className="w-3.5 h-3.5 text-primary" />
+                    )}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 rounded-full text-destructive hover:text-destructive hover:bg-destructive/10"
+                    title="Eliminar"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      deleteNotification(notification.id)
+                    }}
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </Button>
                 </div>
-              </Link>
+              </div>
             ))}
           </div>
         )}
