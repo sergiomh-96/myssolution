@@ -4,7 +4,7 @@ export type OfferStatus = 'borrador' | 'enviada' | 'aceptada' | 'rechazada'
 export type RequestPriority = 'low' | 'medium' | 'high' | 'urgent'
 export type RequestStatus = 'open' | 'in_progress' | 'pending_customer' | 'resolved' | 'closed'
 export type ChannelType = 'direct' | 'group' | 'team'
-export type NotificationType = 'offer_created' | 'offer_approved' | 'offer_rejected' | 'request_created' | 'request_assigned' | 'request_updated' | 'chat_message' | 'system'
+export type NotificationType = 'offer_created' | 'offer_approved' | 'offer_rejected' | 'offer_assigned' | 'validation_requested' | 'request_created' | 'request_assigned' | 'request_updated' | 'chat_message' | 'system'
 export type ProductBrand = 'AGFRI' | 'MYSAIR'
 export type ProductStatus = 'active' | 'inactive' | 'draft'
 
@@ -144,9 +144,9 @@ export interface Notification {
   user_id: string
   type: NotificationType
   title: string
-  content: string | null
+  message: string | null
   link: string | null
-  is_read: boolean
+  read: boolean
   created_at: string
 }
 

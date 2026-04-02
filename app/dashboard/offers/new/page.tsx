@@ -81,6 +81,7 @@ export default async function NewOfferPage() {
             currentUserRole={profile.role}
             customers={customers}
             createdByName={profile.full_name || undefined}
+            currentUserName={profile.full_name || ''}
           />
         </CardContent>
       </Card>

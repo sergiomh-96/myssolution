@@ -22,6 +22,7 @@ import { ExportItemsExcelButton } from './export-items-excel-button'
 import { ImportItemsDialog } from './import-items'
 import type { Offer, OfferStatus, UserRole } from '@/lib/types/database'
 import { formatOfferNumber } from '@/lib/utils/offer'
+import { sendMultipleNotifications } from '@/app/_actions/notifications'
 
 interface OfferFormProps {
   offer?: Offer
@@ -29,6 +30,7 @@ interface OfferFormProps {
   currentUserRole: UserRole
   customers: { id: string; company_name: string; status: string }[]
   createdByName?: string
+  currentUserName?: string
 }
 
 interface OfferItem {
@@ -370,7 +372,7 @@ function CustomerSearchInput({
   )
 }
 
-export function OfferForm({ offer, currentUserId, currentUserRole, customers, createdByName }: OfferFormProps) {
+export function OfferForm({ offer, currentUserId, currentUserRole, customers, createdByName, currentUserName }: OfferFormProps) {
   const router = useRouter()
   const isViewer = currentUserRole === 'viewer'
 
@@ -400,6 +402,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
   const [userHasModifiedDiscounts, setUserHasModifiedDiscounts] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [initialAssignedUserIds, setInitialAssignedUserIds] = useState<string[]>([])
 
   const existingItems: OfferItem[] = []
 
@@ -833,6 +836,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
 
         const userIds = data?.map(a => a.user_id) || []
         setAssignedUserIds(userIds)
+        setInitialAssignedUserIds(userIds)
       } catch (err) {
         console.error('Error:', err)
       }
@@ -1340,7 +1344,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
         // is_validated can ONLY be set to true by an admin from the validations panel.
         // When saving, we only reset it to false if the offer now requires validation.
         // If no validation is needed, we leave the existing is_validated value untouched.
-        ...(isPendingValidation ? { is_validated: false } : {}),
+        ...(isPendingValidation ? { is_validated: false, validation_required_at: new Date().toISOString() } : {}),
       }
 
       let offerId: string | null = (offer?.id || savedOfferId)?.toString() || null
@@ -1455,8 +1459,8 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
       }
 
       // Handle user assignments
-      if (offerId && assignedUserIds.length > 0) {
-        // Delete existing assignments
+      if (offerId) {
+        // Delete existing assignments first (always, to support clearing all)
         const { error: deleteError } = await supabase
           .from('offer_assignments')
           .delete()
@@ -1464,18 +1468,67 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
 
         if (deleteError) throw deleteError
 
-        // Insert new assignments
-        const assignmentsToInsert = assignedUserIds.map(userId => ({
-          offer_id: offerId,
-          user_id: userId,
-        }))
+        // Insert new assignments only if any
+        if (assignedUserIds.length > 0) {
+          const assignmentsToInsert = assignedUserIds.map(userId => ({
+            offer_id: offerId,
+            user_id: userId,
+          }))
 
-        const { error: insertError } = await supabase
-          .from('offer_assignments')
-          .insert(assignmentsToInsert)
+          const { error: insertError } = await supabase
+            .from('offer_assignments')
+            .insert(assignmentsToInsert)
 
-        if (insertError) throw insertError
+          if (insertError) throw insertError
+
+          // Send notifications to new assignees (that were not in initially)
+          const newAssignees = assignedUserIds.filter((uid) => uid !== currentUserId && !initialAssignedUserIds.includes(uid));
+          if (newAssignees.length > 0) {
+            const formattedOfferNumber = formatOfferNumber(savedOfferNumber || offer?.offer_number || 0)
+            const notificationsToInsert = newAssignees.map(userId => ({
+              userId,
+              type: 'offer_assigned' as any,
+              title: 'Oferta asignada',
+              message: `${currentUserName || createdByName || 'Un usuario'} te ha asignado la oferta ${formattedOfferNumber}. Pulsa para ver`,
+              link: `/dashboard/offers/${offerId}`
+            }))
+            
+            await sendMultipleNotifications(notificationsToInsert)
+          }
+        }
       }
+
+      // Send notifications to all admins if validation requested
+      if (isPendingValidation && offerId) {
+        const formattedOfferNumber = formatOfferNumber(savedOfferNumber || offer?.offer_number || 0)
+        const { data: admins } = await supabase.from('profiles').select('id').eq('role', 'admin')
+        
+        if (admins && admins.length > 0) {
+          const notificationsToInsert = admins
+            .filter(admin => admin.id !== currentUserId) // Don't notify the requestor
+            .map(admin => ({
+              user_id: admin.id,
+              type: 'validation_requested' as any,
+              title: 'Validación requerida',
+              content: `${currentUserName || createdByName || 'Un usuario'} solicita validación para la oferta con nº ${formattedOfferNumber}. Pulsa para ver`,
+              link: '/dashboard/validations',
+              is_read: false
+            }))
+          
+          if (notificationsToInsert.length > 0) {
+            await sendMultipleNotifications(notificationsToInsert.map(n => ({
+              userId: n.user_id,
+              type: n.type as any,
+              title: n.title,
+              message: n.content, // Since n was mapping to 'content' before, now it's message
+              link: n.link
+            })))
+          }
+        }
+      }
+
+      // Update state of initial assignments after successful save 
+      setInitialAssignedUserIds(assignedUserIds)
 
       // Show success message
       setSuccess(true)

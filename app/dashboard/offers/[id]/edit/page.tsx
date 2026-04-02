@@ -114,6 +114,7 @@ export default async function EditOfferPage({ params }: PageProps) {
             currentUserRole={profile.role}
             customers={customers || []}
             createdByName={offer?.created_by_profile?.full_name}
+            currentUserName={profile.full_name || ''}
           />
         </CardContent>
       </Card>
