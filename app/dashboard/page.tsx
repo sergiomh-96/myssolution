@@ -95,7 +95,7 @@ export default function DashboardPage() {
           id, 
           created_at, 
           amount,
-          items:offer_items(pvp_total)
+          items:offer_items(type, pvp_total, neto_total2)
         `)
         .gte('created_at', lastMonthStart)
 
@@ -111,7 +111,7 @@ export default function DashboardPage() {
           status, 
           amount, 
           customer:customers(company_name),
-          items:offer_items(pvp_total)
+          items:offer_items(type, pvp_total, neto_total2)
         `)
         .gte('created_at', currentYearStart)
 
@@ -122,7 +122,7 @@ export default function DashboardPage() {
       // 4. Fetch Recent Offers (top 10)
       let recentOffersQuery = supabase
         .from('offers')
-        .select('*, customer:customers(company_name), items:offer_items(pvp_total)')
+        .select('*, customer:customers(company_name), items:offer_items(type, pvp_total, neto_total2)')
         .order('created_at', { ascending: false })
         .limit(10)
 
@@ -164,7 +164,26 @@ export default function DashboardPage() {
       const calculateAmount = (o: any) => {
         const items = (o.items as any[]) || []
         if (items.length > 0) {
-          return items.reduce((sum, item) => sum + (Number(item.pvp_total) || 0), 0)
+          return items.reduce((sum, item) => {
+            if (item.type === 'article' || item.type === 'external') {
+              return sum + (Number(item.neto_total2) || 0)
+            }
+            return sum
+          }, 0)
+        }
+        return Number(o.amount) || 0
+      }
+
+      const calculatePVP = (o: any) => {
+        const items = (o.items as any[]) || []
+        if (items.length > 0) {
+          return items.reduce((sum, item) => {
+            if (item.type === 'article' || item.type === 'external') {
+              // Ensure we use parseFloat and a strict 0 fallback
+              return sum + (parseFloat(String(item.pvp_total)) || 0)
+            }
+            return sum
+          }, 0)
         }
         return Number(o.amount) || 0
       }
@@ -177,7 +196,8 @@ export default function DashboardPage() {
             seen.add(o.id)
             deduplicated.push({
               ...o,
-              computed_amount: calculateAmount(o)
+              computed_amount: calculateAmount(o),
+              computed_pvp: calculatePVP(o)
             })
           }
         }
@@ -198,21 +218,23 @@ export default function DashboardPage() {
       const percentageChange = countLast === 0 ? (countCurrent > 0 ? 100 : 0) : ((countCurrent - countLast) / countLast) * 100
 
       // --- Process Amount Breakdown and Customer Chart Data ---
-      const breakdown = {
-        borrador: 0,
-        enviada: 0,
-        aceptada: 0,
-        rechazada: 0,
-      }
-      let totalAmountYear = 0
+      const neto_breakdown = { borrador: 0, enviada: 0, aceptada: 0, rechazada: 0 }
+      const pvp_breakdown = { borrador: 0, enviada: 0, aceptada: 0, rechazada: 0 }
+      let totalNetoYear = 0
+      let totalPVPYear = 0
 
       offersYearData.forEach(offer => {
-        const status = offer.status as keyof typeof breakdown
-        const amount = offer.computed_amount
-        if (status in breakdown) {
-          breakdown[status] += amount
+        const status = offer.status as keyof typeof neto_breakdown
+        // Strict number conversion for safety
+        const neto = parseFloat(String(offer.computed_amount)) || 0
+        const pvp = parseFloat(String(offer.computed_pvp)) || 0
+
+        if (status in neto_breakdown) {
+          neto_breakdown[status] += neto
+          pvp_breakdown[status] += pvp
         }
-        totalAmountYear += amount
+        totalNetoYear += neto
+        totalPVPYear += pvp
       })
 
       // Customer Value Data
@@ -241,8 +263,10 @@ export default function DashboardPage() {
           percentageChange: percentageChange,
         },
         totalOffersAmount: {
-          total: totalAmountYear,
-          breakdown: breakdown,
+          total: totalNetoYear,
+          breakdown: neto_breakdown,
+          pvp_total: totalPVPYear,
+          pvp_breakdown: pvp_breakdown
         },
         offersYearData,
         recentOffers,

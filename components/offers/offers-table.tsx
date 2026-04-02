@@ -30,7 +30,7 @@ import type { Offer, UserRole } from '@/lib/types/database'
 import { format } from 'date-fns'
 import { formatOfferNumber } from '@/lib/utils/offer'
 import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { DuplicateOfferButton } from './duplicate-offer-button'
 
 interface OffersTableProps {
@@ -56,6 +56,7 @@ const statusColors = {
 
 export function OffersTable({ offers: initialOffers, userRole, userId }: OffersTableProps) {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [offersList, setOffersList] = useState(initialOffers)
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
@@ -66,6 +67,14 @@ export function OffersTable({ offers: initialOffers, userRole, userId }: OffersT
   const [deleting, setDeleting] = useState(false)
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
+
+  // Initialize search query from URL if 'customer' parameter is present
+  useEffect(() => {
+    const customer = searchParams.get('customer')
+    if (customer) {
+      setSearchQuery(customer)
+    }
+  }, [searchParams])
 
   // Update local state when initialOffers prop changes (e.g. after router.refresh())
   useEffect(() => {

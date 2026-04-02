@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
-import { Users, FileText, TrendingUp, Wallet, ArrowUpRight, ArrowDownRight } from 'lucide-react'
+import { Users, FileText, TrendingUp, Wallet, ArrowUpRight, ArrowDownRight, Info } from 'lucide-react'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import type { UserRole } from '@/lib/types/database'
 import { cn } from '@/lib/utils'
@@ -34,6 +34,8 @@ interface KPIGridProps {
   totalOffersAmount: {
     total: number
     breakdown: AmountBreakdown
+    pvp_total: number
+    pvp_breakdown: AmountBreakdown
   }
   role: UserRole
 }
@@ -48,6 +50,7 @@ export function KPIGrid({
 }: KPIGridProps) {
   const [selectedStatus, setSelectedStatus] = useState<keyof AmountBreakdown | 'total'>('total')
   const [selectedCustomerType, setSelectedCustomerType] = useState<keyof CustomersBreakdown>('total')
+  const [showPVP, setShowPVP] = useState(false)
   
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('es-ES', {
@@ -58,18 +61,24 @@ export function KPIGrid({
   }
 
   const getDisplayAmount = () => {
-    if (selectedStatus === 'total') return totalOffersAmount.total
-    return totalOffersAmount.breakdown[selectedStatus]
+    if (showPVP) {
+      if (selectedStatus === 'total') return totalOffersAmount?.pvp_total || 0
+      return totalOffersAmount?.pvp_breakdown?.[selectedStatus as keyof AmountBreakdown] || 0
+    }
+    
+    if (selectedStatus === 'total') return totalOffersAmount?.total || 0
+    return totalOffersAmount?.breakdown?.[selectedStatus as keyof AmountBreakdown] || 0
   }
 
   const getCustomersCount = () => {
     return customersBreakdown[selectedCustomerType]
   }
 
-  const SensitiveValue = ({ value, isCurrency = false }: { value: number | string, isCurrency?: boolean }) => {
-    const display = typeof value === 'number' 
-      ? (isCurrency ? formatCurrency(value) : value.toLocaleString())
-      : value
+  const SensitiveValue = ({ value, isCurrency = false }: { value: number | string | undefined, isCurrency?: boolean }) => {
+    const val = value ?? 0
+    const display = typeof val === 'number' 
+      ? (isCurrency ? formatCurrency(val) : val.toLocaleString())
+      : val
 
     return (
       <span className={cn(
@@ -185,8 +194,16 @@ export function KPIGrid({
                 <SensitiveValue value={getDisplayAmount()} isCurrency />
               </p>
             </div>
-            <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-success/10 group-hover:rotate-6 transition-transform">
-              <Wallet className="w-4.5 h-4.5 text-success" />
+            <div className="flex flex-col items-end gap-2.5">
+              <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-success/10 group-hover:rotate-6 transition-transform">
+                <Wallet className="w-4.5 h-4.5 text-success" />
+              </div>
+              <Tabs value={showPVP ? 'pvp' : 'neto'} onValueChange={(v) => setShowPVP(v === 'pvp')}>
+                <TabsList className="h-6 bg-muted/50 p-0.5 border border-border/50">
+                  <TabsTrigger value="neto" className="text-[9px] uppercase font-bold px-2 h-5 transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Neto</TabsTrigger>
+                  <TabsTrigger value="pvp" className="text-[9px] uppercase font-bold px-2 h-5 transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">PVP</TabsTrigger>
+                </TabsList>
+              </Tabs>
             </div>
           </div>
           

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
@@ -19,13 +20,14 @@ interface CustomerValueChartProps {
 }
 
 export function CustomerValueChart({ isSensitiveVisible, offers }: CustomerValueChartProps) {
+  const router = useRouter()
   const [selectedStatus, setSelectedStatus] = useState<OfferStatus | 'all'>('all')
 
   const chartData = useMemo(() => {
     // Process raw offers into grouped chart data
     const data: CustomerValueData[] = offers.map(o => ({
       customer_name: (o.customer as any)?.company_name || 'Sin cliente',
-      total_amount: Number(o.amount) || 0,
+      total_amount: Number(o.computed_amount ?? o.amount) || 0,
       status: o.status,
     }))
 
@@ -62,7 +64,10 @@ export function CustomerValueChart({ isSensitiveVisible, offers }: CustomerValue
   return (
     <Card className="h-full flex flex-col border-border/50 shadow-sm transition-all duration-300">
       <CardHeader className="flex flex-row items-center justify-between py-2 px-4 border-b border-border/50">
-        <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground opacity-80">Total € por cliente (Top 10)</CardTitle>
+        <div className="flex flex-col">
+          <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground opacity-80 leading-none">Total € por cliente (Top 10)</CardTitle>
+          <span className="text-[10px] text-muted-foreground/60 italic font-medium mt-1">Valores en € sobre precios NETOS</span>
+        </div>
         <Select
           value={selectedStatus}
           onValueChange={(value) => setSelectedStatus(value as OfferStatus | 'all')}
@@ -133,6 +138,12 @@ export function CustomerValueChart({ isSensitiveVisible, offers }: CustomerValue
                 fill="hsl(var(--primary))" 
                 radius={[0, 4, 4, 0]}
                 barSize={18}
+                className="cursor-pointer hover:opacity-80 transition-opacity"
+                onClick={(data) => {
+                  if (data && data.name) {
+                    router.push(`/dashboard/offers?customer=${encodeURIComponent(data.name)}`)
+                  }
+                }}
               >
                 {chartData.map((_entry, index) => (
                   <Cell key={`cell-${index}`} fill={`hsl(var(--primary) / ${1 - index * 0.05})`} />
