@@ -17,6 +17,7 @@ import { DuplicateOfferButton } from './duplicate-offer-button'
 import { CalcularLarguerosDialog } from './calcular-largueros-dialog'
 import { CalcularMedidasEspecialesDialog } from './calcular-medidas-especiales-dialog'
 import { GeneratePdfButton } from './generate-pdf-button'
+import { GenerateDossierButton } from './generate-dossier-button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { ExportItemsExcelButton } from './export-items-excel-button'
 import { ImportItemsDialog } from './import-items'
@@ -2535,6 +2536,13 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
               customerName={(offer as any)?.customer?.company_name || currentCustomer?.company_name}
               offerTitle={formData.title || offer?.title}
               disabled={isPendingValidation}
+            />
+            <GenerateDossierButton
+              offerId={savedOfferId || offer?.id?.toString() || ''}
+              offerNumber={savedOfferNumber || offer?.offer_number || 0}
+              customerName={(offer as any)?.customer?.company_name || currentCustomer?.company_name}
+              offerTitle={formData.title || offer?.title}
+              disabled={isPendingValidation || (!savedOfferId && !offer?.id)}
             />
           </div>
           <div className="flex gap-2">

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { formatDistanceToNow } from 'date-fns'
 import { Card, CardContent } from '@/components/ui/card'
@@ -43,6 +44,7 @@ const statusColors = {
 const PAGE_SIZE = 500
 
 export function CustomersTable({ customers, userRole }: CustomersTableProps) {
+  const router = useRouter()
   const [searchQuery, setSearchQuery] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
 
@@ -109,64 +111,75 @@ export function CustomersTable({ customers, userRole }: CustomersTableProps) {
                     <TableHead>Estado</TableHead>
                     <TableHead>Creado Por</TableHead>
                     <TableHead>Perfiles</TableHead>
-                    <TableHead>Creado</TableHead>
-                    <TableHead className="text-right">Acciones</TableHead>
+                    <TableHead className="text-right">Creado</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {pageCustomers.map((customer, index) => (
-                    <TableRow key={customer.id}>
-                      <TableCell className="text-muted-foreground font-medium w-12">
+                    <TableRow 
+                      key={customer.id} 
+                      className="cursor-pointer hover:bg-muted/50 transition-colors"
+                      onClick={() => router.push(`/dashboard/customers/${customer.id}/edit`)}
+                    >
+                      <TableCell className="text-muted-foreground font-medium w-12 text-sm">
                         {pageStart + index + 1}
                       </TableCell>
                       <TableCell>
-                        <div>
-                          <p className="font-medium text-foreground">{customer.company_name}</p>
+                        <div className="flex flex-col">
+                          <span className="font-semibold text-foreground text-sm">{customer.company_name}</span>
                           {customer.website && (
                             <a
                               href={customer.website}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-xs text-primary hover:underline flex items-center gap-1"
+                              onClick={(e) => e.stopPropagation()}
+                              className="text-[10px] text-primary/80 hover:text-primary hover:underline flex items-center gap-1 w-fit mt-0.5"
                             >
-                              {customer.website}
-                              <ExternalLink className="w-3 h-3" />
+                              {customer.website.replace(/^https?:\/\//, '')}
+                              <ExternalLink className="w-2.5 h-2.5" />
                             </a>
                           )}
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div>
-                          <p className="text-sm text-foreground">{customer.contact_name}</p>
-                          <p className="text-xs text-muted-foreground">{customer.contact_email}</p>
+                        <div className="flex flex-col">
+                          <span className="text-sm text-foreground/90 font-medium">{customer.contact_name || '-'}</span>
+                          <span className="text-[11px] text-muted-foreground">{customer.contact_email}</span>
                         </div>
                       </TableCell>
                       <TableCell>
-                        <span className="text-sm text-muted-foreground">
+                        <span className="text-sm text-muted-foreground/80">
                           {customer.provincia || '-'}
                         </span>
                       </TableCell>
                       <TableCell>
-                        <span className="text-sm text-muted-foreground">
+                        <span className="text-sm text-muted-foreground/80">
                           {customer.industry || '-'}
                         </span>
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline" className={statusColors[customer.status as keyof typeof statusColors] ?? ''}>
+                        <Badge 
+                          variant="outline" 
+                          className={`text-[10px] h-5 px-2 uppercase tracking-tight font-bold ${statusColors[customer.status as keyof typeof statusColors] ?? ''}`}
+                        >
                           {customer.status}
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <span className="text-sm text-muted-foreground">
+                        <span className="text-sm text-muted-foreground/80">
                           {customer.created_by_user?.full_name || '-'}
                         </span>
                       </TableCell>
                       <TableCell>
-                        <div className="flex flex-wrap gap-1">
+                        <div className="flex flex-wrap gap-1 max-w-[150px]">
                           {customer.customer_profile_assignments?.length ? (
                             customer.customer_profile_assignments.map((a) =>
                               a.profile ? (
-                                <Badge key={a.profile_id} variant="secondary" className="text-xs">
+                                <Badge 
+                                  key={a.profile_id} 
+                                  variant="secondary" 
+                                  className="text-[10px] h-5 px-1.5 bg-secondary/50 text-secondary-foreground"
+                                >
                                   {a.profile.full_name || a.profile_id}
                                 </Badge>
                               ) : null
@@ -176,23 +189,10 @@ export function CustomersTable({ customers, userRole }: CustomersTableProps) {
                           )}
                         </div>
                       </TableCell>
-                      <TableCell>
-                        <span className="text-sm text-muted-foreground">
+                      <TableCell className="text-right">
+                        <span className="text-sm text-muted-foreground/80 whitespace-nowrap">
                           {formatDistanceToNow(new Date(customer.created_at), { addSuffix: true })}
                         </span>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex gap-2 justify-end">
-                          <Button asChild variant="ghost" size="sm">
-                            <Link href={`/dashboard/customers/${customer.id}/edit`}>
-                              <Edit className="h-4 w-4 mr-2" />
-                              Editar
-                            </Link>
-                          </Button>
-                          <Button asChild variant="ghost" size="sm">
-                            <Link href={`/dashboard/customers/${customer.id}`}>Ver</Link>
-                          </Button>
-                        </div>
                       </TableCell>
                     </TableRow>
                   ))}

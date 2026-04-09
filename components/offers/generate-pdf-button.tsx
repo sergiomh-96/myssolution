@@ -27,7 +27,7 @@ type PriceType = 'pvp' | 'neto' | 'all'
 const PDF_OPTIONS: Array<{ label: string; company: Company; priceType: PriceType }> = [
   { label: 'Oferta PVP (MYSAIR)', company: 'mysair', priceType: 'pvp' },
   { label: 'Oferta NETO (MYSAIR)', company: 'mysair', priceType: 'neto' },
-  { label: 'Oferta PVP+DESCUENTO+NETO (MYSAIR)', company: 'mysair', priceType: 'all' },
+  { label: 'Oferta PVP+DESC+NETO (MYSAIR)', company: 'mysair', priceType: 'all' },
   { label: 'Oferta PVP (AGFRI)', company: 'agfri', priceType: 'pvp' },
   { label: 'Oferta NETO (AGFRI)', company: 'agfri', priceType: 'neto' },
 ]
@@ -47,10 +47,8 @@ export function GeneratePdfButton({ offerId, offerNumber, customerName = '', off
 
       const blob = await response.blob()
       
-      // Construir nombre del archivo: 2026-nº oferta + cliente + título + tipo precio
       const year = new Date().getFullYear()
       const offerNum = String(offerNumber).padStart(4, '0')
-      // Sanitizar nombres: mantener letras, números, espacios y guiones. Reemplazar espacios con guiones
       const client = customerName 
         ? customerName.replace(/[^\w\s\-ñáéíóúÑÁÉÍÓÚ]/g, '').trim().replace(/\s+/g, '-') 
         : 'Cliente'
@@ -60,7 +58,6 @@ export function GeneratePdfButton({ offerId, offerNumber, customerName = '', off
       const type = priceType === 'neto' ? 'Neto' : priceType === 'all' ? 'Completo' : 'PVP'
       const filename = `${year}-${offerNum}-${client}-${title}-${type}.pdf`
       
-      // Intentar usar la API de File System Access para mostrar el diálogo "Guardar como"
       if ('showSaveFilePicker' in window) {
         try {
           const handle = await (window as any).showSaveFilePicker({
@@ -75,40 +72,28 @@ export function GeneratePdfButton({ offerId, offerNumber, customerName = '', off
           await writable.close()
           toast.success('PDF guardado correctamente')
         } catch (err: any) {
-          // Si el usuario cancela (AbortError), no hacemos nada
-          if (err.name !== 'AbortError') {
-            console.error('Error saving file:', err)
-            // Si falla el picker, intentamos el método tradicional como último recurso
-            const url = URL.createObjectURL(blob)
-            const a = document.createElement('a')
-            a.href = url
-            a.download = filename
-            document.body.appendChild(a)
-            a.click()
-            a.remove()
-            setTimeout(() => URL.revokeObjectURL(url), 500)
-            toast.success('PDF generado correctamente')
-          }
+          if (err.name !== 'AbortError') saveAsFallback(blob, filename)
         }
       } else {
-        // Fallback para navegadores que no soportan showSaveFilePicker
-        const url = URL.createObjectURL(blob)
-        const a = document.createElement('a')
-        a.href = url
-        a.download = filename
-        document.body.appendChild(a)
-        a.click()
-        a.remove()
-        
-        // Limpiar URL después de 500ms
-        setTimeout(() => URL.revokeObjectURL(url), 500)
-        toast.success('PDF generado correctamente')
+        saveAsFallback(blob, filename)
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Error generando el PDF')
     } finally {
       setLoading(false)
     }
+  }
+
+  const saveAsFallback = (blob: Blob, filename: string) => {
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = filename
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    setTimeout(() => URL.revokeObjectURL(url), 500)
+    toast.success('PDF generado correctamente')
   }
 
   return (

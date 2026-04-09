@@ -171,7 +171,8 @@ export function CustomerForm({
     }
   }
 
-  const isAdmin = currentUserRole === 'admin' || currentUserRole === 'sales_rep'
+  const isAdmin = currentUserRole === 'admin'
+  const canEdit = isAdmin || !customer || customer.created_by === currentUserId
   const unassignedProfiles = availableUsers.filter(u => !selectedProfileIds.includes(u.id))
 
   return (
@@ -191,8 +192,8 @@ export function CustomerForm({
             value={formData.company_name}
             onChange={(e) => handleInputChange('company_name', e.target.value)}
             required
-            disabled={loading}
-            className="h-8 text-sm"
+            disabled={loading || !canEdit}
+            className={`h-8 text-sm ${!canEdit ? 'bg-muted select-none' : ''}`}
           />
         </div>
 
@@ -202,8 +203,8 @@ export function CustomerForm({
             id="nif"
             value={formData.nif}
             onChange={(e) => handleInputChange('nif', e.target.value)}
-            disabled={loading}
-            className="h-8 text-sm"
+            disabled={loading || !canEdit}
+            className={`h-8 text-sm ${!canEdit ? 'bg-muted select-none' : ''}`}
           />
         </div>
 
@@ -225,8 +226,8 @@ export function CustomerForm({
             id="contact_name"
             value={formData.contact_name}
             onChange={(e) => handleInputChange('contact_name', e.target.value)}
-            disabled={loading}
-            className="h-8 text-sm"
+            disabled={loading || !canEdit}
+            className={`h-8 text-sm ${!canEdit ? 'bg-muted select-none' : ''}`}
           />
         </div>
 
@@ -237,8 +238,8 @@ export function CustomerForm({
             type="email"
             value={formData.contact_email}
             onChange={(e) => handleInputChange('contact_email', e.target.value)}
-            disabled={loading}
-            className="h-8 text-sm"
+            disabled={loading || !canEdit}
+            className={`h-8 text-sm ${!canEdit ? 'bg-muted select-none' : ''}`}
           />
         </div>
 
@@ -249,8 +250,8 @@ export function CustomerForm({
             type="tel"
             value={formData.contact_phone}
             onChange={(e) => handleInputChange('contact_phone', e.target.value)}
-            disabled={loading}
-            className="h-8 text-sm"
+            disabled={loading || !canEdit}
+            className={`h-8 text-sm ${!canEdit ? 'bg-muted select-none' : ''}`}
           />
         </div>
 
@@ -261,8 +262,8 @@ export function CustomerForm({
             placeholder="https://example.com"
             value={formData.website}
             onChange={(e) => handleInputChange('website', e.target.value)}
-            disabled={loading}
-            className="h-8 text-sm"
+            disabled={loading || !canEdit}
+            className={`h-8 text-sm ${!canEdit ? 'bg-muted select-none' : ''}`}
           />
         </div>
 
@@ -272,8 +273,8 @@ export function CustomerForm({
             id="industry"
             value={formData.industry}
             onChange={(e) => handleInputChange('industry', e.target.value)}
-            disabled={loading}
-            className="h-8 text-sm"
+            disabled={loading || !canEdit}
+            className={`h-8 text-sm ${!canEdit ? 'bg-muted select-none' : ''}`}
           />
         </div>
 
@@ -282,7 +283,7 @@ export function CustomerForm({
           <Select
             value={formData.status}
             onValueChange={(value) => handleInputChange('status', value as CustomerStatus)}
-            disabled={loading}
+            disabled={loading || !canEdit}
           >
             <SelectTrigger id="status" className="h-8 text-sm">
               <SelectValue />
@@ -303,8 +304,8 @@ export function CustomerForm({
             id="address"
             value={formData.address}
             onChange={(e) => handleInputChange('address', e.target.value)}
-            disabled={loading}
-            className="h-8 text-sm"
+            disabled={loading || !canEdit}
+            className={`h-8 text-sm ${!canEdit ? 'bg-muted select-none' : ''}`}
           />
         </div>
 
@@ -314,8 +315,8 @@ export function CustomerForm({
             id="ciudad"
             value={formData.ciudad}
             onChange={(e) => handleInputChange('ciudad', e.target.value)}
-            disabled={loading}
-            className="h-8 text-sm"
+            disabled={loading || !canEdit}
+            className={`h-8 text-sm ${!canEdit ? 'bg-muted select-none' : ''}`}
           />
         </div>
 
@@ -325,8 +326,8 @@ export function CustomerForm({
             id="provincia"
             value={formData.provincia}
             onChange={(e) => handleInputChange('provincia', e.target.value)}
-            disabled={loading}
-            className="h-8 text-sm"
+            disabled={loading || !canEdit}
+            className={`h-8 text-sm ${!canEdit ? 'bg-muted select-none' : ''}`}
           />
         </div>
 
@@ -336,8 +337,8 @@ export function CustomerForm({
             id="codigo_postal"
             value={formData.codigo_postal}
             onChange={(e) => handleInputChange('codigo_postal', e.target.value)}
-            disabled={loading}
-            className="h-8 text-sm"
+            disabled={loading || !canEdit}
+            className={`h-8 text-sm ${!canEdit ? 'bg-muted select-none' : ''}`}
           />
         </div>
 
@@ -347,8 +348,8 @@ export function CustomerForm({
             id="pais"
             value={formData.pais}
             onChange={(e) => handleInputChange('pais', e.target.value)}
-            disabled={loading}
-            className="h-8 text-sm"
+            disabled={loading || !canEdit}
+            className={`h-8 text-sm ${!canEdit ? 'bg-muted select-none' : ''}`}
           />
         </div>
       </div>
@@ -360,8 +361,8 @@ export function CustomerForm({
           value={formData.notas_cliente}
           onChange={(e) => handleInputChange('notas_cliente', e.target.value)}
           rows={2}
-          disabled={loading}
-          className="text-sm"
+          disabled={loading || !canEdit}
+          className={`text-sm ${!canEdit ? 'bg-muted select-none' : ''}`}
         />
       </div>
 
@@ -369,7 +370,7 @@ export function CustomerForm({
       <div className="border rounded-lg p-3 space-y-2">
         <div className="flex items-center gap-2">
           <Label className="text-sm font-semibold">Descuentos</Label>
-          {currentUserRole !== 'admin' && (
+          {!canEdit && (
             <span className="text-xs text-muted-foreground ml-1">(solo lectura)</span>
           )}
         </div>
@@ -495,14 +496,16 @@ export function CustomerForm({
       )}
 
       <div className="flex gap-2 pt-1">
-        <Button type="submit" disabled={loading || (!!customer && !unsavedChanges)} className="h-8 text-sm px-4">
-          {loading ? (
-            <>
-              <Loader2 className="mr-2 h-3 w-3 animate-spin" />
-              Guardando...
-            </>
-          ) : customer ? 'Actualizar Cliente' : 'Crear Cliente'}
-        </Button>
+        {canEdit && (
+          <Button type="submit" disabled={loading || (!!customer && !unsavedChanges)} className="h-8 text-sm px-4">
+            {loading ? (
+              <>
+                <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                Guardando...
+              </>
+            ) : customer ? 'Actualizar Cliente' : 'Crear Cliente'}
+          </Button>
+        )}
         <Button type="button" variant="outline" onClick={() => router.back()} disabled={loading} className="h-8 text-sm px-4">
           Cancelar
         </Button>
