@@ -53,8 +53,8 @@ export function ProductForm({ productId }: ProductFormProps) {
     alto: '',
     ancho: '',
     volumen: '',
-    larguero_largo: '',
-    larguero_alto: '',
+    larguero_largo: 'MA45 ',
+    larguero_alto: 'MA45 ',
     familia: '',
     subfamilia: '',
     motorizada: false,
@@ -195,8 +195,8 @@ export function ProductForm({ productId }: ProductFormProps) {
         alto: toNum(formData.alto),
         ancho: toNum(formData.ancho),
         volumen: toNum(formData.volumen),
-        larguero_largo: toNum(formData.larguero_largo),
-        larguero_alto: toNum(formData.larguero_alto),
+        larguero_largo: toText(formData.larguero_largo),
+        larguero_alto: toText(formData.larguero_alto),
         area_efectiva: toNum(formData.area_efectiva),
         brand_id: toNum(formData.brand_id),
         familia: toText(formData.familia),
@@ -381,12 +381,12 @@ export function ProductForm({ productId }: ProductFormProps) {
             <Input type="number" value={formData.volumen} onChange={(e) => handleChange('volumen', e.target.value)} />
           </div>
           <div>
-            <Label>Larguero Largo</Label>
-            <Input type="number" value={formData.larguero_largo} onChange={(e) => handleChange('larguero_largo', e.target.value)} />
+            <Label>Larguero Ancho</Label>
+            <Input value={formData.larguero_largo} onChange={(e) => handleChange('larguero_largo', e.target.value)} />
           </div>
           <div>
             <Label>Larguero Alto</Label>
-            <Input type="number" value={formData.larguero_alto} onChange={(e) => handleChange('larguero_alto', e.target.value)} />
+            <Input value={formData.larguero_alto} onChange={(e) => handleChange('larguero_alto', e.target.value)} />
           </div>
         </div>
       </Card>

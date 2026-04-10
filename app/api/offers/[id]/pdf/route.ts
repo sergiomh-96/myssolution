@@ -309,7 +309,7 @@ export async function GET(
     
     if (priceType === 'all') {
       return [
-        item.product?.referencia || item.external_ref || '-',
+        item.referencia || item.external_ref || item.product?.referencia || '-',
         item.description || item.product?.descripcion || '-',
         String(item.quantity ?? 1),
         formatCurrency(unitPriceNum),
@@ -319,7 +319,7 @@ export async function GET(
     }
     
     return [
-      item.product?.referencia || item.external_ref || '-',
+      item.referencia || item.external_ref || item.product?.referencia || '-',
       item.description || item.product?.descripcion || '-',
       String(item.quantity ?? 1),
       formatCurrency(unitPriceNum),
