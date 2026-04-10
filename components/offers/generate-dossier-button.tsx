@@ -35,6 +35,12 @@ type Company = 'mysair' | 'agfri'
 type PriceType = 'pvp' | 'neto' | 'all'
 type DossierType = 'sistemas' | 'difusion'
 
+const CERT_OPTIONS = [
+  { label: 'Certificado Difusión (no motorizada)', url: 'https://drive.google.com/open?id=1wOG32ieG-SLb9sJjg31NZgwFis1nzn2l' },
+  { label: 'Certificado Sistemas', url: 'https://drive.google.com/open?id=1qbMf8fZtNCTY2f2hJeLUDiSSuKr6auhI' },
+  { label: 'Certificado Recuperador Doble Flujo', url: 'https://drive.google.com/open?id=1KbvGX7zjEY6Rkt_IHAdl16q1lviwjVdl' },
+]
+
 const SCHEMAS_OPTIONS = [
   { label: 'SISTEMA ZONIFICADO PARA EQUIPOS DX (1 U.I.)', url: 'https://drive.google.com/open?id=1JsuggzHVfjhzvTcnnmuVHJkdOCvSdZUw' },
   { label: 'SISTEMA ZONIFICADO PARA EQUIPOS DX (2 U.I.)', url: 'https://drive.google.com/open?id=1Mj4yBr9hIBPSmdA9RhdNTYWHSJTMbMRr' },
@@ -59,10 +65,18 @@ export function GenerateDossierButton({ offerId, offerNumber, customerName = '',
   const [includeFT, setIncludeFT] = useState(true) 
   const [includeCert, setIncludeCert] = useState(false)
   const [includeES, setIncludeES] = useState(false)
+  const [includeGarantia, setIncludeGarantia] = useState(true)
   const [selectedSchemas, setSelectedSchemas] = useState<string[]>([])
+  const [selectedCerts, setSelectedCerts] = useState<string[]>([])
 
   const handleToggleSchema = (url: string) => {
     setSelectedSchemas(prev => 
+      prev.includes(url) ? prev.filter(u => u !== url) : [...prev, url]
+    )
+  }
+
+  const handleToggleCert = (url: string) => {
+    setSelectedCerts(prev => 
       prev.includes(url) ? prev.filter(u => u !== url) : [...prev, url]
     )
   }
@@ -77,7 +91,9 @@ export function GenerateDossierButton({ offerId, offerNumber, customerName = '',
         includeFT: String(includeFT),
         includeCert: String(includeCert),
         includeES: String(includeES),
+        includeGarantia: String(includeGarantia),
         selectedSchemas: JSON.stringify(selectedSchemas),
+        selectedCerts: JSON.stringify(selectedCerts),
       })
 
       const response = await fetch(`/api/offers/${offerId}/pdf?${params.toString()}`)
@@ -215,9 +231,39 @@ export function GenerateDossierButton({ offerId, offerNumber, customerName = '',
                 <Checkbox id="d-ft" checked={includeFT} onCheckedChange={(v) => setIncludeFT(!!v)} />
                 <Label htmlFor="d-ft" className="text-sm cursor-pointer">Fichas Técnicas</Label>
               </div>
-              <div className="flex items-start gap-3">
-                <Checkbox id="d-ce" checked={includeCert} onCheckedChange={(v) => setIncludeCert(!!v)} />
-                <Label htmlFor="d-ce" className="text-sm cursor-pointer">Certificados de Conformidad</Label>
+              <div className="space-y-3">
+                <div className="flex items-start gap-3">
+                  <Checkbox 
+                    id="d-ce" 
+                    checked={includeCert} 
+                    onCheckedChange={(checked) => {
+                      setIncludeCert(checked === true)
+                      if (!checked) setSelectedCerts([])
+                    }} 
+                  />
+                  <Label htmlFor="d-ce" className="text-sm cursor-pointer font-medium">Certificados de Conformidad</Label>
+                </div>
+                
+                {includeCert && (
+                  <div className="ml-7 space-y-2 max-h-[140px] overflow-y-auto border rounded-lg p-2 bg-white">
+                    {CERT_OPTIONS.map((opt) => (
+                      <div key={opt.url} className="flex items-start gap-2 py-1">
+                        <Checkbox 
+                          id={opt.url} 
+                          checked={selectedCerts.includes(opt.url)}
+                          onCheckedChange={() => handleToggleCert(opt.url)}
+                          className="mt-0.5"
+                        />
+                        <Label 
+                          htmlFor={opt.url} 
+                          className="text-[10px] leading-tight cursor-pointer font-normal text-muted-foreground hover:text-foreground"
+                        >
+                          {opt.label}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
               <div className="space-y-3">
                 <div className="flex items-start gap-3">
@@ -252,6 +298,10 @@ export function GenerateDossierButton({ offerId, offerNumber, customerName = '',
                     ))}
                   </div>
                 )}
+              </div>
+              <div className="flex items-start gap-3">
+                <Checkbox id="d-ga" checked={includeGarantia} onCheckedChange={(v) => setIncludeGarantia(!!v)} />
+                <Label htmlFor="d-ga" className="text-sm cursor-pointer font-medium">Condiciones de Garantía</Label>
               </div>
             </div>
           </div>

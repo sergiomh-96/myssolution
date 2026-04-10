@@ -13,7 +13,9 @@ const DIFUSION_COVER_URL = 'https://itzohkwuqmkzatmbrfgr.supabase.co/storage/v1/
 const OFFER_COVER_URL = 'https://itzohkwuqmkzatmbrfgr.supabase.co/storage/v1/object/sign/Dossier_portadas/Dossier_Ofertas_Portada.pdf?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV84Mjc5NjQ5NC1mNTRiLTRmZTQtYWZmZS01M2NkYTVjMGYwNTgiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJEb3NzaWVyX3BvcnRhZGFzL0Rvc3NpZXJfT2ZlcnRhc19Qb3J0YWRhLnBkZiIsImlhdCI6MTc3NTczNzU4NiwiZXhwIjoyNDA2NDU3NTg2fQ.01jcrj1RVTSBdNNlQ1gbPAhfpgXPqAkl2yMqq33rGF4'
 const FT_COVER_URL = 'https://itzohkwuqmkzatmbrfgr.supabase.co/storage/v1/object/sign/Dossier_portadas/Dossier_Fichas_Tecnicas_Portada.pdf?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV84Mjc5NjQ5NC1mNTRiLTRmZTQtYWZmZS01M2NkYTVjMGYwNTgiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJEb3NzaWVyX3BvcnRhZGFzL0Rvc3NpZXJfRmljaGFzX1RlY25pY2FzX1BvcnRhZGEucGRmIiwiaWF0IjoxNzc1NzM3Mjc0LCJleHAiOjI0MDY0NTcyNzR9.TuVs6VQC6rOkWCWTfKq-5jRNnzeLTMeNOg1fy2bhoY0'
 const ESQUEMAS_COVER_URL = 'https://itzohkwuqmkzatmbrfgr.supabase.co/storage/v1/object/sign/Dossier_portadas/Dossier_Esquemas_Conexion_Portada.pdf?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV84Mjc5NjQ5NC1mNTRiLTRmZTQtYWZmZS01M2NkYTVjMGYwNTgiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJEb3NzaWVyX3BvcnRhZGFzL0Rvc3NpZXJfRXNxdWVtYXNfQ29uZXhpb25fUG9ydGFkYS5wZGYiLCJpYXQiOjE3NzU3Mzc4MjIsImV4cCI6MjQwNjQ1NzgyMn0.HGAOKUjj-1CXCyty5AdV--lrtySkUErwmMo81iWWXuo'
-const BACK_COVER_URL = 'https://itzohkwuqmkzatmbrfgr.supabase.co/storage/v1/object/sign/Dossier_portadas/Dossier_Contraportada.pdf?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV84Mjc5NjQ5NC1mNTRiLTRmZTQtYWZmZS01M2NkYTVjMGYwNTgiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJEb3NzaWVyX3BvcnRhZGFzL0Rvc3NpZXJfQ29udHJhcG9ydGFkYS5wZGYiLCJpYXQiOjE3NzU3Mzg5MDUsImV4cCI6MjQwNjQ1ODkwNX0.9sjPSIqEJpQ6d4_XsFXkesXNN4chHHZjxi5s_JIjfQw'
+const CERT_COVER_URL = 'https://itzohkwuqmkzatmbrfgr.supabase.co/storage/v1/object/sign/Dossier_portadas/Dossier_Certificados_Calidad_Portada.pdf?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV84Mjc5NjQ5NC1mNTRiLTRmZTQtYWZmZS01M2NkYTVjMGYwNTgiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJEb3NzaWVyX3BvcnRhZGFzL0Rvc3NpZXJfQ2VydGlmaWNhZG9zX0NhbGlkYWRfUG9ydGFkYS5wZGYiLCJpYXQiOjE3NzU4MjQ1MDUsImV4cCI6MjQwNjU0NDUwNX0.XNCHq2By09gkUUXd9_Rg57rGbIbxgT0iK6LjuqO4aFA'
+const GARANTIA_URL = 'https://itzohkwuqmkzatmbrfgr.supabase.co/storage/v1/object/sign/Dossier_portadas/Dossier_Condiciones_Garantia.pdf?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV84Mjc5NjQ5NC1mNTRiLTRmZTQtYWZmZS01M2NkYTVjMGYwNTgiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJEb3NzaWVyX3BvcnRhZGFzL0Rvc3NpZXJfQ29uZGljaW9uZXNfR2FyYW50aWEucGRmIiwiaWF0IjoxNzc1ODI0NTkxLCJleHAiOjI0MDY1NDQ1OTF9.fXiBvc0xBsMI3BLTuxbkEaM1Pye6Y-HOxIwIyZjyAtE'
+const BACK_COVER_URL = 'https://itzohkwuqmkzatmbrfgr.supabase.co/storage/v1/object/sign/Dossier_portadas/Dossier_Contraportada.pdf?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV84Mjc5NjQ5NC1mNTRiLTRmZTQtYWZmZS01M2NkYTVjMGYwNTgiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJEb3NzaWVyX3BvcnRhZGFzL0Rvc3NpZXJfQ29udHJhcG9ydGFkYS5wZGYiLCJpYXQiOjE3NzU3Mzg5MDUsImV4cCI6MjQwNjU0NDkwNX0.9sjPSIqEJpQ6d4_XsFXkesXNN4chHHZjxi5s_JIjfQw'
 
 export async function GET(
   req: Request,
@@ -27,12 +29,16 @@ export async function GET(
   const includeFT = url.searchParams.get('includeFT') === 'true'
   const includeCert = url.searchParams.get('includeCert') === 'true'
   const includeES = url.searchParams.get('includeES') === 'true'
+  const includeGarantia = url.searchParams.get('includeGarantia') === 'true'
   const selectedSchemasRaw = url.searchParams.get('selectedSchemas')
+  const selectedCertsRaw = url.searchParams.get('selectedCerts')
   let selectedSchemas: string[] = []
+  let selectedCerts: string[] = []
   try {
     if (selectedSchemasRaw) selectedSchemas = JSON.parse(selectedSchemasRaw)
+    if (selectedCertsRaw) selectedCerts = JSON.parse(selectedCertsRaw)
   } catch (e) {
-    console.error('Error parsing selectedSchemas:', e)
+    console.error('Error parsing selections:', e)
   }
 
   const supabase = await createClient()
@@ -420,12 +426,13 @@ export async function GET(
   if (includeFT || includeCert || includeES) {
     try {
       const mergedPdf = await PDFDocument.create()
+      const processedUrls = new Set<string>()
       
       // 1. ADD DOSSIER COVER (AS THE VERY FIRST PAGE)
       try {
         const coverUrl = dossierType === 'difusion' ? DIFUSION_COVER_URL : SISTEMAS_COVER_URL
         const coverBuffer = await downloadPublicDriveFile(coverUrl)
-        if (coverBuffer) {
+        if (coverBuffer && coverBuffer.toString('utf8', 0, 4) === '%PDF') {
           const coverPdf = await PDFDocument.load(coverBuffer)
           const [coverPage] = await mergedPdf.copyPages(coverPdf, [0])
           
@@ -433,10 +440,9 @@ export async function GET(
           const { width, height } = coverPage.getSize()
           const font = await mergedPdf.embedFont(StandardFonts.HelveticaBold)
           const textColor = rgb(0.1, 0.2, 0.3)
-          const fontSize = 18 // Slightly smaller for better fit
-          const rightMarginX = width * 0.91 // X position for the right end of the text
+          const fontSize = 18 
+          const rightMarginX = width * 0.91 
 
-          // Client name
           const clientText = offer.customer?.company_name || '-'
           const clientWidth = font.widthOfTextAtSize(clientText, fontSize)
           coverPage.drawText(clientText, {
@@ -447,7 +453,6 @@ export async function GET(
             color: textColor,
           })
 
-          // Reference / Title
           const refText = offer.title || '-'
           const refWidth = font.widthOfTextAtSize(refText, fontSize)
           coverPage.drawText(refText, {
@@ -460,7 +465,6 @@ export async function GET(
 
           mergedPdf.addPage(coverPage)
           
-          // Add remaining pages if cover has more than 1
           if (coverPdf.getPageCount() > 1) {
             const extraPages = await mergedPdf.copyPages(coverPdf, coverPdf.getPageIndices().slice(1))
             extraPages.forEach(p => mergedPdf.addPage(p))
@@ -473,7 +477,7 @@ export async function GET(
       // 2. ADD OFFER COVER PAGE
       try {
         const coverBuffer = await downloadPublicDriveFile(OFFER_COVER_URL)
-        if (coverBuffer) {
+        if (coverBuffer && coverBuffer.toString('utf8', 0, 4) === '%PDF') {
           const coverPdf = await PDFDocument.load(coverBuffer)
           const pages = await mergedPdf.copyPages(coverPdf, coverPdf.getPageIndices())
           pages.forEach(p => mergedPdf.addPage(p))
@@ -518,23 +522,34 @@ export async function GET(
         
         // Add manually selected schemas from the dialog
         for (const schemaUrl of selectedSchemas) {
-          const fileBuffer = await downloadPublicDriveFile(schemaUrl)
-          if (fileBuffer) {
-            const esPdf = await PDFDocument.load(fileBuffer)
-            const pages = await mergedPdf.copyPages(esPdf, esPdf.getPageIndices())
-            pages.forEach(p => mergedPdf.addPage(p))
+          if (processedUrls.has(schemaUrl)) continue
+          try {
+            const fileBuffer = await downloadPublicDriveFile(schemaUrl)
+            if (fileBuffer && fileBuffer.toString('utf8', 0, 4) === '%PDF') {
+              const esPdf = await PDFDocument.load(fileBuffer)
+              const pages = await mergedPdf.copyPages(esPdf, esPdf.getPageIndices())
+              pages.forEach(p => mergedPdf.addPage(p))
+              processedUrls.add(schemaUrl)
+            }
+          } catch (e) {
+            console.error(`Error loading schema ${schemaUrl}:`, e)
           }
         }
 
         // Also add schemas associated with specific products if any
         for (const item of offerItems) {
-          if ((item.product as any)?.url_esquema) {
-            const url = (item.product as any).url_esquema
-            const fileBuffer = await downloadPublicDriveFile(url)
-            if (fileBuffer) {
-              const esPdf = await PDFDocument.load(fileBuffer)
-              const pages = await mergedPdf.copyPages(esPdf, esPdf.getPageIndices())
-              pages.forEach(p => mergedPdf.addPage(p))
+          const url = (item.product as any)?.url_esquema
+          if (url && !processedUrls.has(url)) {
+            try {
+              const fileBuffer = await downloadPublicDriveFile(url)
+              if (fileBuffer && fileBuffer.toString('utf8', 0, 4) === '%PDF') {
+                const esPdf = await PDFDocument.load(fileBuffer)
+                const pages = await mergedPdf.copyPages(esPdf, esPdf.getPageIndices())
+                pages.forEach(p => mergedPdf.addPage(p))
+                processedUrls.add(url)
+              }
+            } catch (e) {
+              console.error('Error loading product schema:', e)
             }
           }
         }
@@ -544,7 +559,7 @@ export async function GET(
       if (includeFT) {
         try {
           const coverBuffer = await downloadPublicDriveFile(FT_COVER_URL)
-          if (coverBuffer) {
+          if (coverBuffer && coverBuffer.toString('utf8', 0, 4) === '%PDF') {
             const coverPdf = await PDFDocument.load(coverBuffer)
             const pages = await mergedPdf.copyPages(coverPdf, coverPdf.getPageIndices())
             pages.forEach(p => mergedPdf.addPage(p))
@@ -554,22 +569,89 @@ export async function GET(
         }
 
         for (const item of offerItems) {
-          if ((item.product as any)?.ficha_tecnica) {
-            const url = (item.product as any).ficha_tecnica
-            const fileBuffer = await downloadPublicDriveFile(url)
-            if (fileBuffer) {
-              const ftPdf = await PDFDocument.load(fileBuffer)
-              const pages = await mergedPdf.copyPages(ftPdf, ftPdf.getPageIndices())
-              pages.forEach(p => mergedPdf.addPage(p))
+          const url = (item.product as any)?.ficha_tecnica
+          if (url && !processedUrls.has(url)) {
+            try {
+              const fileBuffer = await downloadPublicDriveFile(url)
+              if (fileBuffer && fileBuffer.toString('utf8', 0, 4) === '%PDF') {
+                const ftPdf = await PDFDocument.load(fileBuffer)
+                const pages = await mergedPdf.copyPages(ftPdf, ftPdf.getPageIndices())
+                pages.forEach(p => mergedPdf.addPage(p))
+                processedUrls.add(url)
+              }
+            } catch (e) {
+              console.error('Error loading technical sheet:', e)
             }
           }
+        }
+      }
+
+      // 5.5 ADD CERTIFICATES SECTION (IF REQUESTED)
+      if (includeCert) {
+        try {
+          const coverBuffer = await downloadPublicDriveFile(CERT_COVER_URL)
+          if (coverBuffer && coverBuffer.toString('utf8', 0, 4) === '%PDF') {
+            const coverPdf = await PDFDocument.load(coverBuffer)
+            const pages = await mergedPdf.copyPages(coverPdf, coverPdf.getPageIndices())
+            pages.forEach(p => mergedPdf.addPage(p))
+          }
+        } catch (error) {
+          console.error('Error adding Certificates cover page:', error)
+        }
+
+        // Add manually selected certs from the dialog
+        for (const certUrl of selectedCerts) {
+          if (processedUrls.has(certUrl)) continue
+          try {
+            const fileBuffer = await downloadPublicDriveFile(certUrl)
+            if (fileBuffer && fileBuffer.toString('utf8', 0, 4) === '%PDF') {
+              const certPdf = await PDFDocument.load(fileBuffer)
+              const pages = await mergedPdf.copyPages(certPdf, certPdf.getPageIndices())
+              pages.forEach(p => mergedPdf.addPage(p))
+              processedUrls.add(certUrl)
+            }
+          } catch (e) {
+            console.error(`Error loading certificate ${certUrl}:`, e)
+          }
+        }
+
+        // Also add certificates associated with specific products if any
+        for (const item of offerItems) {
+          const url = (item.product as any)?.url_certificado
+          if (url && !processedUrls.has(url)) {
+            try {
+              const fileBuffer = await downloadPublicDriveFile(url)
+              if (fileBuffer && fileBuffer.toString('utf8', 0, 4) === '%PDF') {
+                const certPdf = await PDFDocument.load(fileBuffer)
+                const pages = await mergedPdf.copyPages(certPdf, certPdf.getPageIndices())
+                pages.forEach(p => mergedPdf.addPage(p))
+                processedUrls.add(url)
+              }
+            } catch (e) {
+              console.error('Error loading product certificate:', e)
+            }
+          }
+        }
+      }
+
+      // 5.7 ADD WARRANTY CONDITIONS (IF REQUESTED)
+      if (includeGarantia) {
+        try {
+          const fileBuffer = await downloadPublicDriveFile(GARANTIA_URL)
+          if (fileBuffer && fileBuffer.toString('utf8', 0, 4) === '%PDF') {
+            const esPdf = await PDFDocument.load(fileBuffer)
+            const pages = await mergedPdf.copyPages(esPdf, esPdf.getPageIndices())
+            pages.forEach(p => mergedPdf.addPage(p))
+          }
+        } catch (e) {
+          console.error('Error loading warranty conditions:', e)
         }
       }
 
       // 6. ADD BACK COVER (AS THE VERY LAST PAGE)
       try {
         const coverBuffer = await downloadPublicDriveFile(BACK_COVER_URL)
-        if (coverBuffer) {
+        if (coverBuffer && coverBuffer.toString('utf8', 0, 4) === '%PDF') {
           const coverPdf = await PDFDocument.load(coverBuffer)
           const pages = await mergedPdf.copyPages(coverPdf, coverPdf.getPageIndices())
           pages.forEach(p => mergedPdf.addPage(p))
@@ -585,7 +667,7 @@ export async function GET(
     }
   }
 
-  const filename = `oferta-${offerNum}${includeFT || includeCert || includeES ? '-dossier' : ''}.pdf`
+  const filename = `oferta-${offerNum}${includeFT || includeCert || includeES || includeGarantia ? '-dossier' : ''}.pdf`
 
   return new NextResponse(finalPdfBuffer, {
     status: 200,
