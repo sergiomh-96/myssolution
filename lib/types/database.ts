@@ -207,18 +207,18 @@ export interface Product {
 }
 
 export interface SupportAssistance {
-  id: string
+  id: number
   external_id: string | null
   titulo: string
   customer_id: number | null
   contacto_nombre: string | null
+  contacto_telefono: string | null
+  contacto_email: string | null
   tipo_cliente: string | null
   codigo_postal: string | null
   ciudad: string | null
   provincia: string | null
   empleado_id: string | null
-  fecha: string
-  hora: string | null
   duracion_llamada: number
   tipo_incidencia: string | null
   estado: string
@@ -240,7 +240,7 @@ export interface SupportAssistance {
 
 export interface SupportAssistanceItem {
   id: string
-  assistance_id: string
+  assistance_id: number
   marca: string | null
   referencia: string | null
   cantidad: number

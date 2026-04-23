@@ -11,8 +11,8 @@ export default async function RequestsPage() {
 
   let query = supabase
     .from('support_assistances')
-    .select('*, customer:customers(company_name), employee:profiles!empleado_id(full_name)')
-    .order('created_at', { ascending: false })
+    .select('*, customer:customers(company_name), employee:profiles!empleado_id(full_name), creator:profiles!created_by(full_name)')
+    .order('id', { ascending: false })
 
   // Support agents and sales reps see only their own (assigned or created)
   if (profile.role === 'support_agent' || profile.role === 'sales_rep') {

@@ -5,11 +5,13 @@ CREATE SEQUENCE IF NOT EXISTS public.support_assistance_seq START 818;
 
 -- 2. Create support_assistances table
 CREATE TABLE IF NOT EXISTS public.support_assistances (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  id BIGSERIAL PRIMARY KEY,
   external_id TEXT UNIQUE,
   titulo TEXT NOT NULL,
   customer_id BIGINT REFERENCES public.customers(id) ON DELETE SET NULL,
   contacto_nombre TEXT,
+  contacto_telefono TEXT,
+  contacto_email TEXT,
   tipo_cliente TEXT,
   codigo_postal TEXT,
   ciudad TEXT,
@@ -39,12 +41,13 @@ CREATE TABLE IF NOT EXISTS public.support_assistances (
 -- 3. Create support_assistance_items table
 CREATE TABLE IF NOT EXISTS public.support_assistance_items (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  assistance_id UUID NOT NULL REFERENCES public.support_assistances(id) ON DELETE CASCADE,
+  assistance_id BIGINT NOT NULL REFERENCES public.support_assistances(id) ON DELETE CASCADE,
   marca TEXT, -- AGFRI, MYSAIR, etc.
   referencia TEXT,
   cantidad INTEGER DEFAULT 1,
   descripcion TEXT,
   en_garantia BOOLEAN DEFAULT false,
+  observacion VARCHAR(140),
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 

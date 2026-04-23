@@ -268,11 +268,15 @@ function ContactSearchInput({
   value,
   contacts,
   onSelect,
+  onPhoneSelect,
+  onEmailSelect,
   disabled,
 }: {
   value: string
-  contacts: Array<{ id: number; nombre: string; apellidos: string | null }>
+  contacts: Array<{ id: number; nombre: string; apellidos: string | null; telefono?: string | null; email?: string | null }>
   onSelect: (contactName: string) => void
+  onPhoneSelect?: (phone: string) => void
+  onEmailSelect?: (email: string) => void
   disabled?: boolean
 }) {
   const [searchTerm, setSearchTerm] = useState(value)
@@ -313,12 +317,18 @@ function ContactSearchInput({
               onClick={() => {
                 const fullName = `${contact.nombre} ${contact.apellidos || ''}`.trim()
                 onSelect(fullName)
+                if (onPhoneSelect && contact.telefono) onPhoneSelect(contact.telefono)
+                if (onEmailSelect && contact.email) onEmailSelect(contact.email)
                 setSearchTerm(fullName)
                 setIsOpen(false)
               }}
               className="w-full text-left px-3 py-2 hover:bg-accent rounded-sm text-sm transition-colors"
             >
               <div className="font-medium">{contact.nombre} {contact.apellidos}</div>
+              <div className="text-[10px] text-muted-foreground flex flex-col">
+                {contact.telefono && <span>📞 {contact.telefono}</span>}
+                {contact.email && <span>📧 {contact.email}</span>}
+              </div>
             </button>
           ))}
         </div>
@@ -564,14 +574,16 @@ export function AssistanceForm({
     titulo: assistance?.titulo || '',
     customer_id: assistance?.customer_id || null,
     contacto_nombre: assistance?.contacto_nombre || '',
+    contacto_telefono: assistance?.contacto_telefono || '',
+    contacto_email: assistance?.contacto_email || '',
     tipo_cliente: assistance?.tipo_cliente || 'USUARIO FINAL',
     codigo_postal: assistance?.codigo_postal || '',
     ciudad: assistance?.ciudad || '',
     provincia: assistance?.provincia || '',
     direccion: assistance?.direccion || '',
     empleado_id: assistance?.empleado_id || currentUserId,
-    fecha: assistance?.fecha || format(new Date(), 'yyyy-MM-dd'),
-    hora: assistance?.hora || format(new Date(), 'HH:mm'),
+    fecha: (assistance?.created_at ? format(new Date(assistance.created_at), 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd')) as any,
+    hora: (assistance?.created_at ? format(new Date(assistance.created_at), 'HH:mm') : format(new Date(), 'HH:mm')) as any,
     duracion_llamada: assistance?.duracion_llamada || 0,
     tipo_incidencia: assistance?.tipo_incidencia || 'INCIDENCIA TÉCNICA',
     estado: assistance?.estado || 'ABIERTA',
@@ -597,7 +609,7 @@ export function AssistanceForm({
       const supabase = createClient()
       const { data } = await supabase
         .from('clients_contacts')
-        .select('id, nombre, apellidos')
+        .select('id, nombre, apellidos, telefono, email')
         .eq('customer_id', formData.customer_id)
       
       setAvailableContacts(data || [])
@@ -691,6 +703,10 @@ export function AssistanceForm({
 
     try {
       const supabase = createClient()
+
+      if (!formData.titulo?.trim()) {
+        throw new Error('El título es obligatorio')
+      }
       
       // Handle free-text customer like in OfferForm
       let customerId: number | null = null
@@ -719,15 +735,44 @@ export function AssistanceForm({
             customerId = newCust.id
           }
         } else {
-          customerId = Number(formData.customer_id)
+          const n = Number(formData.customer_id)
+          customerId = (isNaN(n) || n === 0) ? null : n
         }
       }
 
-      const payload = {
-        ...formData,
+      const payload: any = {
+        titulo: formData.titulo,
         customer_id: customerId,
-        created_by: currentUserId,
+        contacto_nombre: formData.contacto_nombre,
+        contacto_telefono: formData.contacto_telefono,
+        contacto_email: formData.contacto_email,
+        tipo_cliente: formData.tipo_cliente,
+        codigo_postal: formData.codigo_postal,
+        ciudad: formData.ciudad,
+        provincia: formData.provincia,
+        direccion: formData.direccion,
+        empleado_id: formData.empleado_id,
+        duracion_llamada: formData.duracion_llamada,
+        tipo_incidencia: formData.tipo_incidencia,
+        estado: formData.estado,
         subestado: formData.subestado === 'NINGUNA' ? '' : formData.subestado,
+        distribuidor: formData.distribuidor,
+        sat: formData.sat,
+        garantia: formData.garantia,
+        rma_number: formData.rma_number,
+        incidencia_desc: formData.incidencia_desc,
+        solucion_desc: formData.solucion_desc,
+        comentarios_soporte: formData.comentarios_soporte,
+        comentarios_admin: formData.comentarios_admin,
+      }
+
+      // Solo añadir created_by si es una inserción nueva
+      if (!assistance?.id) {
+        payload.created_by = currentUserId
+      }
+
+      if (customerId !== null && isNaN(customerId)) {
+        throw new Error('El ID de cliente no es válido (NaN)')
       }
 
       let assistanceId = assistance?.id
@@ -745,23 +790,30 @@ export function AssistanceForm({
         const { data, error } = await supabase
           .from('support_assistances')
           .insert([payload])
-          .select()
-          .single()
+          .select('id')
         
         if (error) throw error
-        assistanceId = data.id
+        
+        if (!data || data.length === 0) {
+          throw new Error('Error al crear: El registro se guardó pero no se pudo recuperar el ID (posible error de permisos RLS)')
+        }
+        
+        assistanceId = data[0].id
       }
 
       // Sync items
       await supabase.from('support_assistance_items').delete().eq('assistance_id', assistanceId)
-      const itemsToInsert = items.map(item => ({
-        assistance_id: assistanceId,
-        marca: item.marca,
-        referencia: item.referencia,
-        cantidad: item.cantidad,
-        descripcion: item.descripcion,
-        en_garantia: item.en_garantia,
-      }))
+      const itemsToInsert = items
+        .filter(item => item.referencia && item.referencia.trim() !== '')
+        .map(item => ({
+          assistance_id: assistanceId,
+          marca: item.marca || null,
+          referencia: item.referencia || null,
+          cantidad: item.cantidad || 1,
+          descripcion: item.descripcion || null,
+          en_garantia: item.en_garantia || false,
+          observacion: item.observacion ? item.observacion.substring(0, 140) : null,
+        }))
 
       if (itemsToInsert.length > 0) {
         const { error: itemsError } = await supabase
@@ -774,8 +826,17 @@ export function AssistanceForm({
       router.push('/dashboard/requests')
       router.refresh()
     } catch (err: any) {
-      console.error(err)
-      toast.error('Error al guardar: ' + err.message)
+      console.group('Error al guardar asistencia')
+      console.error('Tipo de error:', typeof err)
+      console.error('Keys del error:', Object.keys(err || {}))
+      console.error('Error objeto:', err)
+      console.error('Mensaje (err.message):', err?.message)
+      console.error('Detalles (err.details):', err?.details)
+      console.error('Código (err.code):', err?.code)
+      console.groupEnd()
+      
+      const errorMsg = err?.message || err?.details || 'Error desconocido'
+      toast.error('Error al guardar: ' + errorMsg)
     } finally {
       setLoading(false)
     }
@@ -937,12 +998,14 @@ export function AssistanceForm({
                       value={formData.fecha || ''} 
                       onChange={(e) => setFormData({ ...formData, fecha: e.target.value })}
                       className="h-9 text-[11px] shadow-sm flex-[2]"
+                      disabled
                     />
                     <Input 
                       type="time" 
                       value={formData.hora || ''} 
                       onChange={(e) => setFormData({ ...formData, hora: e.target.value })}
                       className="h-9 text-[11px] shadow-sm flex-1"
+                      disabled
                     />
                   </div>
                 </div>
@@ -1017,16 +1080,31 @@ export function AssistanceForm({
                   <ContactSearchInput 
                     value={formData.contacto_nombre || ''}
                     contacts={availableContacts}
-                    onSelect={(val) => setFormData({ ...formData, contacto_nombre: val })}
+                    onSelect={(val) => setFormData(prev => ({ ...prev, contacto_nombre: val }))}
+                    onPhoneSelect={(phone) => setFormData(prev => ({ ...prev, contacto_telefono: phone }))}
+                    onEmailSelect={(email) => setFormData(prev => ({ ...prev, contacto_email: email }))}
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-[10px] font-bold uppercase text-muted-foreground">9. Distribuidor</Label>
-                  <DistributorSearchInput 
-                    value={formData.distribuidor || ''}
-                    customers={customers}
-                    onSelect={(val) => setFormData({ ...formData, distribuidor: val })}
-                  />
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1.5">
+                      <Label className="text-[10px] font-bold uppercase text-muted-foreground">9a. Teléfono</Label>
+                      <Input 
+                        value={formData.contacto_telefono || ''} 
+                        onChange={(e) => setFormData({ ...formData, contacto_telefono: e.target.value })}
+                        className="h-9 shadow-sm"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-[10px] font-bold uppercase text-muted-foreground">9b. Email</Label>
+                      <Input 
+                        value={formData.contacto_email || ''} 
+                        onChange={(e) => setFormData({ ...formData, contacto_email: e.target.value })}
+                        className="h-9 shadow-sm"
+                        placeholder="email@ejemplo.com"
+                      />
+                    </div>
+                  </div>
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-[10px] font-bold uppercase text-muted-foreground">10. Subestado</Label>
@@ -1051,23 +1129,22 @@ export function AssistanceForm({
                     </SelectContent>
                   </Select>
                 </div>
+                <div className="space-y-1.5">
+                  <Label className="text-[10px] font-bold uppercase text-muted-foreground">11. Provincia</Label>
+                  <Input 
+                    value={formData.provincia || ''} 
+                    onChange={(e) => setFormData({ ...formData, provincia: e.target.value })}
+                    className="h-9 shadow-sm"
+                  />
+                </div>
 
                 {/* Row 4: Ciudad, Dirección, RMA, Distribuidor */}
                 <div className="space-y-1.5">
-                  <Label className="text-[10px] font-bold uppercase text-muted-foreground">11. Ciudad</Label>
+                  <Label className="text-[10px] font-bold uppercase text-muted-foreground">12. Ciudad</Label>
                   <Input 
                     value={formData.ciudad || ''} 
                     onChange={(e) => setFormData({ ...formData, ciudad: e.target.value })}
                     className="h-9 shadow-sm"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-[10px] font-bold uppercase text-muted-foreground">12. Dirección</Label>
-                  <Input 
-                    value={formData.direccion || ''} 
-                    onChange={(e) => setFormData({ ...formData, direccion: e.target.value })}
-                    className="h-9 shadow-sm"
-                    placeholder="Calle, número, oficina..."
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -1076,7 +1153,7 @@ export function AssistanceForm({
                     type="number" 
                     className="h-9 text-right shadow-sm" 
                     value={formData.rma_number || 0}
-                    onChange={(e) => setFormData({ ...formData, rma_number: parseInt(e.target.value) })}
+                    onChange={(e) => setFormData({ ...formData, rma_number: parseInt(e.target.value) || 0 })}
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -1087,10 +1164,19 @@ export function AssistanceForm({
                     onSelect={(val) => setFormData({ ...formData, sat: val })}
                   />
                 </div>
+                <div className="space-y-1.5">
+                  <Label className="text-[10px] font-bold uppercase text-muted-foreground">15. Dirección</Label>
+                  <Input 
+                    value={formData.direccion || ''} 
+                    onChange={(e) => setFormData({ ...formData, direccion: e.target.value })}
+                    className="h-9 shadow-sm"
+                    placeholder="Calle, número, oficina..."
+                  />
+                </div>
 
                 {/* Row 5: CP, Provincia */}
                 <div className="space-y-1.5">
-                  <Label className="text-[10px] font-bold uppercase text-muted-foreground">15. CP</Label>
+                  <Label className="text-[10px] font-bold uppercase text-muted-foreground">16. CP</Label>
                   <Input 
                     value={formData.codigo_postal || ''} 
                     onChange={(e) => setFormData({ ...formData, codigo_postal: e.target.value })}
@@ -1098,11 +1184,11 @@ export function AssistanceForm({
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-[10px] font-bold uppercase text-muted-foreground">16. Provincia</Label>
-                  <Input 
-                    value={formData.provincia || ''} 
-                    onChange={(e) => setFormData({ ...formData, provincia: e.target.value })}
-                    className="h-9 shadow-sm"
+                  <Label className="text-[10px] font-bold uppercase text-muted-foreground">17. Distribuidor</Label>
+                  <DistributorSearchInput 
+                    value={formData.distribuidor || ''}
+                    customers={customers}
+                    onSelect={(val) => setFormData({ ...formData, distribuidor: val })}
                   />
                 </div>
                 <div></div>
@@ -1165,7 +1251,7 @@ export function AssistanceForm({
                         <Input 
                           type="number" 
                           value={item.cantidad || 1} 
-                          onChange={(e) => updateItem(item.id!, 'cantidad', parseInt(e.target.value))}
+                          onChange={(e) => updateItem(item.id!, 'cantidad', parseInt(e.target.value) || 1)}
                           className="h-8 text-[11px] text-center w-16 mx-auto shadow-none border-transparent focus-visible:border-border"
                         />
                       </td>
@@ -1251,8 +1337,18 @@ export function AssistanceForm({
             <div className="space-y-4">
                <Tabs defaultValue="com_soporte" className="w-full border rounded-lg overflow-hidden bg-background shadow-sm">
                   <TabsList className="bg-muted/30 px-1 h-9 rounded-none w-full justify-start gap-1 border-b">
-                    <TabsTrigger value="com_soporte" className="h-7 text-[10px] font-bold uppercase tracking-wider px-4">Notas Internas Soporte</TabsTrigger>
-                    <TabsTrigger value="com_admin" className="h-7 text-[10px] font-bold uppercase tracking-wider px-4">Notas Administración</TabsTrigger>
+                    <TabsTrigger value="com_soporte" className="h-7 text-[10px] font-bold uppercase tracking-wider px-4 flex items-center gap-1.5">
+                      Observaciones tras revisión en fábrica
+                      {formData.comentarios_soporte && formData.comentarios_soporte.trim().length > 0 && (
+                        <span className="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-destructive text-[8px] text-destructive-foreground animate-pulse">1</span>
+                      )}
+                    </TabsTrigger>
+                    <TabsTrigger value="com_admin" className="h-7 text-[10px] font-bold uppercase tracking-wider px-4 flex items-center gap-1.5">
+                      Notas Administración
+                      {formData.comentarios_admin && formData.comentarios_admin.trim().length > 0 && (
+                        <span className="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-destructive text-[8px] text-destructive-foreground animate-pulse">1</span>
+                      )}
+                    </TabsTrigger>
                   </TabsList>
                   <TabsContent value="com_soporte" className="mt-0 p-0">
                     <Textarea 
