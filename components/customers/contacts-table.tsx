@@ -18,6 +18,7 @@ interface Contact {
   email: string
   telefono: string
   codigo_postal: string
+  direccion: string
   created_at: string
   updated_at: string
 }
@@ -40,6 +41,7 @@ export function ContactsTable({ customerId, customerName, disabled = false }: Co
     email: '',
     telefono: '',
     codigo_postal: '',
+    direccion: '',
   })
 
   useEffect(() => {
@@ -91,6 +93,7 @@ export function ContactsTable({ customerId, customerName, disabled = false }: Co
         email: '',
         telefono: '',
         codigo_postal: '',
+        direccion: '',
       })
       await fetchContacts()
     } catch (err: any) {
@@ -180,6 +183,13 @@ export function ContactsTable({ customerId, customerName, disabled = false }: Co
             disabled={loading || disabled}
             className="h-8 text-sm"
           />
+          <Input
+            placeholder="Dirección"
+            value={newContact.direccion}
+            onChange={(e) => setNewContact({ ...newContact, direccion: e.target.value })}
+            disabled={loading || disabled}
+            className="h-8 text-sm"
+          />
         </div>
         <Button
           type="button"
@@ -204,6 +214,7 @@ export function ContactsTable({ customerId, customerName, disabled = false }: Co
               <TableHead className="px-2 py-2 w-40">Email</TableHead>
               <TableHead className="px-2 py-2 w-28">Teléfono</TableHead>
               <TableHead className="px-2 py-2 w-24">Código Postal</TableHead>
+              <TableHead className="px-2 py-2 w-40">Dirección</TableHead>
               <TableHead className="px-2 py-2 w-20 text-center">Acciones</TableHead>
             </TableRow>
           </TableHeader>
@@ -233,6 +244,7 @@ export function ContactsTable({ customerId, customerName, disabled = false }: Co
                     )}
                   </TableCell>
                   <TableCell className="px-2 py-2 truncate">{contact.codigo_postal || '-'}</TableCell>
+                  <TableCell className="px-2 py-2 truncate">{contact.direccion || '-'}</TableCell>
                   <TableCell className="px-2 py-2 text-center">
                     <Button
                       type="button"

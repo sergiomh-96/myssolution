@@ -1,10 +1,27 @@
 import { requireProfile } from '@/lib/auth'
 import { createClient } from '@/lib/supabase/server'
 import { AssistanceForm } from '@/components/support/assistance-form'
+import { notFound } from 'next/navigation'
 
-export default async function NewRequestPage() {
+interface PageProps {
+  params: Promise<{ id: string }>
+}
+
+export default async function AssistanceDetailsPage({ params }: PageProps) {
+  const { id } = await params
   const profile = await requireProfile()
   const supabase = await createClient()
+
+  // Fetch the assistance with items
+  const { data: assistance, error } = await supabase
+    .from('support_assistances')
+    .select('*, items:support_assistance_items(*)')
+    .eq('id', id)
+    .single()
+
+  if (error || !assistance) {
+    notFound()
+  }
 
   // Get customers for the dropdown - load in batches to support > 1000 records
   const allCustomers: { id: number; company_name: string; id_erp?: number }[] = []
@@ -34,6 +51,7 @@ export default async function NewRequestPage() {
   return (
     <div className="max-w-[1800px] mx-auto">
       <AssistanceForm
+        assistance={assistance as any}
         currentUserId={profile.id}
         currentUserRole={profile.role}
         customers={allCustomers}

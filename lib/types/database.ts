@@ -87,6 +87,20 @@ export interface OfferAssignment {
   created_at: string
 }
 
+export interface CustomerContact {
+  id: number
+  customer_id: number
+  nombre: string
+  apellidos: string | null
+  puesto: string | null
+  email: string | null
+  telefono: string | null
+  codigo_postal: string | null
+  direccion: string | null
+  created_at: string
+  updated_at: string
+}
+
 export interface CustomerProfileAssignment {
   id: number
   customer_id: number
@@ -190,4 +204,48 @@ export interface Product {
   brand_id: number | null
   created_at: string
   updated_at: string
+}
+
+export interface SupportAssistance {
+  id: string
+  external_id: string | null
+  titulo: string
+  customer_id: number | null
+  contacto_nombre: string | null
+  tipo_cliente: string | null
+  codigo_postal: string | null
+  ciudad: string | null
+  provincia: string | null
+  empleado_id: string | null
+  fecha: string
+  hora: string | null
+  duracion_llamada: number
+  tipo_incidencia: string | null
+  estado: string
+  subestado: string | null
+  distribuidor: string | null
+  sat: string | null
+  garantia: boolean
+  rma_number: number
+  incidencia_desc: string | null
+  solucion_desc: string | null
+  comentarios_soporte: string | null
+  comentarios_admin: string | null
+  adjuntos: any[]
+  direccion: string | null
+  created_by: string
+  created_at: string
+  updated_at: string
+}
+
+export interface SupportAssistanceItem {
+  id: string
+  assistance_id: string
+  marca: string | null
+  referencia: string | null
+  cantidad: number
+  descripcion: string | null
+  en_garantia: boolean
+  observacion?: string | null
+  created_at?: string
 }
