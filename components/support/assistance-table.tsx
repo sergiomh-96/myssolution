@@ -15,7 +15,9 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Search, Filter, RotateCcw, Check, ChevronsUpDown } from 'lucide-react'
+import { Search, Filter, RotateCcw, Check, ChevronsUpDown, RefreshCw, Copy, Trash2, Loader2, Forward } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
+import { toast } from 'sonner'
 import {
   Popover,
   PopoverContent,
@@ -40,15 +42,15 @@ interface AssistanceTableProps {
     customer: { company_name: string } | null
     employee: { full_name: string | null } | null
     creator: { full_name: string | null } | null
+    assignments?: { user_id: string }[] | null
   })[]
   userRole: UserRole
   userId: string
 }
 
 const statusColors: Record<string, string> = {
-  'ABIERTA': 'bg-info/10 text-info border-info/20',
-  'CERRADA': 'bg-success/10 text-success border-success/20',
-  'PENDIENTE': 'bg-warning/10 text-warning-foreground border-warning/20',
+  'ABIERTA': 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800',
+  'CERRADA': 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800/50 dark:text-slate-400 dark:border-slate-700',
 }
 
 const PROVINCIAS = [
@@ -58,23 +60,28 @@ const PROVINCIAS = [
 export function AssistanceTable({ assistances, userRole, userId }: AssistanceTableProps) {
   const router = useRouter()
   const [currentPage, setCurrentPage] = useState(1)
+  const [loadingId, setLoadingId] = useState<string | null>(null)
   const itemsPerPage = 50
 
   const [filters, setFilters] = useState({
     search: '',
-    externalId: '',
     estado: 'all',
     provincias: [] as string[],
     tipo: 'all',
+    startDate: '',
+    endDate: '',
+    creadoPor: 'all',
   })
 
   const resetFilters = () => {
     setFilters({
       search: '',
-      externalId: '',
       estado: 'all',
       provincias: [],
       tipo: 'all',
+      startDate: '',
+      endDate: '',
+      creadoPor: 'all',
     })
     setCurrentPage(1)
   }
@@ -95,17 +102,113 @@ export function AssistanceTable({ assistances, userRole, userId }: AssistanceTab
     setCurrentPage(1)
   }
 
+  const handleDuplicate = async (e: React.MouseEvent, assistance: any) => {
+    e.stopPropagation()
+    if (!confirm('¿Deseas duplicar esta incidencia?')) return
+
+    setLoadingId(`dup-${assistance.id}`)
+    try {
+      const supabase = createClient()
+      const { data: fullAssistance } = await supabase
+        .from('support_assistances')
+        .select('*, items:support_assistance_items(*)')
+        .eq('id', assistance.id)
+        .single()
+
+      if (!fullAssistance) throw new Error('No se pudo cargar la incidencia')
+
+      const { id, external_id, created_at, updated_at, items, ...rest } = fullAssistance
+      const newAssistance = {
+        ...rest,
+        titulo: `${rest.titulo} (COPIA)`,
+        created_by: userId,
+        estado: 'ABIERTA',
+        fecha: new Date().toISOString().split('T')[0]
+      }
+
+      const { data: created, error } = await supabase
+        .from('support_assistances')
+        .insert(newAssistance)
+        .select()
+        .single()
+
+      if (error) throw error
+
+      if (items && items.length > 0) {
+        const newItems = items.map((it: any) => ({
+          assistance_id: created.id,
+          marca: it.marca,
+          referencia: it.referencia,
+          cantidad: it.cantidad,
+          descripcion: it.descripcion,
+          en_garantia: it.en_garantia,
+          observacion: it.observacion
+        }))
+        await supabase.from('support_assistance_items').insert(newItems)
+      }
+
+      toast.success('Incidencia duplicada correctamente')
+      router.refresh()
+    } catch (err: any) {
+      toast.error('Error al duplicar: ' + err.message)
+    } finally {
+      setLoadingId(null)
+    }
+  }
+
+  const handleDelete = async (e: React.MouseEvent, id: number) => {
+    e.stopPropagation()
+    if (!confirm('¿Estás seguro de que deseas eliminar esta incidencia? Esta acción no se puede deshacer.')) return
+
+    setLoadingId(`del-${id}`)
+    try {
+      const supabase = createClient()
+      const { error } = await supabase
+        .from('support_assistances')
+        .delete()
+        .eq('id', id)
+
+      if (error) throw error
+      toast.success('Incidencia eliminada')
+      router.refresh()
+    } catch (err: any) {
+      toast.error('Error al eliminar: ' + err.message)
+    } finally {
+      setLoadingId(null)
+    }
+  }
+
   const filteredData = assistances.filter((item) => {
+    const searchLower = filters.search.toLowerCase()
     const matchesSearch = !filters.search || 
-      item.customer?.company_name.toLowerCase().includes(filters.search.toLowerCase()) ||
-      item.contacto_nombre?.toLowerCase().includes(filters.search.toLowerCase()) ||
-      item.contacto_telefono?.toLowerCase().includes(filters.search.toLowerCase())
-    const matchesId = !filters.externalId || item.external_id?.toLowerCase().includes(filters.externalId.toLowerCase())
+      item.customer?.company_name.toLowerCase().includes(searchLower) ||
+      item.contacto_nombre?.toLowerCase().includes(searchLower) ||
+      item.contacto_telefono?.toLowerCase().includes(searchLower) ||
+      item.external_id?.toLowerCase().includes(searchLower) ||
+      item.titulo.toLowerCase().includes(searchLower)
+      
     const matchesStatus = filters.estado === 'all' || item.estado === filters.estado
     const matchesTipo = filters.tipo === 'all' || item.tipo_incidencia === filters.tipo
     const matchesProvincia = filters.provincias.length === 0 || (item.provincia && filters.provincias.includes(item.provincia))
 
-    return matchesSearch && matchesId && matchesStatus && matchesTipo && matchesProvincia
+    let matchesDate = true
+    if (filters.startDate || filters.endDate) {
+      const itemDate = new Date(item.created_at)
+      if (filters.startDate) {
+        const start = new Date(filters.startDate)
+        start.setHours(0, 0, 0, 0)
+        if (itemDate < start) matchesDate = false
+      }
+      if (filters.endDate) {
+        const end = new Date(filters.endDate)
+        end.setHours(23, 59, 59, 999)
+        if (itemDate > end) matchesDate = false
+      }
+    }
+
+    const matchesCreadoPor = filters.creadoPor === 'all' || item.creator?.full_name === filters.creadoPor
+
+    return matchesSearch && matchesStatus && matchesTipo && matchesProvincia && matchesDate && matchesCreadoPor
   })
 
   const totalPages = Math.ceil(filteredData.length / itemsPerPage)
@@ -114,34 +217,24 @@ export function AssistanceTable({ assistances, userRole, userId }: AssistanceTab
     currentPage * itemsPerPage
   )
 
-  // Get unique values for filters
   const tipos = Array.from(new Set(assistances.map(a => a.tipo_incidencia).filter(Boolean)))
+  const creators = Array.from(new Set(assistances.map(a => a.creator?.full_name).filter(Boolean))).sort() as string[]
 
   return (
     <Card className="border-border/40 shadow-sm">
       <CardContent className="p-6">
         <div className="flex flex-wrap items-end gap-2 mb-6">
-          <div className="space-y-1.5 w-full md:w-64">
-            <label className="text-xs font-medium text-muted-foreground uppercase">Empresa</label>
+          <div className="space-y-1.5 w-full md:w-96">
+            <label className="text-xs font-medium text-muted-foreground uppercase">Buscador global</label>
             <div className="relative">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
-                placeholder="Buscar cliente..."
+                placeholder="Buscar por ID, título, cliente o teléfono..."
                 value={filters.search}
                 onChange={(e) => handleFilterChange('search', e.target.value)}
                 className="pl-9 h-9"
               />
             </div>
-          </div>
-
-          <div className="space-y-1.5 w-full md:w-40">
-            <label className="text-xs font-medium text-muted-foreground uppercase">ID Incidencia</label>
-            <Input
-              placeholder="Ej: IN00817"
-              value={filters.externalId}
-              onChange={(e) => handleFilterChange('externalId', e.target.value)}
-              className="h-9"
-            />
           </div>
 
           <div className="space-y-1.5 w-full md:w-40">
@@ -154,9 +247,28 @@ export function AssistanceTable({ assistances, userRole, userId }: AssistanceTab
                 <SelectItem value="all">Todos</SelectItem>
                 <SelectItem value="ABIERTA">Abierta</SelectItem>
                 <SelectItem value="CERRADA">Cerrada</SelectItem>
-                <SelectItem value="PENDIENTE">Pendiente</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="space-y-1.5 w-full md:w-40">
+            <label className="text-xs font-medium text-muted-foreground uppercase">Desde</label>
+            <Input
+              type="date"
+              value={filters.startDate}
+              onChange={(e) => handleFilterChange('startDate', e.target.value)}
+              className="h-9"
+            />
+          </div>
+
+          <div className="space-y-1.5 w-full md:w-40">
+            <label className="text-xs font-medium text-muted-foreground uppercase">Hasta</label>
+            <Input
+              type="date"
+              value={filters.endDate}
+              onChange={(e) => handleFilterChange('endDate', e.target.value)}
+              className="h-9"
+            />
           </div>
 
           <div className="space-y-1.5 w-full md:w-48">
@@ -232,10 +344,32 @@ export function AssistanceTable({ assistances, userRole, userId }: AssistanceTab
             </Popover>
           </div>
 
-          <div className="flex items-end pb-0.5 w-full md:w-fit">
+          <div className="space-y-1.5 w-full md:w-48">
+            <label className="text-xs font-medium text-muted-foreground uppercase">Creado por</label>
+            <Select value={filters.creadoPor} onValueChange={(v) => handleFilterChange('creadoPor', v)}>
+              <SelectTrigger className="h-9">
+                <SelectValue placeholder="Todos" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                {creators.map(name => (
+                  <SelectItem key={name} value={name}>{name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex items-end pb-0.5 w-full md:w-fit gap-2">
             <Button variant="outline" size="sm" onClick={resetFilters} className="w-full gap-2 h-9">
               <RotateCcw className="w-3.5 h-3.5" />
               Limpiar
+            </Button>
+          </div>
+
+          <div className="flex items-end pb-0.5 ml-auto">
+            <Button variant="outline" size="sm" onClick={() => router.refresh()} className="gap-2 h-9">
+              <RefreshCw className="w-3.5 h-3.5" />
+              Actualizar
             </Button>
           </div>
         </div>
@@ -249,11 +383,11 @@ export function AssistanceTable({ assistances, userRole, userId }: AssistanceTab
                 <TableHead className="w-[175px] max-w-[175px]">Cliente</TableHead>
                 <TableHead>Contacto</TableHead>
                 <TableHead>Teléfono</TableHead>
-                <TableHead>Email</TableHead>
                 <TableHead>Provincia</TableHead>
                 <TableHead>Creado por</TableHead>
                 <TableHead>Fecha</TableHead>
                 <TableHead>Estado</TableHead>
+                <TableHead className="w-[80px] text-right">Acciones</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -271,7 +405,12 @@ export function AssistanceTable({ assistances, userRole, userId }: AssistanceTab
                     onClick={() => router.push(`/dashboard/requests/${item.id}`)}
                   >
                     <TableCell className="font-mono text-xs font-bold text-primary">
-                      {item.external_id}
+                      <div className="flex items-center gap-1.5">
+                        <span>{item.external_id}</span>
+                        {(item.assignments || []).some(a => a.user_id === userId) && (
+                          <Forward className="h-3 w-3 text-foreground" />
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell className="w-[465px] max-w-[465px]">
                       <div className="flex flex-col">
@@ -294,9 +433,6 @@ export function AssistanceTable({ assistances, userRole, userId }: AssistanceTab
                       {item.contacto_telefono || '-'}
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
-                      {item.contacto_email || '-'}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
                       {item.provincia || '-'}
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
@@ -309,6 +445,32 @@ export function AssistanceTable({ assistances, userRole, userId }: AssistanceTab
                       <Badge variant="outline" className={cn("font-semibold text-[10px] px-2 py-0 h-5", statusColors[item.estado] || "bg-muted text-muted-foreground")}>
                         {item.estado}
                       </Badge>
+                    </TableCell>
+                    <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex justify-end gap-1">
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+                          onClick={(e) => handleDuplicate(e, item)}
+                          disabled={!!loadingId}
+                          title="Duplicar incidencia"
+                        >
+                          {loadingId === `dup-${item.id}` ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Copy className="h-3.5 w-3.5" />}
+                        </Button>
+                        {(userRole === 'admin' || userRole === 'manager') && (
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                            onClick={(e) => handleDelete(e, item.id)}
+                            disabled={!!loadingId}
+                            title="Eliminar incidencia"
+                          >
+                            {loadingId === `del-${item.id}` ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
+                          </Button>
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))

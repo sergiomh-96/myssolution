@@ -22,6 +22,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command"
 import { 
   Plus, 
   Trash2, 
@@ -34,7 +36,8 @@ import {
   Eye,
   Copy,
   FileText,
-  FileDown
+  FileDown,
+  ChevronsUpDown
 } from 'lucide-react'
 import { toast } from 'sonner'
 import type { SupportAssistance, SupportAssistanceItem, UserRole } from '@/lib/types/database'
@@ -48,6 +51,80 @@ interface AssistanceFormProps {
   customers: { id: number; company_name: string; id_erp?: number }[]
   employees: { id: string; full_name: string | null }[]
   currentUserName: string
+  initialAssignments?: string[]
+}
+
+function EmployeeMultiSelect({
+  selectedIds,
+  employees,
+  onChange,
+  disabled
+}: {
+  selectedIds: string[]
+  employees: { id: string; full_name: string | null }[]
+  onChange: (ids: string[]) => void
+  disabled?: boolean
+}) {
+  const [open, setOpen] = useState(false)
+
+  const toggleUser = (id: string) => {
+    if (selectedIds.includes(id)) {
+      onChange(selectedIds.filter(i => i !== id))
+    } else {
+      onChange([...selectedIds, id])
+    }
+  }
+
+  const selectedNames = employees
+    .filter(e => selectedIds.includes(e.id))
+    .map(e => e.full_name)
+    .join(', ')
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          className="w-full justify-between h-9 text-xs font-normal"
+          disabled={disabled}
+        >
+          <span className="truncate">
+            {selectedIds.length > 0 ? selectedNames : "Seleccionar usuarios..."}
+          </span>
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[300px] p-0" align="start">
+        <Command>
+          <CommandInput placeholder="Buscar usuario..." />
+          <CommandEmpty>No se encontraron usuarios.</CommandEmpty>
+          <CommandGroup className="max-h-64 overflow-auto">
+            {employees.map((emp) => (
+              <CommandItem
+                key={emp.id}
+                value={emp.full_name || ''}
+                onSelect={() => toggleUser(emp.id)}
+              >
+                <div className="flex items-center gap-2 w-full">
+                  <div className={cn(
+                    "flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
+                    selectedIds.includes(emp.id)
+                      ? "bg-primary text-primary-foreground"
+                      : "opacity-50 [&_svg]:invisible"
+                  )}>
+                    <Check className="h-3 w-3" />
+                  </div>
+                  <span>{emp.full_name}</span>
+                </div>
+              </CommandItem>
+            ))}
+          </CommandGroup>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  )
 }
 
 function CustomerSearchInput({
@@ -270,13 +347,25 @@ function ContactSearchInput({
   onSelect,
   onPhoneSelect,
   onEmailSelect,
+  onPostalCodeSelect,
+  onAddressSelect,
   disabled,
 }: {
   value: string
-  contacts: Array<{ id: number; nombre: string; apellidos: string | null; telefono?: string | null; email?: string | null }>
+  contacts: Array<{ 
+    id: number; 
+    nombre: string; 
+    apellidos: string | null; 
+    telefono?: string | null; 
+    email?: string | null;
+    codigo_postal?: string | null;
+    direccion?: string | null;
+  }>
   onSelect: (contactName: string) => void
   onPhoneSelect?: (phone: string) => void
   onEmailSelect?: (email: string) => void
+  onPostalCodeSelect?: (cp: string) => void
+  onAddressSelect?: (addr: string) => void
   disabled?: boolean
 }) {
   const [searchTerm, setSearchTerm] = useState(value)
@@ -319,6 +408,8 @@ function ContactSearchInput({
                 onSelect(fullName)
                 if (onPhoneSelect && contact.telefono) onPhoneSelect(contact.telefono)
                 if (onEmailSelect && contact.email) onEmailSelect(contact.email)
+                if (onPostalCodeSelect && contact.codigo_postal) onPostalCodeSelect(contact.codigo_postal)
+                if (onAddressSelect && contact.direccion) onAddressSelect(contact.direccion)
                 setSearchTerm(fullName)
                 setIsOpen(false)
               }}
@@ -328,6 +419,7 @@ function ContactSearchInput({
               <div className="text-[10px] text-muted-foreground flex flex-col">
                 {contact.telefono && <span>📞 {contact.telefono}</span>}
                 {contact.email && <span>📧 {contact.email}</span>}
+                {contact.direccion && <span>📍 {contact.direccion}</span>}
               </div>
             </button>
           ))}
@@ -558,10 +650,12 @@ export function AssistanceForm({
   currentUserRole,
   customers,
   employees,
-  currentUserName
+  currentUserName,
+  initialAssignments = []
 }: AssistanceFormProps) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
+  const [selectedAssignees, setSelectedAssignees] = useState<string[]>(initialAssignments)
   const [items, setItems] = useState<Partial<SupportAssistanceItem>[]>(
     assistance?.items || [{ id: crypto.randomUUID(), cantidad: 1, en_garantia: false }]
   )
@@ -569,6 +663,7 @@ export function AssistanceForm({
   const [availableSats, setAvailableSats] = useState<any[]>([])
   const [availableProducts, setAvailableProducts] = useState<any[]>([])
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [nextExternalId, setNextExternalId] = useState<string>('')
 
   const [formData, setFormData] = useState<Partial<SupportAssistance> & { customer_id?: any }>({
     titulo: assistance?.titulo || '',
@@ -609,7 +704,7 @@ export function AssistanceForm({
       const supabase = createClient()
       const { data } = await supabase
         .from('clients_contacts')
-        .select('id, nombre, apellidos, telefono, email')
+        .select('id, nombre, apellidos, telefono, email, codigo_postal, direccion')
         .eq('customer_id', formData.customer_id)
       
       setAvailableContacts(data || [])
@@ -632,6 +727,56 @@ export function AssistanceForm({
 
     fetchSats()
   }, [])
+
+  // Fetch next available external_id for new assistances
+  useEffect(() => {
+    if (!assistance) {
+      const fetchNextId = async () => {
+        const supabase = createClient()
+        const { data, error } = await supabase
+          .from('support_assistances')
+          .select('external_id')
+          .order('id', { ascending: false })
+          .limit(1)
+        
+        if (data && data.length > 0 && data[0].external_id) {
+          const currentNumber = parseInt(data[0].external_id.replace('IN', ''))
+          const nextNumber = currentNumber + 1
+          setNextExternalId(`IN${String(nextNumber).padStart(5, '0')}`)
+        } else {
+          // If no records found, fallback to the sequence start
+          setNextExternalId('IN00818')
+        }
+      }
+      fetchNextId()
+    }
+  }, [assistance])
+
+  // Fetch city and province when zip code changes
+  useEffect(() => {
+    const fetchZipCodeData = async () => {
+      const cp = formData.codigo_postal?.trim()
+      // Zip codes in Spain are 5 digits (can be 4 if leading 0 is omitted)
+      if (!cp || cp.length < 4 || cp.length > 5) return
+
+      const supabase = createClient()
+      const { data, error } = await supabase
+        .from('zip_codes')
+        .select('poblacion, provincia')
+        .eq('cp', parseInt(cp))
+        .maybeSingle()
+      
+      if (data && !error) {
+        setFormData(prev => ({
+          ...prev,
+          ciudad: data.poblacion || prev.ciudad,
+          provincia: data.provincia || prev.provincia
+        }))
+      }
+    }
+
+    fetchZipCodeData()
+  }, [formData.codigo_postal])
 
   // Fetch products on mount (batch loading for all 28,000+ products)
   useEffect(() => {
@@ -686,15 +831,15 @@ export function AssistanceForm({
   }, [])
 
   const addItem = () => {
-    setItems([...items, { id: crypto.randomUUID(), cantidad: 1, en_garantia: false, observacion: '' }])
+    setItems(prev => [...prev, { id: crypto.randomUUID(), cantidad: 1, en_garantia: false, observacion: '' }])
   }
 
   const removeItem = (id: string) => {
-    setItems(items.filter(item => item.id !== id))
+    setItems(prev => prev.filter(item => item.id !== id))
   }
 
   const updateItem = (id: string, field: keyof SupportAssistanceItem, value: any) => {
-    setItems(items.map(item => item.id === id ? { ...item, [field]: value } : item))
+    setItems(prev => prev.map(item => item.id === id ? { ...item, [field]: value } : item))
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -820,6 +965,19 @@ export function AssistanceForm({
           .from('support_assistance_items')
           .insert(itemsToInsert)
         if (itemsError) throw itemsError
+      }
+
+      // Sync assignments
+      await supabase.from('support_assistance_assignments').delete().eq('assistance_id', assistanceId)
+      if (selectedAssignees.length > 0) {
+        const assignmentsToInsert = selectedAssignees.map(uid => ({
+          assistance_id: assistanceId,
+          user_id: uid
+        }))
+        const { error: assignError } = await supabase
+          .from('support_assistance_assignments')
+          .insert(assignmentsToInsert)
+        if (assignError) throw assignError
       }
 
       toast.success(assistance ? 'Asistencia actualizada' : 'Asistencia registrada correctamente')
@@ -981,7 +1139,7 @@ export function AssistanceForm({
                 <div className="space-y-1.5">
                   <Label className="text-[10px] font-bold uppercase text-muted-foreground">1. Nº Incidencia</Label>
                   <Input 
-                    value={assistance?.external_id || 'Autogenerado'} 
+                    value={assistance?.external_id || nextExternalId || 'Cargando...'} 
                     disabled 
                     className="h-9 bg-muted/50 font-mono text-xs"
                   />
@@ -1083,6 +1241,8 @@ export function AssistanceForm({
                     onSelect={(val) => setFormData(prev => ({ ...prev, contacto_nombre: val }))}
                     onPhoneSelect={(phone) => setFormData(prev => ({ ...prev, contacto_telefono: phone }))}
                     onEmailSelect={(email) => setFormData(prev => ({ ...prev, contacto_email: email }))}
+                    onPostalCodeSelect={(cp) => setFormData(prev => ({ ...prev, codigo_postal: cp }))}
+                    onAddressSelect={(addr) => setFormData(prev => ({ ...prev, direccion: addr }))}
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -1191,7 +1351,14 @@ export function AssistanceForm({
                     onSelect={(val) => setFormData({ ...formData, distribuidor: val })}
                   />
                 </div>
-                <div></div>
+                <div className="space-y-1.5">
+                  <Label className="text-[10px] font-bold uppercase text-muted-foreground">Asignado a</Label>
+                  <EmployeeMultiSelect 
+                    selectedIds={selectedAssignees}
+                    employees={employees}
+                    onChange={setSelectedAssignees}
+                  />
+                </div>
                 <div></div>
               </div>
             </CardContent>
@@ -1229,21 +1396,23 @@ export function AssistanceForm({
                           value={item.referencia || ''}
                           products={availableProducts}
                           onSelect={(p) => {
-                            if (p.is_manual) {
-                              updateItem(item.id!, 'referencia', p.referencia)
-                            } else {
-                              const newItems = items.map(it => 
-                                it.id === item.id 
-                                  ? { ...it, referencia: p.referencia, descripcion: p.descripcion }
-                                  : it
-                              )
-                              setItems(newItems)
-                              
-                              // Auto-add new line if this is the last item
-                              if (idx === items.length - 1) {
-                                addItem()
+                            const newItems = items.map(it => {
+                              if (it.id === item.id) {
+                                return {
+                                  ...it,
+                                  referencia: p.referencia,
+                                  descripcion: p.is_manual ? it.descripcion : (p.descripcion || p.modelo_nombre || '')
+                                }
                               }
+                              return it
+                            })
+                            
+                            // Auto-add new line if this is the last item and a product was selected (not manual)
+                            if (!p.is_manual && idx === items.length - 1) {
+                              newItems.push({ id: crypto.randomUUID(), cantidad: 1, en_garantia: false, observacion: '' })
                             }
+                            
+                            setItems(newItems)
                           }}
                         />
                       </td>

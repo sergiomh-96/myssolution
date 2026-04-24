@@ -44,9 +44,15 @@ export default async function AssistanceDetailsPage({ params }: PageProps) {
   const { data: employees } = await supabase
     .from('profiles')
     .select('id, full_name')
-    .in('role', ['admin', 'manager', 'support_agent'])
-    .eq('is_active', true)
     .order('full_name')
+
+  // Get existing assignments
+  const { data: assignments } = await supabase
+    .from('support_assistance_assignments')
+    .select('user_id')
+    .eq('assistance_id', id)
+
+  const initialAssignments = assignments?.map(a => a.user_id) || []
 
   return (
     <div className="max-w-[1800px] mx-auto">
@@ -57,6 +63,7 @@ export default async function AssistanceDetailsPage({ params }: PageProps) {
         customers={allCustomers}
         employees={employees || []}
         currentUserName={profile.full_name || 'Usuario'}
+        initialAssignments={initialAssignments}
       />
     </div>
   )
