@@ -1082,10 +1082,71 @@ export function AssistanceForm({
     }
   }
 
-  const handleGeneratePdf = () => {
-    toast.info('Generación de PDF para asistencias estará disponible próximamente.')
-    // Placeholder for future implementation:
-    // window.open(`/api/requests/${assistance.id}/pdf`, '_blank')
+  const handleGeneratePdf = async () => {
+    const targetId = assistance?.id || formData.id
+    if (!targetId) {
+      toast.error('No se puede generar el PDF de una asistencia no guardada')
+      return
+    }
+    
+    setLoading(true)
+    try {
+      const response = await fetch(`/api/requests/${targetId}/pdf`)
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || 'Error en el servidor al generar el PDF')
+      }
+      
+      const blob = await response.blob()
+      if (blob.size < 100) {
+        throw new Error('El PDF generado está vacío o es demasiado pequeño')
+      }
+
+      const externalId = assistance?.external_id || (assistance as any)?.external_id || targetId
+      const filename = `${externalId} - Informe Asistencia.pdf`
+      
+      // Use Save File Picker if available
+      if ('showSaveFilePicker' in window) {
+        try {
+          const handle = await (window as any).showSaveFilePicker({
+            suggestedName: filename,
+            types: [{
+              description: 'Archivo PDF',
+              accept: { 'application/pdf': ['.pdf'] },
+            }],
+          })
+          const writable = await handle.createWritable()
+          await writable.write(blob)
+          await writable.close()
+          toast.success('PDF guardado correctamente')
+        } catch (err: any) {
+          if (err.name !== 'AbortError') saveAsFallback(blob, filename)
+        }
+      } else {
+        saveAsFallback(blob, filename)
+      }
+    } catch (err: any) {
+      console.error('PDF Error:', err)
+      toast.error('Error al generar PDF: ' + err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const saveAsFallback = (blob: Blob, filename: string) => {
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.style.display = 'none'
+    a.href = url
+    a.download = filename
+    document.body.appendChild(a)
+    a.click()
+    setTimeout(() => {
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    }, 100)
+    toast.success('PDF generado correctamente')
   }
 
   return (
