@@ -38,7 +38,7 @@ export default async function EditOfferPage({ params }: PageProps) {
   // Get customers for the dropdown - load up to 5000 in batches of 1000
   let customers: { id: string; company_name: string; status: string }[] = []
   
-  if (profile.role === 'sales_rep') {
+  if (profile.role === 'sales_rep' || profile.role === 'support_agent') {
     const allCustomers: typeof customers = []
     for (let i = 0; i < 5; i++) {
       const { data: customersData } = await supabase

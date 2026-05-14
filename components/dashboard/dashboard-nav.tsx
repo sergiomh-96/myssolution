@@ -37,7 +37,7 @@ const navItems = [
     href: '/dashboard/customers',
     label: 'Clientes',
     icon: Users,
-    allowedRoles: ['admin', 'manager', 'sales_rep', 'viewer']
+    allowedRoles: ['admin', 'manager', 'sales_rep', 'support_agent', 'viewer']
   },
   {
     href: '/dashboard/products',
@@ -49,7 +49,7 @@ const navItems = [
     href: '/dashboard/offers',
     label: 'Ofertas',
     icon: FileText,
-    allowedRoles: ['admin', 'manager', 'sales_rep', 'viewer']
+    allowedRoles: ['admin', 'manager', 'sales_rep', 'support_agent', 'viewer']
   },
   {
     href: '/dashboard/validations',
@@ -73,7 +73,7 @@ const navItems = [
     href: '/dashboard/analytics',
     label: 'Analíticas',
     icon: BarChart3,
-    allowedRoles: ['admin', 'manager', 'viewer']
+    allowedRoles: ['admin', 'manager', 'support_agent', 'viewer']
   },
   {
     href: '/dashboard/users',

@@ -8,9 +8,9 @@ export default async function OffersPage() {
   const profile = await requireProfile()
   const supabase = await createClient()
 
-  // For sales_rep: get IDs of offers assigned to them via offer_assignments
+  // For sales_rep and support_agent: get IDs of offers assigned to them via offer_assignments
   let assignedOfferIds: string[] = []
-  if (profile.role === 'sales_rep') {
+  if (profile.role === 'sales_rep' || profile.role === 'support_agent') {
     const { data: assigned } = await supabase
       .from('offer_assignments')
       .select('offer_id')
@@ -31,8 +31,8 @@ export default async function OffersPage() {
     .eq('visible', true)
     .order('created_at', { ascending: false })
 
-  // Sales reps see offers they created OR that are assigned to them
-  if (profile.role === 'sales_rep') {
+  // Sales reps and support agents see offers they created OR that are assigned to them
+  if (profile.role === 'sales_rep' || profile.role === 'support_agent') {
     const offerIdsToShow = [...new Set([...assignedOfferIds])]
     if (offerIdsToShow.length > 0) {
       query = query.or(`created_by.eq.${profile.id},id.in.(${offerIdsToShow.join(',')})`)

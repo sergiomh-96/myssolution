@@ -71,7 +71,7 @@ export async function requireRole(allowedRoles: UserRole[]) {
 }
 
 export function canManageOffers(role: UserRole): boolean {
-  return ['admin', 'manager', 'sales_rep'].includes(role)
+  return ['admin', 'manager', 'sales_rep', 'support_agent'].includes(role)
 }
 
 export function canApproveOffers(role: UserRole): boolean {
@@ -83,7 +83,7 @@ export function canManageRequests(role: UserRole): boolean {
 }
 
 export function canViewAnalytics(role: UserRole): boolean {
-  return ['admin', 'manager', 'viewer'].includes(role)
+  return ['admin', 'manager', 'viewer', 'support_agent'].includes(role)
 }
 
 export function canManageUsers(role: UserRole): boolean {

@@ -9,9 +9,9 @@ export default async function CustomersPage() {
   const profile = await requireProfile()
   const supabase = await createClient()
 
-  // For sales_rep: get IDs of customers assigned via customer_profile_assignments
+  // For sales_rep and support_agent: get IDs of customers assigned via customer_profile_assignments
   let assignedCustomerIds: string[] = []
-  if (profile.role === 'sales_rep') {
+  if (profile.role === 'sales_rep' || profile.role === 'support_agent') {
     const { data: assigned } = await supabase
       .from('customer_profile_assignments')
       .select('customer_id')
@@ -39,7 +39,7 @@ export default async function CustomersPage() {
         .range(i * 1000, i * 1000 + 999)
 
       // Apply role-based filter
-      if (profile.role === 'sales_rep') {
+      if (profile.role === 'sales_rep' || profile.role === 'support_agent') {
         if (assignedCustomerIds.length > 0) {
           q = q.or(`assigned_to.eq.${profile.id},id.in.(${assignedCustomerIds.join(',')})`)
         } else {

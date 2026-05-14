@@ -11,7 +11,7 @@ export default async function NewCustomerPage() {
   // admins, managers, and sales_rep can assign users when creating a customer
   let users: { id: string; full_name: string | null; role: string }[] = []
   
-  if (profile.role === 'admin' || profile.role === 'manager' || profile.role === 'sales_rep') {
+  if (profile.role === 'admin' || profile.role === 'manager' || profile.role === 'sales_rep' || profile.role === 'support_agent') {
     const { data } = await supabase
       .from('profiles')
       .select('id, full_name, role')
