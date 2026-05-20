@@ -99,6 +99,10 @@ export function CustomerForm({
     setLoading(true)
 
     try {
+      if (!customer && !isAdmin) {
+        throw new Error('Solo los administradores pueden crear clientes.')
+      }
+
       const supabase = createClient()
 
       if (customer && customerId) {
@@ -172,7 +176,7 @@ export function CustomerForm({
   }
 
   const isAdmin = currentUserRole === 'admin'
-  const canEdit = isAdmin || !customer || customer.created_by === currentUserId
+  const canEdit = customer ? (isAdmin || customer.created_by === currentUserId) : isAdmin
   const unassignedProfiles = availableUsers.filter(u => !selectedProfileIds.includes(u.id))
 
   return (

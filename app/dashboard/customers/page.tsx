@@ -63,7 +63,7 @@ export default async function CustomersPage() {
             Gestiona las relaciones con tus clientes
           </p>
         </div>
-        {profile.role !== 'viewer' && (
+        {profile.role === 'admin' && (
           <Button asChild>
             <Link href="/dashboard/customers/new">
               <Plus className="w-4 h-4 mr-2" />

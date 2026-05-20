@@ -1,10 +1,10 @@
-import { requireProfile } from '@/lib/auth'
+import { requireRole } from '@/lib/auth'
 import { CustomerForm } from '@/components/customers/customer-form'
 import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 export default async function NewCustomerPage() {
-  const profile = await requireProfile()
+  const profile = await requireRole(['admin'])
   const supabase = await createClient()
 
   // Get list of users for profile assignment
