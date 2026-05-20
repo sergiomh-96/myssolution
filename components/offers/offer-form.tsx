@@ -309,6 +309,18 @@ function CustomerSearchInput({
           <div className="flex-1 h-9 px-2 py-2 border border-input rounded-md bg-background text-sm truncate">
             {selectedCustomer.company_name}
           </div>
+          {!String(selectedCustomer.id).startsWith('free:') && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-9 w-9 p-0"
+              onClick={() => window.open(`/dashboard/customers/${selectedCustomer.id}/edit`, '_blank')}
+              title="Ver ficha cliente"
+            >
+              <Eye className="w-4 h-4" />
+            </Button>
+          )}
           <Button
             type="button"
             variant="ghost"

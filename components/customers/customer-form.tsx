@@ -51,6 +51,7 @@ export function CustomerForm({
   // Use exact DB column names
   const [formData, setFormData] = useState({
     company_name: customer?.company_name || '',
+    razon_social: customer?.razon_social || '',
     contact_name: customer?.contact_name || '',
     contact_email: customer?.contact_email || '',
     contact_phone: customer?.contact_phone || '',
@@ -188,14 +189,39 @@ export function CustomerForm({
       )}
 
       {/* Customer fields */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <div className="space-y-1">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div className="space-y-1 md:col-span-2">
           <Label htmlFor="company_name" className="text-sm">Nombre de empresa *</Label>
           <Input
             id="company_name"
             value={formData.company_name}
             onChange={(e) => handleInputChange('company_name', e.target.value)}
             required
+            disabled={loading || !canEdit}
+            className={`h-8 text-sm ${!canEdit ? 'bg-muted select-none' : ''}`}
+          />
+        </div>
+
+        {customer && createdByUser ? (
+          <div className="space-y-1">
+            <Label htmlFor="created_by" className="text-sm">Creado Por</Label>
+            <Input
+              id="created_by"
+              value={createdByUser.full_name || '-'}
+              disabled
+              className="bg-muted h-8 text-sm"
+            />
+          </div>
+        ) : (
+          <div className="hidden md:block" />
+        )}
+
+        <div className="space-y-1 md:col-span-2">
+          <Label htmlFor="razon_social" className="text-sm">Razón Social</Label>
+          <Input
+            id="razon_social"
+            value={formData.razon_social}
+            onChange={(e) => handleInputChange('razon_social', e.target.value)}
             disabled={loading || !canEdit}
             className={`h-8 text-sm ${!canEdit ? 'bg-muted select-none' : ''}`}
           />
@@ -211,18 +237,6 @@ export function CustomerForm({
             className={`h-8 text-sm ${!canEdit ? 'bg-muted select-none' : ''}`}
           />
         </div>
-
-        {customer && createdByUser && (
-          <div className="space-y-1">
-            <Label htmlFor="created_by" className="text-sm">Creado Por</Label>
-            <Input
-              id="created_by"
-              value={createdByUser.full_name || '-'}
-              disabled
-              className="bg-muted h-8 text-sm"
-            />
-          </div>
-        )}
 
         <div className="space-y-1">
           <Label htmlFor="contact_name" className="text-sm">Nombre de contacto</Label>
@@ -273,13 +287,22 @@ export function CustomerForm({
 
         <div className="space-y-1">
           <Label htmlFor="industry" className="text-sm">Sector</Label>
-          <Input
-            id="industry"
-            value={formData.industry}
-            onChange={(e) => handleInputChange('industry', e.target.value)}
+          <Select
+            value={formData.industry || undefined}
+            onValueChange={(value) => handleInputChange('industry', value)}
             disabled={loading || !canEdit}
-            className={`h-8 text-sm ${!canEdit ? 'bg-muted select-none' : ''}`}
-          />
+          >
+            <SelectTrigger id="industry" className={`h-8 text-sm bg-background ${!canEdit ? 'bg-muted select-none' : ''}`}>
+              <SelectValue placeholder="Seleccionar sector..." />
+            </SelectTrigger>
+            <SelectContent>
+              {['Distribuidor', 'Instalador', 'Fabricante', 'Constructora', 'Ingenieria', 'Arquitectura'].map((sector) => (
+                <SelectItem key={sector} value={sector}>
+                  {sector}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="space-y-1">
@@ -294,15 +317,15 @@ export function CustomerForm({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="lead">Lead</SelectItem>
-              <SelectItem value="prospect">Prospect</SelectItem>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="inactive">Inactive</SelectItem>
-              <SelectItem value="churned">Churned</SelectItem>
+              <SelectItem value="prospect">Prospecto</SelectItem>
+              <SelectItem value="active">Activo</SelectItem>
+              <SelectItem value="inactive">Inactivo</SelectItem>
+              <SelectItem value="churned">Baja</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
-        <div className="space-y-1 md:col-span-2">
+        <div className="space-y-1 col-span-full">
           <Label htmlFor="address" className="text-sm">Dirección</Label>
           <Input
             id="address"

@@ -59,6 +59,7 @@ export function CustomersTable({ customers, userRole }: CustomersTableProps) {
     const search = searchQuery.toLowerCase()
     return sortedCustomers.filter((c) =>
       c.company_name?.toLowerCase().includes(search) ||
+      c.razon_social?.toLowerCase().includes(search) ||
       c.contact_name?.toLowerCase().includes(search) ||
       c.contact_email?.toLowerCase().includes(search) ||
       c.industry?.toLowerCase().includes(search)
@@ -105,6 +106,7 @@ export function CustomersTable({ customers, userRole }: CustomersTableProps) {
                   <TableRow>
                     <TableHead className="w-12">#</TableHead>
                     <TableHead>Empresa</TableHead>
+                    <TableHead>Razón Social</TableHead>
                     <TableHead>Contacto</TableHead>
                     <TableHead>Provincia</TableHead>
                     <TableHead>Sector</TableHead>
@@ -140,6 +142,9 @@ export function CustomersTable({ customers, userRole }: CustomersTableProps) {
                             </a>
                           )}
                         </div>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm font-medium text-foreground">{customer.razon_social || '-'}</span>
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-col">

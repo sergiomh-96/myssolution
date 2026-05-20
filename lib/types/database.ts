@@ -48,6 +48,7 @@ export interface Customer {
   provincia: string | null
   ciudad: string | null
   pais: string | null
+  razon_social: string | null
 }
 
 export interface Offer {

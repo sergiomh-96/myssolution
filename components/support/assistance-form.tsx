@@ -207,7 +207,7 @@ function CustomerSearchInput({
               variant="outline"
               size="sm"
               className="h-9 w-9 p-0"
-              onClick={() => router.push(`/dashboard/customers/${selectedCustomer.id}/edit`)}
+              onClick={() => window.open(`/dashboard/customers/${selectedCustomer.id}/edit`, '_blank')}
               title="Ver ficha cliente"
             >
               <Eye className="w-4 h-4" />
@@ -981,8 +981,11 @@ export function AssistanceForm({
       }
 
       toast.success(assistance ? 'Asistencia actualizada' : 'Asistencia registrada correctamente')
-      router.push('/dashboard/requests')
-      router.refresh()
+      if (!assistance && assistanceId) {
+        router.push(`/dashboard/requests/${assistanceId}`)
+      } else {
+        router.refresh()
+      }
     } catch (err: any) {
       console.group('Error al guardar asistencia')
       console.error('Tipo de error:', typeof err)

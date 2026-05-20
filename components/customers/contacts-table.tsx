@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Loader2, Plus, Trash2, Edit2 } from 'lucide-react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 interface Contact {
   id: number
@@ -68,8 +69,8 @@ export function ContactsTable({ customerId, customerName, disabled = false }: Co
   }
 
   const handleAddContact = async () => {
-    if (!newContact.nombre.trim() || !newContact.email.trim()) {
-      setError('Nombre y email son requeridos')
+    if (!newContact.nombre.trim()) {
+      setError('Nombre es requerido')
       return
     }
 
@@ -82,6 +83,8 @@ export function ContactsTable({ customerId, customerName, disabled = false }: Co
         .insert({
           customer_id: customerId,
           ...newContact,
+          email: newContact.email.trim() || null,
+          puesto: newContact.puesto || null,
         })
 
       if (insertError) throw insertError
@@ -154,15 +157,24 @@ export function ContactsTable({ customerId, customerName, disabled = false }: Co
             disabled={loading || disabled}
             className="h-8 text-sm"
           />
-          <Input
-            placeholder="Puesto"
+          <Select
             value={newContact.puesto}
-            onChange={(e) => setNewContact({ ...newContact, puesto: e.target.value })}
+            onValueChange={(value) => setNewContact({ ...newContact, puesto: value })}
             disabled={loading || disabled}
-            className="h-8 text-sm"
-          />
+          >
+            <SelectTrigger className="h-8 text-sm bg-background">
+              <SelectValue placeholder="Puesto" />
+            </SelectTrigger>
+            <SelectContent>
+              {['Ingeniero', 'Comercial', 'Técnico', 'Compras', 'Administración', 'Gerente', 'Instalador', 'Arquitecto', 'Usuario Final', 'Jefe de Obra', 'Proyectista', 'Almacen'].map((puesto) => (
+                <SelectItem key={puesto} value={puesto}>
+                  {puesto}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Input
-            placeholder="Email *"
+            placeholder="Email"
             type="email"
             value={newContact.email}
             onChange={(e) => setNewContact({ ...newContact, email: e.target.value })}
