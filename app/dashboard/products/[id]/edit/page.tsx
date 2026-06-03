@@ -1,8 +1,15 @@
 import { ProductForm } from '@/components/products/product-form'
-import { use } from 'react'
+import { requireProfile, canManageProducts } from '@/lib/auth'
+import { redirect } from 'next/navigation'
 
-export default function EditProductPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params)
+export default async function EditProductPage({ params }: { params: Promise<{ id: string }> }) {
+  const profile = await requireProfile()
+
+  if (!canManageProducts(profile.role)) {
+    redirect('/dashboard/products')
+  }
+
+  const { id } = await params
   const productId = parseInt(id, 10)
 
   if (isNaN(productId)) {

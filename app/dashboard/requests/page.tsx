@@ -25,12 +25,14 @@ export default async function RequestsPage() {
             Gestión y registro de asistencias técnicas
           </p>
         </div>
-        <Button asChild className="gap-2 shadow-sm font-semibold">
-          <Link href="/dashboard/requests/new">
-            <Plus className="w-4 h-4" />
-            Nueva Asistencia
-          </Link>
-        </Button>
+        {profile.role !== 'viewer' && (
+          <Button asChild className="gap-2 shadow-sm font-semibold">
+            <Link href="/dashboard/requests/new">
+              <Plus className="w-4 h-4" />
+              Nueva Asistencia
+            </Link>
+          </Button>
+        )}
       </div>
 
       {error ? (

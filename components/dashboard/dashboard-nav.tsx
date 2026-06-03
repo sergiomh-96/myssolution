@@ -61,7 +61,7 @@ const navItems = [
     href: '/dashboard/requests',
     label: 'Soporte Técnico',
     icon: Headphones,
-    allowedRoles: ['admin', 'manager', 'support_agent']
+    allowedRoles: ['admin', 'manager', 'support_agent', 'viewer']
   },
   {
     href: '/dashboard/chat',
@@ -73,7 +73,7 @@ const navItems = [
     href: '/dashboard/analytics',
     label: 'Analíticas',
     icon: BarChart3,
-    allowedRoles: ['admin', 'manager', 'support_agent', 'viewer']
+    allowedRoles: ['admin', 'manager', 'support_agent']
   },
   {
     href: '/dashboard/users',

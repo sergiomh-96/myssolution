@@ -1,6 +1,14 @@
 import { ProductForm } from '@/components/products/product-form'
+import { requireProfile, canManageProducts } from '@/lib/auth'
+import { redirect } from 'next/navigation'
 
-export default function NewProductPage() {
+export default async function NewProductPage() {
+  const profile = await requireProfile()
+
+  if (!canManageProducts(profile.role)) {
+    redirect('/dashboard/products')
+  }
+
   return (
     <div className="space-y-6">
       <div>

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { startOfMonth, subMonths, format, parseISO } from 'date-fns'
 import { es } from 'date-fns/locale'
@@ -16,6 +17,7 @@ import type { Profile } from '@/lib/types/database'
 import { cn } from '@/lib/utils'
 
 export default function AnalyticsPage() {
+  const router = useRouter()
   const [profile, setProfile] = useState<Profile | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isSensitiveVisible, setIsSensitiveVisible] = useState(false)
@@ -38,6 +40,10 @@ export default function AnalyticsPage() {
         .single()
 
       if (profileData) {
+        if (profileData.role === 'viewer') {
+          router.replace('/dashboard')
+          return
+        }
         setProfile(profileData)
         setIsSensitiveVisible(!profileData.default_privacy_mode)
       }

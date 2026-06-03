@@ -1,9 +1,14 @@
 import { requireProfile } from '@/lib/auth'
 import { createClient } from '@/lib/supabase/server'
 import { AssistanceForm } from '@/components/support/assistance-form'
+import { redirect } from 'next/navigation'
 
 export default async function NewRequestPage() {
   const profile = await requireProfile()
+
+  if (profile.role === 'viewer') {
+    redirect('/dashboard/requests')
+  }
   const supabase = await createClient()
 
   // Get customers for the dropdown - load in batches to support > 1000 records

@@ -53,11 +53,12 @@ interface PrecioProducto {
 
 interface ProductsTableProps {
   products: Product[]
+  canManage: boolean
 }
 
 const PAGE_SIZE = 500
 
-export function ProductsTable({ products: initialProducts }: ProductsTableProps) {
+export function ProductsTable({ products: initialProducts, canManage }: ProductsTableProps) {
   const router = useRouter()
   const [search, setSearch] = useState('')
   const [selectedTarifa, setSelectedTarifa] = useState<number | null>(null)
@@ -205,13 +206,13 @@ export function ProductsTable({ products: initialProducts }: ProductsTableProps)
                 <TableHead className="text-xs text-right">Ancho</TableHead>
                 <TableHead className="text-xs text-right">Precio</TableHead>
                 <TableHead className="text-xs">Estado</TableHead>
-                <TableHead className="w-10"></TableHead>
+                {canManage && <TableHead className="w-10"></TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
               {pageProducts.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={14} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={canManage ? 14 : 13} className="text-center text-muted-foreground py-8">
                     {search ? 'No se encontraron productos' : 'Sin productos'}
                   </TableCell>
                 </TableRow>
@@ -237,30 +238,32 @@ export function ProductsTable({ products: initialProducts }: ProductsTableProps)
                         {product.status === 'active' ? 'Activo' : 'Inactivo'}
                       </Badge>
                     </TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-7 w-7">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem onClick={() => router.push(`/dashboard/products/${product.id}/edit`)}>
-                            <Edit className="h-4 w-4 mr-2" />
-                            Editar
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            className="text-destructive"
-                            onClick={() => handleDelete(product.id)}
-                          >
-                            <Trash2 className="h-4 w-4 mr-2" />
-                            Eliminar
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
+                    {canManage && (
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-7 w-7">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => router.push(`/dashboard/products/${product.id}/edit`)}>
+                              <Edit className="h-4 w-4 mr-2" />
+                              Editar
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="text-destructive"
+                              onClick={() => handleDelete(product.id)}
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Eliminar
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    )}
                   </TableRow>
                 ))
               )}

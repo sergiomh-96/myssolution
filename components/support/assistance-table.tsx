@@ -448,16 +448,18 @@ export function AssistanceTable({ assistances, userRole, userId }: AssistanceTab
                     </TableCell>
                     <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                       <div className="flex justify-end gap-1">
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
-                          onClick={(e) => handleDuplicate(e, item)}
-                          disabled={!!loadingId}
-                          title="Duplicar incidencia"
-                        >
-                          {loadingId === `dup-${item.id}` ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Copy className="h-3.5 w-3.5" />}
-                        </Button>
+                        {userRole !== 'viewer' && (
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+                            onClick={(e) => handleDuplicate(e, item)}
+                            disabled={!!loadingId}
+                            title="Duplicar incidencia"
+                          >
+                            {loadingId === `dup-${item.id}` ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Copy className="h-3.5 w-3.5" />}
+                          </Button>
+                        )}
                         {(userRole === 'admin' || userRole === 'manager') && (
                           <Button 
                             variant="ghost" 

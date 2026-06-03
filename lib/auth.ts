@@ -83,9 +83,13 @@ export function canManageRequests(role: UserRole): boolean {
 }
 
 export function canViewAnalytics(role: UserRole): boolean {
-  return ['admin', 'manager', 'viewer', 'support_agent'].includes(role)
+  return ['admin', 'manager', 'support_agent'].includes(role)
 }
 
 export function canManageUsers(role: UserRole): boolean {
   return role === 'admin'
+}
+
+export function canManageProducts(role: UserRole): boolean {
+  return ['admin', 'manager'].includes(role)
 }

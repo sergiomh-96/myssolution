@@ -62,7 +62,10 @@ export async function PUT(
   } catch (error) {
     console.error('Error updating user:', error)
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { 
+        error: error instanceof Error ? error.message : 'Internal server error',
+        stack: error instanceof Error ? error.stack : undefined
+      },
       { status: 500 }
     )
   }

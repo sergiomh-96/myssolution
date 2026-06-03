@@ -43,6 +43,7 @@ import { toast } from 'sonner'
 import type { SupportAssistance, SupportAssistanceItem, UserRole } from '@/lib/types/database'
 import { format } from 'date-fns'
 import { cn } from '@/lib/utils'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 
 interface AssistanceFormProps {
   assistance?: SupportAssistance & { items: SupportAssistanceItem[] }
@@ -654,6 +655,7 @@ export function AssistanceForm({
   initialAssignments = []
 }: AssistanceFormProps) {
   const router = useRouter()
+  const isViewer = currentUserRole === 'viewer'
   const [loading, setLoading] = useState(false)
   const [selectedAssignees, setSelectedAssignees] = useState<string[]>(initialAssignments)
   const [items, setItems] = useState<Partial<SupportAssistanceItem>[]>(
@@ -1182,14 +1184,24 @@ export function AssistanceForm({
                 Ver
               </Button>
           )}
-          <Button type="submit" disabled={loading} size="sm" className="gap-2 h-8 text-xs px-4">
-            {loading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
-            {assistance ? 'Actualizar' : 'Guardar'}
-          </Button>
+          {!isViewer && (
+            <Button type="submit" disabled={loading} size="sm" className="gap-2 h-8 text-xs px-4">
+              {loading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
+              {assistance ? 'Actualizar' : 'Guardar'}
+            </Button>
+          )}
         </div>
       </div>
 
       <div className="space-y-6">
+        {isViewer && (
+          <Alert className="border-blue-200 bg-blue-50">
+            <Eye className="h-4 w-4 text-blue-600" />
+            <AlertDescription className="text-blue-800 text-xs">
+              Usted tiene el rol de <strong>Visualizador</strong>. Esta pantalla es de solo lectura y no se pueden realizar cambios.
+            </AlertDescription>
+          </Alert>
+        )}
         {/* 1) SECCION DE DATOS */}
         <section className="space-y-3">
           <h2 className="text-xs font-black uppercase tracking-[0.2em] text-primary flex items-center gap-2">
@@ -1250,6 +1262,7 @@ export function AssistanceForm({
                     placeholder="Ej: Problema conexión..."
                     required 
                     className="h-9 focus-visible:ring-primary shadow-sm"
+                    disabled={isViewer}
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -1257,6 +1270,7 @@ export function AssistanceForm({
                   <Select 
                     value={formData.tipo_incidencia || ''} 
                     onValueChange={(v) => setFormData({ ...formData, tipo_incidencia: v })}
+                    disabled={isViewer}
                   >
                     <SelectTrigger className="w-full h-9 shadow-sm">
                       <SelectValue />
@@ -1275,6 +1289,7 @@ export function AssistanceForm({
                   <Select 
                     value={formData.estado || ''} 
                     onValueChange={(v) => setFormData({ ...formData, estado: v })}
+                    disabled={isViewer}
                   >
                     <SelectTrigger className={cn("h-9 font-bold shadow-sm w-full transition-colors", 
                       formData.estado === 'ABIERTA' ? "bg-warning text-warning-foreground border-warning" : "bg-success text-success-foreground border-success"
@@ -1295,6 +1310,7 @@ export function AssistanceForm({
                     value={formData.customer_id}
                     customers={customers}
                     onSelect={(val) => setFormData({ ...formData, customer_id: val as any })}
+                    disabled={isViewer}
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -1307,6 +1323,7 @@ export function AssistanceForm({
                     onEmailSelect={(email) => setFormData(prev => ({ ...prev, contacto_email: email }))}
                     onPostalCodeSelect={(cp) => setFormData(prev => ({ ...prev, codigo_postal: cp }))}
                     onAddressSelect={(addr) => setFormData(prev => ({ ...prev, direccion: addr }))}
+                    disabled={isViewer}
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -1317,6 +1334,7 @@ export function AssistanceForm({
                         value={formData.contacto_telefono || ''} 
                         onChange={(e) => setFormData({ ...formData, contacto_telefono: e.target.value })}
                         className="h-9 shadow-sm"
+                        disabled={isViewer}
                       />
                     </div>
                     <div className="space-y-1.5">
@@ -1326,6 +1344,7 @@ export function AssistanceForm({
                         onChange={(e) => setFormData({ ...formData, contacto_email: e.target.value })}
                         className="h-9 shadow-sm"
                         placeholder="email@ejemplo.com"
+                        disabled={isViewer}
                       />
                     </div>
                   </div>
@@ -1335,6 +1354,7 @@ export function AssistanceForm({
                   <Select 
                     value={formData.subestado || ''} 
                     onValueChange={(v) => setFormData({ ...formData, subestado: v })}
+                    disabled={isViewer}
                   >
                     <SelectTrigger className="h-9 text-sm shadow-sm w-full">
                       <SelectValue placeholder="Subestado..." />
@@ -1359,6 +1379,7 @@ export function AssistanceForm({
                     value={formData.provincia || ''} 
                     onChange={(e) => setFormData({ ...formData, provincia: e.target.value })}
                     className="h-9 shadow-sm"
+                    disabled={isViewer}
                   />
                 </div>
 
@@ -1369,6 +1390,7 @@ export function AssistanceForm({
                     value={formData.ciudad || ''} 
                     onChange={(e) => setFormData({ ...formData, ciudad: e.target.value })}
                     className="h-9 shadow-sm"
+                    disabled={isViewer}
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -1378,6 +1400,7 @@ export function AssistanceForm({
                     className="h-9 text-right shadow-sm" 
                     value={formData.rma_number || 0}
                     onChange={(e) => setFormData({ ...formData, rma_number: parseInt(e.target.value) || 0 })}
+                    disabled={isViewer}
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -1386,6 +1409,7 @@ export function AssistanceForm({
                     value={formData.sat || ''}
                     sats={availableSats}
                     onSelect={(val) => setFormData({ ...formData, sat: val })}
+                    disabled={isViewer}
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -1395,6 +1419,7 @@ export function AssistanceForm({
                     onChange={(e) => setFormData({ ...formData, direccion: e.target.value })}
                     className="h-9 shadow-sm"
                     placeholder="Calle, número, oficina..."
+                    disabled={isViewer}
                   />
                 </div>
 
@@ -1405,6 +1430,7 @@ export function AssistanceForm({
                     value={formData.codigo_postal || ''} 
                     onChange={(e) => setFormData({ ...formData, codigo_postal: e.target.value })}
                     className="h-9 shadow-sm"
+                    disabled={isViewer}
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -1413,6 +1439,7 @@ export function AssistanceForm({
                     value={formData.distribuidor || ''}
                     customers={customers}
                     onSelect={(val) => setFormData({ ...formData, distribuidor: val })}
+                    disabled={isViewer}
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -1421,6 +1448,7 @@ export function AssistanceForm({
                     selectedIds={selectedAssignees}
                     employees={employees}
                     onChange={setSelectedAssignees}
+                    disabled={isViewer}
                   />
                 </div>
                 <div></div>
@@ -1446,9 +1474,11 @@ export function AssistanceForm({
                     <th className="px-4 py-2.5 text-left font-semibold uppercase tracking-wider text-muted-foreground w-[420px]">Observación</th>
                     <th className="px-4 py-2.5 text-center font-semibold uppercase tracking-wider text-muted-foreground w-[80px]">Garantía</th>
                     <th className="px-4 py-2.5 text-center font-semibold uppercase tracking-wider text-muted-foreground w-[60px]">
-                      <Button type="button" variant="outline" size="sm" onClick={addItem} className="h-7 w-7 p-0 shadow-sm">
-                        <Plus className="w-4 h-4" />
-                      </Button>
+                      {!isViewer && (
+                        <Button type="button" variant="outline" size="sm" onClick={addItem} className="h-7 w-7 p-0 shadow-sm">
+                          <Plus className="w-4 h-4" />
+                        </Button>
+                      )}
                     </th>
                   </tr>
                 </thead>
@@ -1478,6 +1508,7 @@ export function AssistanceForm({
                             
                             setItems(newItems)
                           }}
+                          disabled={isViewer}
                         />
                       </td>
                       <td className="p-2 text-center">
@@ -1486,6 +1517,7 @@ export function AssistanceForm({
                           value={item.cantidad || 1} 
                           onChange={(e) => updateItem(item.id!, 'cantidad', parseInt(e.target.value) || 1)}
                           className="h-8 text-[11px] text-center w-16 mx-auto shadow-none border-transparent focus-visible:border-border"
+                          disabled={isViewer}
                         />
                       </td>
                       <td className="p-2">
@@ -1494,6 +1526,7 @@ export function AssistanceForm({
                           onChange={(e) => updateItem(item.id!, 'descripcion', e.target.value)}
                           placeholder="Nombre del producto..."
                           className="h-8 text-[11px] shadow-none border-transparent focus-visible:border-border"
+                          disabled={isViewer}
                         />
                       </td>
                       <td className="p-2">
@@ -1503,6 +1536,7 @@ export function AssistanceForm({
                           placeholder="Nota (máx 140)..."
                           maxLength={140}
                           className="h-8 text-[11px] shadow-none border-transparent focus-visible:border-border"
+                          disabled={isViewer}
                         />
                       </td>
                       <td className="p-2 text-center">
@@ -1511,6 +1545,7 @@ export function AssistanceForm({
                           checked={item.en_garantia} 
                           onChange={(e) => updateItem(item.id!, 'en_garantia', e.target.checked)}
                           className="w-4 h-4 rounded cursor-pointer"
+                          disabled={isViewer}
                         />
                       </td>
                       <td className="p-2 text-center">
@@ -1520,7 +1555,7 @@ export function AssistanceForm({
                           size="icon" 
                           className="h-8 w-8 text-destructive hover:bg-destructive/10"
                           onClick={() => removeItem(item.id!)}
-                          disabled={items.length === 1}
+                          disabled={items.length === 1 || isViewer}
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
@@ -1551,6 +1586,7 @@ export function AssistanceForm({
                   onChange={(e) => setFormData({ ...formData, incidencia_desc: e.target.value })}
                   placeholder="Detalles sobre qué falla y bajo qué condiciones..."
                   className="min-h-[120px] bg-warning/[0.03] border-warning/20 focus-visible:ring-warning shadow-sm text-sm"
+                  disabled={isViewer}
                 />
               </div>
               <div className="space-y-1.5">
@@ -1563,6 +1599,7 @@ export function AssistanceForm({
                   onChange={(e) => setFormData({ ...formData, solucion_desc: e.target.value })}
                   placeholder="Pasos seguidos para resolver o estado final..."
                   className="min-h-[120px] bg-success/[0.03] border-success/20 focus-visible:ring-success shadow-sm text-sm"
+                  disabled={isViewer}
                 />
               </div>
             </div>
@@ -1589,6 +1626,7 @@ export function AssistanceForm({
                       onChange={(e) => setFormData({ ...formData, comentarios_soporte: e.target.value })}
                       placeholder="Escriba aquí notas que solo el equipo técnico deba ver..."
                       className="min-h-[254px] border-none rounded-none focus-visible:ring-0 shadow-none resize-none p-3 text-sm"
+                      disabled={isViewer}
                     />
                   </TabsContent>
                   <TabsContent value="com_admin" className="mt-0 p-0">
@@ -1597,6 +1635,7 @@ export function AssistanceForm({
                       onChange={(e) => setFormData({ ...formData, comentarios_admin: e.target.value })}
                       placeholder="Notas destinadas a facturación o administrativa..."
                       className="min-h-[254px] border-none rounded-none focus-visible:ring-0 shadow-none resize-none p-3 text-sm"
+                      disabled={isViewer}
                     />
                   </TabsContent>
                </Tabs>
@@ -1607,17 +1646,19 @@ export function AssistanceForm({
         {/* 4) BOTONES DE ACCIÓN INFERIORES */}
         <section className="pt-4 mt-6 border-t flex items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <Button 
-              type="button" 
-              size="sm"
-              onClick={() => router.push('/dashboard/requests/new')}
-              className="h-8 text-xs bg-blue-600 hover:bg-blue-700 text-white border-none shadow-sm"
-            >
-              <Plus className="w-3 h-3 mr-2" />
-              Añadir nueva
-            </Button>
+            {!isViewer && (
+              <Button 
+                type="button" 
+                size="sm"
+                onClick={() => router.push('/dashboard/requests/new')}
+                className="h-8 text-xs bg-blue-600 hover:bg-blue-700 text-white border-none shadow-sm"
+              >
+                <Plus className="w-3 h-3 mr-2" />
+                Añadir nueva
+              </Button>
+            )}
 
-            {assistance?.id && (
+            {assistance?.id && !isViewer && (
               <>
                 <Button 
                   type="button" 
@@ -1661,15 +1702,17 @@ export function AssistanceForm({
               {loading ? 'Guardando...' : 'Atrás'}
             </Button>
 
-            <Button 
-              type="submit" 
-              disabled={loading} 
-              size="sm"
-              className="h-8 text-xs px-4"
-            >
-              {loading ? <Loader2 className="w-3 h-3 mr-2 animate-spin" /> : <Save className="w-3 h-3 mr-2" />}
-              {assistance ? 'Actualizar' : 'Guardar'}
-            </Button>
+            {!isViewer && (
+              <Button 
+                type="submit" 
+                disabled={loading} 
+                size="sm"
+                className="h-8 text-xs px-4"
+              >
+                {loading ? <Loader2 className="w-3 h-3 mr-2 animate-spin" /> : <Save className="w-3 h-3 mr-2" />}
+                {assistance ? 'Actualizar' : 'Guardar'}
+              </Button>
+            )}
           </div>
         </section>
       </div>

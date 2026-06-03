@@ -4,17 +4,12 @@ import { ProductsTable } from '@/components/products/products-table'
 import { Button } from '@/components/ui/button'
 import { Plus } from 'lucide-react'
 import Link from 'next/link'
+import { requireProfile, canManageProducts } from '@/lib/auth'
 
 export default async function ProductsPage() {
+  const profile = await requireProfile()
+  const canManage = canManageProducts(profile.role)
   const supabase = await createClient()
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    redirect('/auth/login')
-  }
 
   // Fetch up to 50000 products sequentially in batches of 1000 with brand join
   const products: any[] = []
@@ -36,15 +31,17 @@ export default async function ProductsPage() {
           <h1 className="text-3xl font-bold tracking-tight">Catálogo de Productos</h1>
           <p className="text-muted-foreground mt-2">Gestiona los artículos de AGFRI y MYSAIR</p>
         </div>
-        <Link href="/dashboard/products/new">
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            Nuevo Producto
-          </Button>
-        </Link>
+        {canManage && (
+          <Link href="/dashboard/products/new">
+            <Button>
+              <Plus className="mr-2 h-4 w-4" />
+              Nuevo Producto
+            </Button>
+          </Link>
+        )}
       </div>
 
-      <ProductsTable products={products || []} />
+      <ProductsTable products={products || []} canManage={canManage} />
     </div>
   )
 }

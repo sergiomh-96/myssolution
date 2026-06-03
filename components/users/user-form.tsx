@@ -30,6 +30,17 @@ const ROLES = [
   { value: 'viewer', label: 'Visualizador' },
 ]
 
+const DEPARTMENTS = [
+  'Comercial',
+  'Técnico',
+  'Gerencia',
+  'Administración',
+  'Logistica',
+  'Taller',
+  'Almacen',
+  'Pedidos',
+]
+
 type PasswordMode = 'invite' | 'manual'
 
 export function UserForm({ user }: UserFormProps) {
@@ -190,13 +201,23 @@ export function UserForm({ user }: UserFormProps) {
 
               <div className="space-y-2">
                 <Label htmlFor="department">Departamento</Label>
-                <Input
-                  id="department"
-                  value={formData.department}
-                  onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+                <Select
+                  value={formData.department || 'none'}
+                  onValueChange={(value) => setFormData({ ...formData, department: value === 'none' ? '' : value })}
                   disabled={loading}
-                  placeholder="Ventas"
-                />
+                >
+                  <SelectTrigger id="department">
+                    <SelectValue placeholder="Seleccionar departamento..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Ninguno</SelectItem>
+                    {DEPARTMENTS.map((dept) => (
+                      <SelectItem key={dept} value={dept}>
+                        {dept}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="space-y-2 md:col-span-2">
