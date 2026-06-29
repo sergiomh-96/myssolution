@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Edit } from 'lucide-react'
 import Link from 'next/link'
 import { GeneratePdfButton } from '@/components/offers/generate-pdf-button'
+import { GenerateBc3Button } from '@/components/offers/generate-bc3-button'
 import { DuplicateOfferButton } from '@/components/offers/duplicate-offer-button'
 import { ValidateOfferButton } from '@/components/offers/validate-offer-button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -84,6 +85,12 @@ export default async function OfferDetailPage({ params }: PageProps) {
               offerNumber={offer.offer_number}
               customerName={offer.customer?.company_name}
               offerTitle={offer.title}
+              disabled={isPendingValidation}
+            />
+            <GenerateBc3Button
+              offerId={id}
+              offerNumber={offer.offer_number}
+              customerName={offer.customer?.company_name}
               disabled={isPendingValidation}
             />
             {profile.role !== 'viewer' && (

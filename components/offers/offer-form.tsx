@@ -21,6 +21,7 @@ import { GenerateDossierButton } from './generate-dossier-button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { ExportItemsExcelButton } from './export-items-excel-button'
 import { ImportItemsDialog } from './import-items'
+import { GenerateBc3Button } from './generate-bc3-button'
 import type { Offer, OfferStatus, UserRole } from '@/lib/types/database'
 import { formatOfferNumber } from '@/lib/utils/offer'
 
@@ -2461,6 +2462,13 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
                       offerNumber={offer?.offer_number || 0}
                       customerName={(offer as any)?.customer?.company_name || currentCustomer?.company_name}
                       disabled={loading || items.length === 0}
+                    />
+                    <GenerateBc3Button
+                      offerId={(offer?.id || savedOfferId)!.toString()}
+                      offerNumber={offer?.offer_number || 0}
+                      customerName={(offer as any)?.customer?.company_name || currentCustomer?.company_name}
+                      disabled={loading || items.length === 0}
+                      className="h-7 text-xs"
                     />
                   </>
                 )}
