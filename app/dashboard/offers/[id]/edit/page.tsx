@@ -39,12 +39,20 @@ export default async function EditOfferPage({ params }: PageProps) {
   let customers: { id: string; company_name: string; status: string }[] = []
   
   if (profile.role === 'sales_rep' || profile.role === 'support_agent') {
+    // Get customer IDs assigned directly or via customer_profile_assignments
+    const { data: assignedViaProfile } = await supabase
+      .from('customer_profile_assignments')
+      .select('customer_id')
+      .eq('profile_id', profile.id)
+
+    const assignedCustomerIds = (assignedViaProfile || []).map(a => a.customer_id)
+
     const allCustomers: typeof customers = []
     for (let i = 0; i < 5; i++) {
       const { data: customersData } = await supabase
         .from('customers')
         .select('id, company_name, status')
-        .eq('assigned_to', profile.id)
+        .or(`assigned_to.eq.${profile.id},id.in.(${assignedCustomerIds.length > 0 ? assignedCustomerIds.join(',') : 'null'})`)
         .order('company_name')
         .range(i * 1000, i * 1000 + 999)
       
