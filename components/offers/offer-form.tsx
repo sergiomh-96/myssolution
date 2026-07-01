@@ -1703,7 +1703,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
             <Label htmlFor="title" className="text-xs">Título Oferta *</Label>
             <Input
               id="title"
-              value={formData.title}
+              value={formData.title ?? ''}
               onChange={(e) => {
                 setFormData({ ...formData, title: e.target.value })
                 setUnsavedChanges(true)
@@ -1861,7 +1861,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
             <Input
               id="valid_until"
               type="date"
-              value={formData.valid_until}
+              value={formData.valid_until ?? ''}
               onChange={(e) => {
                 setFormData({ ...formData, valid_until: e.target.value })
                 setUnsavedChanges(true)
@@ -1887,7 +1887,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
             <Label htmlFor="description" className="text-xs">Descripción (Visible en Oferta)</Label>
             <Textarea
               id="description"
-              value={formData.description}
+              value={formData.description ?? ''}
               onChange={(e) => {
                 setFormData({ ...formData, description: e.target.value })
                 setUnsavedChanges(true)
@@ -1903,7 +1903,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
             <Label htmlFor="notas_internas" className="text-xs">Notas Internas (Invisibles)</Label>
             <Textarea
               id="notas_internas"
-              value={formData.notas_internas}
+              value={formData.notas_internas ?? ''}
               onChange={(e) => {
                 setFormData({ ...formData, notas_internas: e.target.value })
                 setUnsavedChanges(true)

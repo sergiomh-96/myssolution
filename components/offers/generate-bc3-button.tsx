@@ -2,8 +2,14 @@
 
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { FileCode2, Loader2 } from 'lucide-react'
+import { FileCode2, Loader2, ChevronDown, FileSpreadsheet } from 'lucide-react'
 import { toast } from 'sonner'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 
 interface GenerateBc3ButtonProps {
   offerId: string
@@ -13,59 +19,63 @@ interface GenerateBc3ButtonProps {
   className?: string
 }
 
-export function GenerateBc3Button({ 
-  offerId, 
-  offerNumber, 
-  customerName = '', 
+export function GenerateBc3Button({
+  offerId,
+  offerNumber,
+  customerName = '',
   disabled = false,
   className
 }: GenerateBc3ButtonProps) {
   const [loading, setLoading] = useState(false)
 
-  const handleGenerateBc3 = async () => {
+  const safeClient = customerName
+    ? customerName.replace(/[^\w\s\-ñáéíóúÑÁÉÍÓÚ]/g, '').trim().replace(/\s+/g, '_')
+    : 'Cliente'
+
+  const handleExport = async (format: 'bc3' | 'excel') => {
     setLoading(true)
     try {
-      const response = await fetch(`/api/offers/${offerId}/bc3`)
+      const endpoint = format === 'bc3'
+        ? `/api/offers/${offerId}/bc3`
+        : `/api/offers/${offerId}/excel-presto`
 
+      const ext      = format === 'bc3' ? '.bc3' : '.xls'
+      const mime     = format === 'bc3' ? 'text/plain' : 'application/vnd.ms-excel'
+      const label    = format === 'bc3' ? 'BC3' : 'Excel'
+      const filename = `OFERTA_${offerNumber}_${safeClient}${ext}`
+
+      const response = await fetch(endpoint)
       if (!response.ok) {
         const err = await response.json().catch(() => ({}))
-        throw new Error(err.error || 'Error generando el archivo Presto')
+        throw new Error(err.error || `Error generando el archivo ${label}`)
       }
 
       const blob = await response.blob()
-      
-      const safeClient = customerName 
-        ? customerName.replace(/[^\w\s\-ñáéíóúÑÁÉÍÓÚ]/g, '').trim().replace(/\s+/g, '_') 
-        : 'Cliente'
-      const filename = `OFERTA_${offerNumber}_${safeClient}.bc3`
-      
+
       if ('showSaveFilePicker' in window) {
         try {
           const handle = await (window as any).showSaveFilePicker({
             suggestedName: filename,
-            types: [{
-              description: 'Archivo Presto BC3',
-              accept: { 'text/plain': ['.bc3'] },
-            }],
+            types: [{ description: `Archivo ${label}`, accept: { [mime]: [ext] } }],
           })
           const writable = await handle.createWritable()
           await writable.write(blob)
           await writable.close()
-          toast.success('Archivo Presto (.bc3) guardado correctamente')
+          toast.success(`Archivo ${label} guardado correctamente`)
         } catch (err: any) {
-          if (err.name !== 'AbortError') saveAsFallback(blob, filename)
+          if (err.name !== 'AbortError') saveAsFallback(blob, filename, label)
         }
       } else {
-        saveAsFallback(blob, filename)
+        saveAsFallback(blob, filename, label)
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Error generando el archivo Presto')
+      toast.error(err instanceof Error ? err.message : 'Error generando el archivo')
     } finally {
       setLoading(false)
     }
   }
 
-  const saveAsFallback = (blob: Blob, filename: string) => {
+  const saveAsFallback = (blob: Blob, filename: string, label: string) => {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
@@ -74,23 +84,37 @@ export function GenerateBc3Button({
     a.click()
     a.remove()
     setTimeout(() => URL.revokeObjectURL(url), 500)
-    toast.success('Archivo Presto (.bc3) generado correctamente')
+    toast.success(`Archivo ${label} generado correctamente`)
   }
 
   return (
-    <Button
-      variant="outline"
-      disabled={loading || disabled}
-      onClick={handleGenerateBc3}
-      className={className || "h-8 text-xs"}
-      title="Descargar oferta en formato Presto (.bc3)"
-    >
-      {loading ? (
-        <Loader2 className="h-3 w-3 mr-2 animate-spin" />
-      ) : (
-        <FileCode2 className="h-3 w-3 mr-2 text-green-600" />
-      )}
-      {loading ? 'Generando...' : 'Exportar BC3'}
-    </Button>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="outline"
+          disabled={loading || disabled}
+          className={className || 'h-8 text-xs'}
+          title="Exportar oferta en formato BC3"
+        >
+          {loading ? (
+            <Loader2 className="h-3 w-3 mr-1.5 animate-spin" />
+          ) : (
+            <FileCode2 className="h-3 w-3 mr-1.5 text-green-600" />
+          )}
+          {loading ? 'Generando...' : 'Exportar BC3'}
+          <ChevronDown className="h-3 w-3 ml-1.5 opacity-60" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="w-48">
+        <DropdownMenuItem onClick={() => handleExport('bc3')} disabled={loading}>
+          <FileCode2 className="h-3.5 w-3.5 mr-2 text-green-600" />
+          Exportar como .bc3
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => handleExport('excel')} disabled={loading}>
+          <FileSpreadsheet className="h-3.5 w-3.5 mr-2 text-emerald-600" />
+          Exportar como .xlsx
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }
