@@ -39,8 +39,8 @@ export function GenerateBc3Button({
         ? `/api/offers/${offerId}/bc3`
         : `/api/offers/${offerId}/excel-presto`
 
-      const ext      = format === 'bc3' ? '.bc3' : '.xls'
-      const mime     = format === 'bc3' ? 'text/plain' : 'application/vnd.ms-excel'
+      const ext      = format === 'bc3' ? '.bc3' : '.xlsx'
+      const mime     = format === 'bc3' ? 'text/plain' : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
       const label    = format === 'bc3' ? 'BC3' : 'Excel'
       const filename = `OFERTA_${offerNumber}_${safeClient}${ext}`
 

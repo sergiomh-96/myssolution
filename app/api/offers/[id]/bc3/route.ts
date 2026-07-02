@@ -146,7 +146,7 @@ export async function GET(
       const capTitle = sanitizeField(item.description || `Capítulo ${chapterCounter - 1}`)
       currentChapter = { code: capCode, title: capTitle, items: [] }
       chapters.push(currentChapter)
-    } else if (item.type === 'article') {
+    } else if (item.type === 'article' || item.type === 'external') {
       if (!currentChapter) {
         const capCode = nextChapterCode()
         currentChapter = { code: capCode, title: 'Presupuesto', items: [] }

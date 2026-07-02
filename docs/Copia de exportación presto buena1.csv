@@ -1,0 +1,89 @@
+;;;;;;;;;;;;
+Presupuesto;;;;;;;;;;;;
+Código;Nat;Ud;Resumen;Comentario;N;Longitud;Anchura;Altura;Parcial;CanPres;PrPres;ImpPres
+OFERTA_3315  ;Capítulo;;HOTEL EN AV JUAN XXIII S/N. MÁLAGA;;;;;;;1;43.665,84;43.665,84
+;;;;;;;;;;;;
+C01          ;Capítulo;;CLIMATIZACIÓN. DIFUSIÓN;;;;;;;1,00;33.132,00;33.132,00
+;;;;;;;;;;;;
+MA11700X100CB;Material;ud;REJILLA DOBLE DEFLEX. HORIZO. 700x100 C B;;;;;;;139,00;37,00;5.143,00
+;;;;;;;;;;;;
+MA03800X600CB;Material;ud;REJILLA FIJA 45º DEFL. HORIZO. 800x600 C B;;;;;;;139,00;107,00;14.873,00
+;;;;;;;;;;;;
+MA011000X350C;Material;ud;REJILLA SIMPLE DEFL. HORIZON. 1000x350 C B;;;;;;;1,00;75,00;75,00
+;;;;;;;;;;;;
+MA351500V4B  ;Material;ud;DIFUSOR LINEAL 1500 MM 4V B;;;;;;;21,00;277,00;5.817,00
+;;;;;;;;;;;;
+MA481500V4A  ;Material;ud;PLENUM DIF. LINEAL 4V 1500MM AISLADO;;;;;;;21,00;256,00;5.376,00
+;;;;;;;;;;;;
+MA351000V3B  ;Material;ud;DIFUSOR LINEAL 1000 MM 3V B;;;;;;;4,00;145,00;580,00
+;;;;;;;;;;;;
+MA481000V3A  ;Material;ud;PLENUM DIF. LINEAL 3V 1000MM AISLADO;;;;;;;4,00;141,00;564,00
+;;;;;;;;;;;;
+MA415L1B     ;Material;ud;MULTI TOB. ESF. C/MARCO 625mm 5BOCAS 1L B;;;;;;;8,00;88,00;704,00
+;;;;;;;;;;;;
+;;;;;;;;;C01;1,00;33.132,00;33.132,00
+;;;;;;;;;;;;
+C02          ;Capítulo;;VENTILACIÓN. DIFUSIÓN;;;;;;;1,00;1.541,80;1.541,80
+;;;;;;;;;;;;
+MA36100B     ;Material;ud;BOCA DE EXTRACCIÓN 100mm B;;;;;;;140,00;7,95;1.113,00
+;;;;;;;;;;;;
+MA36125B     ;Material;ud;BOCA DE EXTRACCIÓN 125mm B;;;;;;;20,00;9,50;190,00
+;;;;;;;;;;;;
+MA11300X100TA;Material;ud;REJILLA DOBLE DEFLEX. HORIZO. 300x100 T A;;;;;;;8,00;20,10;160,80
+;;;;;;;;;;;;
+MA13200X150CB;Material;ud;REJ. FIJA 45º EXTERIOR C/MALLA 200x150 C B;;;;;;;3,00;26,00;78,00
+;;;;;;;;;;;;
+;;;;;;;;;C02;1,00;1.541,80;1.541,80
+;;;;;;;;;;;;
+C03          ;Capítulo;;VENTILACIÓN. DISTRIBUCIÓN DE AIRE;;;;;;;1,00;3.706,50;3.706,50
+;;;;;;;;;;;;
+MA11X600X250C;Material;ud;REJ. DOBLE DEF. HORIZ. +REG TO 600x250 C B;;;;;;;35,00;94,70;3.314,50
+;;;;;;;;;;;;
+MA13500X350CB;Material;ud;REJ. FIJA 45º EXTERIOR C/MALLA 500x350 C B;;;;;;;1,00;75,00;75,00
+;;;;;;;;;;;;
+MA13600X350CB;Material;ud;REJ. FIJA 45º EXTERIOR C/MALLA 600x350 C B;;;;;;;2,00;90,00;180,00
+;;;;;;;;;;;;
+MA131000X350C;Material;ud;REJ. FIJA 45º EXTERIOR C/MALLA 1000x350 C B;;;;;;;1,00;137,00;137,00
+;;;;;;;;;;;;
+;;;;;;;;;C03;1,00;3.706,50;3.706,50
+;;;;;;;;;;;;
+C04          ;Capítulo;;VENTILACIÓN. EQUIPOS;;;;;;;1,00;2.583,50;2.583,50
+;;;;;;;;;;;;
+MSV1F100-125 ;Material;ud;VENTILADOR / EXTRACTOR EN LÍNEA MONOFLUJO 100/125MM;;;;;;;1,00;115,50;115,50
+;;;;;;;;;;;;
+MSV1F250     ;Material;ud;VENTILADOR / EXTRACTOR EN LÍNEA MONOFLUJO 250MM;;;;;;;2,00;341,00;682,00
+;;;;;;;;;;;;
+MSV1F315     ;Material;ud;VENTILADOR / EXTRACTOR EN LÍNEA MONOFLUJO 315MM;;;;;;;4,00;446,50;1.786,00
+;;;;;;;;;;;;
+;;;;;;;;;C04;1,00;2.583,50;2.583,50
+;;;;;;;;;;;;
+C05          ;Capítulo;;LARGUEROS MONTAJE;;;;;;;1,00;2.702,04;2.702,04
+;;;;;;;;;;;;
+MA45100      ;Material;ud;LARGUERO PARA MARCO MONTAJE 100mm;;;;;;;288,00;0,54;155,52
+;;;;;;;;;;;;
+MA45150      ;Material;ud;LARGUERO PARA MARCO MONTAJE 150mm;;;;;;;12,00;0,62;7,44
+;;;;;;;;;;;;
+MA45200      ;Material;ud;LARGUERO PARA MARCO MONTAJE 200mm;;;;;;;12,00;0,73;8,76
+;;;;;;;;;;;;
+MA45250      ;Material;ud;LARGUERO PARA MARCO MONTAJE 250mm;;;;;;;72,00;0,96;69,12
+;;;;;;;;;;;;
+MA45350      ;Material;ud;LARGUERO PARA MARCO MONTAJE 350mm;;;;;;;12,00;1,37;16,44
+;;;;;;;;;;;;
+MA45500      ;Material;ud;LARGUERO PARA MARCO MONTAJE 500mm;;;;;;;12,00;1,88;22,56
+;;;;;;;;;;;;
+MA45550      ;Material;ud;LARGUERO PARA MARCO MONTAJE 550mm;;;;;;;12,00;2,01;24,12
+;;;;;;;;;;;;
+MA45600      ;Material;ud;LARGUERO PARA MARCO MONTAJE 600mm;;;;;;;360,00;2,21;795,60
+;;;;;;;;;;;;
+MA45700      ;Material;ud;LARGUERO PARA MARCO MONTAJE 700mm;;;;;;;288,00;2,52;725,76
+;;;;;;;;;;;;
+MA45750      ;Material;ud;LARGUERO PARA MARCO MONTAJE 750mm;;;;;;;12,00;2,74;32,88
+;;;;;;;;;;;;
+MA45800      ;Material;ud;LARGUERO PARA MARCO MONTAJE 800mm;;;;;;;288,00;2,93;843,84
+;;;;;;;;;;;;
+;;;;;;;;;C05;1,00;2.702,04;2.702,04
+;;;;;;;;;;;;
+;;;;;;;;;OFERTA_3315;1;43.665,84;43.665,84
+;;;;;;;;;;;;
+;;;;;;;;;PROYECTO_02;1;43.665,84;43.665,84
+;;;;;;;;;;;;
