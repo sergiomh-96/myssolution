@@ -30,6 +30,8 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params
+  const url = new URL(req.url)
+  const format = url.searchParams.get('format') || 'xlsx' // 'xlsx' or 'xls'
   const supabase = await createClient()
 
   // 1. Fetch offer
@@ -395,16 +397,22 @@ export async function GET(
   const wb = XLSX.utils.book_new()
   XLSX.utils.book_append_sheet(wb, ws, 'Presupuesto')
 
-  const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' })
+  const bookType = format === 'xls' ? 'biff8' : 'xlsx'
+  const mimeType = format === 'xls' 
+    ? 'application/vnd.ms-excel' 
+    : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+  const fileExt = format === 'xls' ? '.xls' : '.xlsx'
+
+  const buf = XLSX.write(wb, { type: 'buffer', bookType })
 
   // 9. Send response
   const safeClient = (offer.customer?.company_name || 'Cliente')
     .replace(/[^\w\s\-ñáéíóúÑÁÉÍÓÚ]/g, '').trim().replace(/\s+/g, '_')
-  const filename = `OFERTA_${offer.offer_number}_${safeClient}.xlsx`
+  const filename = `OFERTA_${offer.offer_number}_${safeClient}${fileExt}`
 
   return new NextResponse(buf, {
     headers: {
-      'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'Content-Type': mimeType,
       'Content-Disposition': `attachment; filename="${filename}"`,
     },
   })

@@ -32,16 +32,20 @@ export function GenerateBc3Button({
     ? customerName.replace(/[^\w\s\-ñáéíóúÑÁÉÍÓÚ]/g, '').trim().replace(/\s+/g, '_')
     : 'Cliente'
 
-  const handleExport = async (format: 'bc3' | 'excel') => {
+  const handleExport = async (format: 'bc3' | 'xlsx' | 'xls') => {
     setLoading(true)
     try {
       const endpoint = format === 'bc3'
         ? `/api/offers/${offerId}/bc3`
-        : `/api/offers/${offerId}/excel-presto`
+        : `/api/offers/${offerId}/excel-presto?format=${format}`
 
-      const ext      = format === 'bc3' ? '.bc3' : '.xlsx'
-      const mime     = format === 'bc3' ? 'text/plain' : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-      const label    = format === 'bc3' ? 'BC3' : 'Excel'
+      const ext      = format === 'bc3' ? '.bc3' : format === 'xls' ? '.xls' : '.xlsx'
+      const mime     = format === 'bc3'
+        ? 'text/plain'
+        : format === 'xls'
+          ? 'application/vnd.ms-excel'
+          : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      const label    = format === 'bc3' ? 'BC3' : format === 'xls' ? 'Excel XLS' : 'Excel XLSX'
       const filename = `OFERTA_${offerNumber}_${safeClient}${ext}`
 
       const response = await fetch(endpoint)
@@ -110,9 +114,13 @@ export function GenerateBc3Button({
           <FileCode2 className="h-3.5 w-3.5 mr-2 text-green-600" />
           Exportar como .bc3
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => handleExport('excel')} disabled={loading}>
+        <DropdownMenuItem onClick={() => handleExport('xlsx')} disabled={loading}>
           <FileSpreadsheet className="h-3.5 w-3.5 mr-2 text-emerald-600" />
           Exportar como .xlsx
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => handleExport('xls')} disabled={loading}>
+          <FileSpreadsheet className="h-3.5 w-3.5 mr-2 text-emerald-600" />
+          Exportar como .xls
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
