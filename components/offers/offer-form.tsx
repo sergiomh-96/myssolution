@@ -12,7 +12,9 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
-import { Copy, Loader2, Plus, X, CheckCircle, ChevronDown, Check, Search, Eye, FileText, AlertCircle, ChevronLeft, ChevronRight, GripVertical, Trash2 } from 'lucide-react'
+import { Copy, Loader2, Plus, X, CheckCircle, ChevronDown, Check, Search, Eye, FileText, AlertCircle, ChevronLeft, ChevronRight, GripVertical, Trash2, RefreshCw } from 'lucide-react'
+import { toast } from 'sonner'
+import { cn } from '@/lib/utils'
 import { DuplicateOfferButton } from './duplicate-offer-button'
 import { CalcularLarguerosDialog } from './calcular-largueros-dialog'
 import { CalcularMedidasEspecialesDialog } from './calcular-medidas-especiales-dialog'
@@ -402,6 +404,7 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
   const [precios, setPrecios] = useState<any[]>([])
   const [defaultTarifa, setDefaultTarifa] = useState<number | null>(null)
   const [contactList, setContactList] = useState<any[]>([])
+  const [loadingContacts, setLoadingContacts] = useState(false)
   const callbackRef = useRef<(() => void) | null>(null)
   const [currentCustomer, setCurrentCustomer] = useState<any>(null)
   const [users, setUsers] = useState<any[]>([])
@@ -747,6 +750,42 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
 
     loadCustomerData()
   }, [formData.customer_id])
+
+  // Refetch contacts on demand
+  const refetchContacts = async () => {
+    if (!formData.customer_id) {
+      setContactList([])
+      return
+    }
+
+    const customerIdStr = String(formData.customer_id)
+    if (customerIdStr.startsWith('free:')) {
+      setContactList([])
+      return
+    }
+
+    setLoadingContacts(true)
+    try {
+      const supabase = createClient()
+      const customerId = parseInt(customerIdStr)
+
+      const { data: contacts, error: contactsError } = await supabase
+        .from('clients_contacts')
+        .select('*')
+        .eq('customer_id', customerId)
+        .order('nombre')
+
+      if (contactsError) throw contactsError
+
+      setContactList(contacts || [])
+      toast.success('Lista de contactos actualizada')
+    } catch (err: any) {
+      console.error('Error refreshing contacts:', err)
+      toast.error('Error al actualizar contactos: ' + (err.message || ''))
+    } finally {
+      setLoadingContacts(false)
+    }
+  }
 
   // Recalculate discounts when customer changes
   useEffect(() => {
@@ -1783,26 +1822,57 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
           </div>
 
           <div className="space-y-0.5">
-            <Label htmlFor="contact_id" className="text-xs">Contacto</Label>
-            <Select
-              value={formData.contact_id?.toString() || ''}
-              onValueChange={(value) => {
-                setFormData(prev => ({ ...prev, contact_id: value ? parseInt(value) : null }))
-                setUnsavedChanges(true)
-              }}
-              disabled={loading || isViewer || !formData.customer_id || contactList.length === 0}
-            >
-              <SelectTrigger id="contact_id" className="h-9 text-sm">
-                <SelectValue placeholder="Seleccionar contacto" />
-              </SelectTrigger>
-              <SelectContent>
-                {contactList.map((contact) => (
-                  <SelectItem key={contact.id} value={contact.id.toString()}>
-                    {contact.nombre} {contact.apellidos} - {contact.puesto}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="contact_id" className="text-xs">Contacto</Label>
+              {formData.customer_id && !String(formData.customer_id).startsWith('free:') && (
+                <button
+                  type="button"
+                  onClick={refetchContacts}
+                  disabled={loadingContacts || loading || isViewer}
+                  className="text-[10px] text-primary hover:underline flex items-center gap-1 font-medium disabled:opacity-50"
+                  title="Refrescar lista de contactos del cliente"
+                >
+                  <RefreshCw className={cn("w-3 h-3", loadingContacts && "animate-spin")} />
+                  Actualizar listado
+                </button>
+              )}
+            </div>
+            <div className="flex items-center gap-1">
+              <div className="flex-1 min-w-0">
+                <Select
+                  value={formData.contact_id?.toString() || ''}
+                  onValueChange={(value) => {
+                    setFormData(prev => ({ ...prev, contact_id: value ? parseInt(value) : null }))
+                    setUnsavedChanges(true)
+                  }}
+                  disabled={loading || isViewer || !formData.customer_id || (contactList.length === 0 && !loadingContacts)}
+                >
+                  <SelectTrigger id="contact_id" className="h-9 text-sm">
+                    <SelectValue placeholder={loadingContacts ? "Cargando..." : (contactList.length === 0 ? "Sin contactos" : "Seleccionar contacto")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {contactList.map((contact) => (
+                      <SelectItem key={contact.id} value={contact.id.toString()}>
+                        {contact.nombre} {contact.apellidos} {contact.puesto ? `- ${contact.puesto}` : ''}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              {formData.customer_id && !String(formData.customer_id).startsWith('free:') && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-9 w-9 p-0 shrink-0"
+                  onClick={refetchContacts}
+                  disabled={loadingContacts || loading || isViewer}
+                  title="Actualizar listado de contactos"
+                >
+                  <RefreshCw className={cn("w-3.5 h-3.5", loadingContacts && "animate-spin")} />
+                </Button>
+              )}
+            </div>
           </div>
 
           <div className="space-y-2">

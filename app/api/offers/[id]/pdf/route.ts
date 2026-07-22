@@ -336,13 +336,30 @@ export async function GET(
     .reduce((s, i) => s + Number(i.neto_total2 || 0), 0)
 
   const tableHead = priceType === 'all'
-    ? ['Referencia', 'Observaciones', 'Cant.', 'PVP', 'Desc%', 'Neto Total']
-    : ['Referencia', 'Observaciones', 'Cant.', priceType === 'neto' ? 'Neto' : 'PVP', priceType === 'neto' ? 'Neto Total' : 'PVP Total']
+    ? [
+        { content: 'Referencia', styles: { halign: 'left' as const } },
+        { content: 'Descripción', styles: { halign: 'left' as const } },
+        { content: 'Cant.', styles: { halign: 'center' as const } },
+        { content: 'PVP', styles: { halign: 'center' as const } },
+        { content: 'Desc%', styles: { halign: 'center' as const } },
+        { content: 'Neto Total', styles: { halign: 'center' as const } }
+      ]
+    : [
+        { content: 'Referencia', styles: { halign: 'left' as const } },
+        { content: 'Descripción', styles: { halign: 'left' as const } },
+        { content: 'Cant.', styles: { halign: 'center' as const } },
+        { content: priceType === 'neto' ? 'Neto' : 'PVP', styles: { halign: 'center' as const } },
+        { content: priceType === 'neto' ? 'Neto Total' : 'PVP Total', styles: { halign: 'center' as const } }
+      ]
 
   const tableFoot = priceType === 'all'
     ? [
-        ['', '', '', '', { content: 'TOTAL PVP:', halign: 'right' }, { content: formatCurrency(totalPVP), halign: 'center' }],
-        ['', '', '', '', { content: 'TOTAL NETO:', halign: 'right' }, { content: formatCurrency(totalNeto), halign: 'center' }]
+        [
+          { content: 'TOTAL:', colSpan: 3, halign: 'right' as const },
+          { content: formatCurrency(totalPVP), halign: 'center' as const },
+          '',
+          { content: formatCurrency(totalNeto), halign: 'center' as const }
+        ]
       ]
     : [['', '', '', { content: 'TOTAL:', halign: 'center' }, { content: formatCurrency(priceType === 'neto' ? totalNeto : totalPVP), halign: 'center' }]]
 
@@ -377,10 +394,10 @@ export async function GET(
     columnStyles: priceType === 'all' ? {
       0: { cellWidth: 28, halign: 'left', fontStyle: 'bold' },
       1: { cellWidth: 'auto', halign: 'left' },
-      2: { cellWidth: 16, halign: 'center' },
-      3: { cellWidth: 18, halign: 'center' },
+      2: { cellWidth: 14, halign: 'center' },
+      3: { cellWidth: 25, halign: 'center' },
       4: { cellWidth: 16, halign: 'center' },
-      5: { cellWidth: 20, halign: 'center', fontStyle: 'bold' },
+      5: { cellWidth: 25, halign: 'center', fontStyle: 'bold' },
     } : {
       0: { cellWidth: 32, halign: 'left', fontStyle: 'bold' },
       1: { cellWidth: 'auto', halign: 'left' },

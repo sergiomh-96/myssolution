@@ -12,6 +12,7 @@ import { cn } from '@/lib/utils'
 
 // Allowable models for special measurements
 const ALLOWED_MODELS = [
+  'MA14', 'MA15',
   'MA16', 'MA16E', 'MA17', 'MA17E',
   'MA35', 'MA35E', 'MA35O',
   'MA48', 'MA48O'
@@ -19,15 +20,17 @@ const ALLOWED_MODELS = [
 
 // Configuration for models
 const MODEL_CONFIG: Record<string, any> = {
+  'MA14': { dimensions: ['ancho', 'alto'], requiresAcabado: true, requiresFijacion: false, requiresVias: false, requiresAislamiento: false, hasVariantes: false },
+  'MA15': { dimensions: ['ancho', 'alto'], requiresAcabado: true, requiresFijacion: false, requiresVias: false, requiresAislamiento: false, hasVariantes: false },
   'MA16': { dimensions: ['ancho', 'alto'], requiresAcabado: true, requiresFijacion: true, requiresVias: false, requiresAislamiento: false, hasVariantes: true },
   'MA16E': { dimensions: ['ancho', 'alto'], requiresAcabado: true, requiresFijacion: true, requiresVias: false, requiresAislamiento: false, hasVariantes: true },
   'MA17': { dimensions: ['ancho', 'alto'], requiresAcabado: true, requiresFijacion: true, requiresVias: false, requiresAislamiento: false, hasVariantes: true },
   'MA17E': { dimensions: ['ancho', 'alto'], requiresAcabado: true, requiresFijacion: true, requiresVias: false, requiresAislamiento: false, hasVariantes: true },
   'MA35': { dimensions: ['ancho'], requiresAcabado: true, requiresFijacion: false, requiresVias: true, requiresAislamiento: false },
   'MA35E': { dimensions: ['ancho'], requiresAcabado: true, requiresFijacion: false, requiresVias: true, requiresAislamiento: false },
-  'MA35O': { dimensions: ['ancho'], requiresAcabado: true, requiresFijacion: false, requiresVias: true, requiresAislamiento: false },
+  'MA35O': { dimensions: ['ancho'], requiresAcabado: true, requiresFijacion: false, requiresVias: true, requiresAislamiento: false, allowedVias: ['V1', 'V2'] },
   'MA48': { dimensions: ['ancho'], requiresAcabado: false, requiresFijacion: false, requiresVias: true, requiresAislamiento: true },
-  'MA48O': { dimensions: ['ancho'], requiresAcabado: false, requiresFijacion: false, requiresVias: true, requiresAislamiento: true },
+  'MA48O': { dimensions: ['ancho'], requiresAcabado: false, requiresFijacion: false, requiresVias: true, requiresAislamiento: true, allowedVias: ['V1', 'V2'] },
 }
 
 interface Props {
@@ -64,13 +67,18 @@ export function CalcularMedidasEspecialesDialog({ tarifaId, onAddItem }: Props) 
   const [generatedRef, setGeneratedRef] = useState<string>('')
   const [hasCalculated, setHasCalculated] = useState<boolean>(false)
 
-  // Update default increment when model changes
+  // Update default increment and vias when model changes
   useEffect(() => {
     if (modelo) {
       if (['MA35', 'MA35O'].includes(modelo)) {
         setIncremento(5)
       } else {
         setIncremento(10)
+      }
+
+      const config = MODEL_CONFIG[modelo]
+      if (config?.allowedVias && !config.allowedVias.includes(vias)) {
+        setVias(config.allowedVias[0])
       }
     }
   }, [modelo])
@@ -188,7 +196,7 @@ export function CalcularMedidasEspecialesDialog({ tarifaId, onAddItem }: Props) 
       let piecesNeeded : number[] = []
 
       if (config.dimensions.includes('alto')) {
-        const optionSuffix = `${fijacion}${acabado}`
+        const optionSuffix = `${config.requiresFijacion ? fijacion : ''}${config.requiresAcabado ? acabado : ''}`
         genRef = `${fullModel}${nAncho}X${nAlto}${optionSuffix}`
         
         const catalogItems = baseProducts.filter(p => {
@@ -259,7 +267,7 @@ export function CalcularMedidasEspecialesDialog({ tarifaId, onAddItem }: Props) 
         if (modelo.startsWith('MA35')) {
           suffix += acabado
         } else if (modelo.startsWith('MA48')) {
-           if (aislamiento === 'S') suffix += ' AISLADO' 
+          suffix += (aislamiento === 'S' ? 'A' : 'N')
         }
 
         genRef = `${modelo} ${nAncho}${suffix}`
@@ -355,7 +363,12 @@ export function CalcularMedidasEspecialesDialog({ tarifaId, onAddItem }: Props) 
       const index = customLongDescription.toLowerCase().lastIndexOf(lastMeasure.toLowerCase())
       if (index !== -1) {
         const baseText = customLongDescription.substring(0, index)
-        const parts = [fijacion, acabado, vias, aislamiento === 'S' ? 'AISLADO' : ''].filter(p => p && p !== ' ' && p !== 'NO').join(' ')
+        const parts = [
+          currentConfig?.requiresFijacion ? fijacion : '', 
+          currentConfig?.requiresAcabado ? acabado : '', 
+          currentConfig?.requiresVias ? vias : '', 
+          currentConfig?.requiresAislamiento && aislamiento === 'S' ? 'AISLADO' : ''
+        ].filter(p => p && p !== ' ' && p !== 'NO').join(' ')
         customLongDescription = `${baseText}${newMeasure} ${parts}`.trim()
       }
     }
@@ -445,10 +458,11 @@ export function CalcularMedidasEspecialesDialog({ tarifaId, onAddItem }: Props) 
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="V1">1 Vía (V1)</SelectItem>
-                      <SelectItem value="V2">2 Vías (V2)</SelectItem>
-                      <SelectItem value="V3">3 Vías (V3)</SelectItem>
-                      <SelectItem value="V4">4 Vías (V4)</SelectItem>
+                      {(currentConfig?.allowedVias || ['V1', 'V2', 'V3', 'V4']).map((v: string) => (
+                        <SelectItem key={v} value={v}>
+                          {v === 'V1' ? '1 Vía (V1)' : v === 'V2' ? '2 Vías (V2)' : v === 'V3' ? '3 Vías (V3)' : '4 Vías (V4)'}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 ) : (
