@@ -227,7 +227,7 @@ export function CalcularMedidasEspecialesDialog({ tarifaId, onAddItem }: Props) 
            return
         }
 
-        const maxCatalogLen = availableLengths[0]
+        const maxCatalogLen = availableLengths.includes(1000) ? 1000 : (availableLengths[0] > 1000 ? availableLengths[0] : 1000)
 
         let remainingAncho = nAncho
         while (remainingAncho > 0) {
@@ -235,7 +235,7 @@ export function CalcularMedidasEspecialesDialog({ tarifaId, onAddItem }: Props) 
             piecesNeeded.push(maxCatalogLen)
             remainingAncho -= maxCatalogLen
           } else {
-            const coveringLen = availableLengths.slice().reverse().find(l => l >= remainingAncho) || maxCatalogLen
+            const coveringLen = availableLengths.slice().reverse().find(l => l >= remainingAncho) || remainingAncho
             piecesNeeded.push(coveringLen)
             remainingAncho = 0
           }
@@ -247,7 +247,21 @@ export function CalcularMedidasEspecialesDialog({ tarifaId, onAddItem }: Props) 
         for (const pieceLen of piecesNeeded) {
           let item = catalogItems.find(p => p.largo === pieceLen)
           if (!item) {
-             item = catalogItems.slice().reverse().find(p => (p.largo || 0) >= pieceLen) || catalogItems[0]
+            const baseItem = catalogItems.slice().reverse().find(p => (p.largo || 0) >= pieceLen) || catalogItems[0]
+            const ref = baseItem.referencia.trim()
+            const prefix = fullModel.trim()
+            let newRef = ref
+            if (ref.toLowerCase().startsWith(prefix.toLowerCase())) {
+              const rest = ref.substring(prefix.length)
+              const replacedRest = rest.replace(/^(\s*)\d{2,4}/, `$1${pieceLen}`)
+              newRef = `${prefix}${replacedRest}`
+            }
+
+            item = {
+              ...baseItem,
+              largo: pieceLen,
+              referencia: newRef
+            }
           }
 
           const { data: priceData } = await supabase
