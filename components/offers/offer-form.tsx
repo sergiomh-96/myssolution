@@ -2571,8 +2571,8 @@ export function OfferForm({ offer, currentUserId, currentUserRole, customers, cr
               <Button
                 type="button"
                 variant="default"
-                onClick={() => handleNavigation('/dashboard/offers/new')}
-                disabled={loading}
+                onClick={() => router.push('/dashboard/offers/new')}
+                disabled={loading || (!offer?.id && !savedOfferId)}
                 className="h-8 text-xs"
               >
                 <Plus className="mr-2 h-3 w-3" />

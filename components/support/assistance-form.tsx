@@ -1374,24 +1374,38 @@ export function AssistanceForm({
                     disabled={isViewer}
                   />
                 </div>
-                <div className="space-y-1.5">
-                  <Label className="text-[10px] font-bold uppercase text-muted-foreground">5. Tipo Incidencia</Label>
-                  <Select 
-                    value={formData.tipo_incidencia || ''} 
-                    onValueChange={(v) => setFormData({ ...formData, tipo_incidencia: v })}
-                    disabled={isViewer}
-                  >
-                    <SelectTrigger className="w-full h-9 shadow-sm">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="INCIDENCIA TÉCNICA">INCIDENCIA TÉCNICA</SelectItem>
-                      <SelectItem value="CONSULTA">CONSULTA</SelectItem>
-                      <SelectItem value="INCIDENCIA ADMINISTRATIVA">INCIDENCIA ADMINISTRATIVA</SelectItem>
-                      <SelectItem value="INCIDENCIA TRANSPORTE">INCIDENCIA TRANSPORTE</SelectItem>
-                      <SelectItem value="PUESTA EN MARCHA">PUESTA EN MARCHA</SelectItem>
-                    </SelectContent>
-                  </Select>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-1.5">
+                    <Label className="text-[10px] font-bold uppercase text-muted-foreground truncate block">5A. Tipo Incidencia</Label>
+                    <Select 
+                      value={formData.tipo_incidencia || ''} 
+                      onValueChange={(v) => setFormData({ ...formData, tipo_incidencia: v })}
+                      disabled={isViewer}
+                    >
+                      <SelectTrigger className="w-full h-9 shadow-sm text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="INCIDENCIA TÉCNICA">INCIDENCIA TÉCNICA</SelectItem>
+                        <SelectItem value="CONSULTA">CONSULTA</SelectItem>
+                        <SelectItem value="INCIDENCIA ADMINISTRATIVA">INCIDENCIA ADMINISTRATIVA</SelectItem>
+                        <SelectItem value="INCIDENCIA TRANSPORTE">INCIDENCIA TRANSPORTE</SelectItem>
+                        <SelectItem value="PUESTA EN MARCHA">PUESTA EN MARCHA</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-[10px] font-bold uppercase text-muted-foreground truncate block">5B. Tiempo Llamada</Label>
+                    <Input 
+                      type="number"
+                      min="0"
+                      placeholder="Min."
+                      value={formData.duracion_llamada ?? ''} 
+                      onChange={(e) => setFormData({ ...formData, duracion_llamada: e.target.value === '' ? 0 : parseInt(e.target.value, 10) || 0 })}
+                      disabled={isViewer}
+                      className="h-9 shadow-sm font-mono text-xs"
+                    />
+                  </div>
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-[10px] font-bold uppercase text-muted-foreground">6. Estado</Label>

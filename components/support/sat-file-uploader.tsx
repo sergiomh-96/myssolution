@@ -39,6 +39,7 @@ interface SatFileUploaderProps {
   onChange: (files: SatAttachment[]) => void
   disabled?: boolean
   assistanceId?: string | number
+  maxSizeBytes?: number
 }
 
 function formatFileSize(bytes?: number): string {
@@ -76,7 +77,8 @@ export function SatFileUploader({
   files = [],
   onChange,
   disabled = false,
-  assistanceId
+  assistanceId,
+  maxSizeBytes = 5 * 1024 * 1024 // Default 5 MB
 }: SatFileUploaderProps) {
   const [isDragging, setIsDragging] = useState(false)
   const [uploading, setUploading] = useState(false)
@@ -127,6 +129,14 @@ export function SatFileUploader({
     try {
       for (let i = 0; i < fileList.length; i++) {
         const file = fileList[i]
+
+        // Validate file size limit
+        if (file.size > maxSizeBytes) {
+          const limitMb = (maxSizeBytes / (1024 * 1024)).toFixed(0)
+          toast.error(`El archivo "${file.name}" supera el tamaño máximo permitido (${limitMb} MB).`)
+          continue
+        }
+
         setUploadProgress(`Subiendo (${i + 1}/${fileList.length}): ${file.name}`)
 
         // Sanitize file name
@@ -298,7 +308,7 @@ export function SatFileUploader({
                   <span className="text-muted-foreground"> o arrastra y suelta tus archivos aquí</span>
                 </div>
                 <p className="text-[10px] text-muted-foreground font-mono">
-                  Tipos aceptados: {acceptTypes.replace(/\./g, ' ').toUpperCase()}
+                  Tipos aceptados: {acceptTypes.replace(/\./g, ' ').toUpperCase()} (Máx. {(maxSizeBytes / (1024 * 1024)).toFixed(0)} MB)
                 </p>
               </>
             )}

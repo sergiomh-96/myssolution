@@ -417,6 +417,7 @@ export function AssistanceTable({ assistances, userRole, userId }: AssistanceTab
                         <span className="font-medium text-foreground line-clamp-1">{item.titulo}</span>
                         <span className="text-[10px] text-muted-foreground uppercase tracking-wider">
                           {item.tipo_incidencia || 'Sin tipo'}
+                          {item.duracion_llamada ? ` • ${item.duracion_llamada} min` : ''}
                         </span>
                       </div>
                     </TableCell>

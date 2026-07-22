@@ -205,7 +205,12 @@ export function CalcularMedidasEspecialesDialog({ tarifaId, onAddItem }: Props) 
           
           const matchesAlto = p.alto === nAlto || ref.includes(`X${nAlto}`) || ref.includes(`x${nAlto}`)
           const matchesOptions = ref.endsWith(optionSuffix) || ref.endsWith(` ${optionSuffix}`)
-          return ref.startsWith(prefix) && matchesAlto && matchesOptions
+
+          let matchesPrefix = ref.startsWith(prefix)
+          if (variante === 'Q' && ref.startsWith(`${modelo}QD`)) matchesPrefix = false
+          if (variante === 'X' && ref.startsWith(`${modelo}XD`)) matchesPrefix = false
+
+          return matchesPrefix && matchesAlto && matchesOptions
         })
 
         if (catalogItems.length === 0) {
