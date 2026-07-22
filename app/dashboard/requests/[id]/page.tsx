@@ -12,10 +12,10 @@ export default async function AssistanceDetailsPage({ params }: PageProps) {
   const profile = await requireProfile()
   const supabase = await createClient()
 
-  // Fetch the assistance with items
+  // Fetch the assistance with items and customer
   const { data: assistance, error } = await supabase
     .from('support_assistances')
-    .select('*, items:support_assistance_items(*)')
+    .select('*, items:support_assistance_items(*), customer:customers(id, company_name)')
     .eq('id', id)
     .single()
 
@@ -25,6 +25,10 @@ export default async function AssistanceDetailsPage({ params }: PageProps) {
 
   // Get customers for the dropdown - load in batches to support > 1000 records
   const allCustomers: { id: number; company_name: string; id_erp?: number }[] = []
+  if (assistance.customer) {
+    allCustomers.push(assistance.customer as any)
+  }
+
   for (let i = 0; i < 5; i++) {
     const { data: customersData } = await supabase
       .from('customers')
@@ -34,7 +38,11 @@ export default async function AssistanceDetailsPage({ params }: PageProps) {
       .range(i * 1000, (i + 1) * 1000 - 1)
     
     if (customersData && customersData.length > 0) {
-      allCustomers.push(...(customersData as any))
+      for (const c of customersData) {
+        if (!allCustomers.some(ac => String(ac.id) === String(c.id))) {
+          allCustomers.push(c as any)
+        }
+      }
     } else {
       break
     }

@@ -5,6 +5,7 @@ import autoTable from 'jspdf-autotable'
 import path from 'path'
 import fs from 'fs'
 import sharp from 'sharp'
+import { PDFDocument, rgb, StandardFonts } from 'pdf-lib'
 
 const palette = {
   primary: [41, 128, 185] as [number, number, number]
@@ -42,7 +43,7 @@ export async function GET(
     .eq('assistance_id', id)
     .order('created_at')
 
-  // 3. Prepare PDF
+  // 3. Prepare base PDF with jsPDF
   const doc = new jsPDF({
     orientation: 'portrait',
     unit: 'mm',
@@ -70,12 +71,13 @@ export async function GET(
   const dateStr = String(rawDate).split('T')[0] // Get YYYY-MM-DD part
   const formattedDate = dateStr.includes('-') ? dateStr.split('-').reverse().join('/') : '-'
 
-  // Pre-load logo
+  // Pre-load logo buffer
+  let logoBuffer: Buffer | null = null
   let logoData = ''
   try {
     const logoPath = path.join(process.cwd(), 'public', 'mysair-logo.png')
     if (fs.existsSync(logoPath)) {
-      const logoBuffer = fs.readFileSync(logoPath)
+      logoBuffer = fs.readFileSync(logoPath)
       const compressedBuffer = await sharp(logoBuffer).png().toBuffer()
       logoData = `data:image/png;base64,${compressedBuffer.toString('base64')}`
     }
@@ -127,7 +129,7 @@ export async function GET(
     // Motivo (Multiline support)
     const my = hy + 12
     const labelW = 30
-    const textW = contentW - labelW - 15 // Very conservative width to prevent any overflow
+    const textW = contentW - labelW - 15
     const motivoLines = d.splitTextToSize(assistance.titulo || '-', textW)
     const rowH = Math.max(8, motivoLines.length * 4 + 4)
     
@@ -145,46 +147,54 @@ export async function GET(
     return my + rowH + 12
   }
 
-  // Initial Header
+  // Initial Header for Main Report
   const nextY = drawHeader(doc)
   let y = nextY
 
   // ---- SECTION 2: DATOS DEL CLIENTE ----
-  const colW = contentW / 2
-  const drawGridItem = (x: number, y: number, w: number, label: string, value: string, labelW = 35) => {
+  const colW1 = contentW * 0.58
+  const colW2 = contentW * 0.42
+  const rightX = margin + colW1
+
+  const drawGridItem = (x: number, y: number, w: number, label: string, value: string, labelW = 20) => {
     doc.setDrawColor(...borderColor).setLineWidth(0.1)
     doc.rect(x, y, w, 7)
     doc.setFontSize(8).setFont('helvetica', 'normal').setTextColor(...darkGray)
     doc.text(label, x + 2, y + 5)
     doc.line(x + labelW, y, x + labelW, y + 7)
     doc.setFontSize(8).setFont('helvetica', 'bold').setTextColor(0, 0, 0)
-    doc.text(String(value || '-').substring(0, 70), x + labelW + 2, y + 5)
+    
+    const valStr = String(value || '-').trim()
+    const maxValW = w - labelW - 3
+    const truncated = doc.splitTextToSize(valStr, maxValW)[0] || '-'
+    doc.text(truncated, x + labelW + 2, y + 5)
   }
 
-  drawGridItem(margin, y, colW, 'Empresa', assistance.customer?.company_name)
-  drawGridItem(margin + colW, y, colW, 'Tipo Incidencia', assistance.tipo_incidencia)
+  drawGridItem(margin, y, colW1, 'Empresa', assistance.customer?.company_name, 20)
+  drawGridItem(rightX, y, colW2, 'Tipo Incidencia', assistance.tipo_incidencia, 25)
   y += 7
-  drawGridItem(margin, y, colW, 'Contacto', assistance.contacto_nombre)
-  drawGridItem(margin + colW, y, colW, 'Estado', assistance.estado)
+  drawGridItem(margin, y, colW1, 'Contacto', assistance.contacto_nombre, 20)
+  drawGridItem(rightX, y, colW2, 'Estado', assistance.estado, 20)
   y += 7
-  drawGridItem(margin, y, colW, 'Cargo', assistance.tipo_cliente)
-  drawGridItem(margin + colW, y, colW, 'Subestado', assistance.subestado)
+  drawGridItem(margin, y, colW1, 'Cargo', assistance.tipo_cliente, 20)
+  drawGridItem(rightX, y, colW2, 'Subestado', assistance.subestado, 20)
   y += 7
-  drawGridItem(margin, y, colW, 'Teléfono/email', `${assistance.contacto_telefono || ''} ${assistance.contacto_email || ''}`)
-  drawGridItem(margin + colW, y, colW, 'Distribuidor', assistance.distribuidor)
+  drawGridItem(margin, y, colW1, 'Teléfono', assistance.contacto_telefono, 20)
+  drawGridItem(rightX, y, colW2, 'Distribuidor', assistance.distribuidor, 20)
   y += 7
-  drawGridItem(margin, y, contentW, 'Dirección', assistance.direccion)
+  drawGridItem(margin, y, colW1, 'Email', assistance.contacto_email, 20)
+  drawGridItem(rightX, y, colW2, 'Sat', assistance.sat, 20)
   y += 7
-  drawGridItem(margin, y, colW, 'Provincia', assistance.provincia)
-  drawGridItem(margin + colW, y, colW, 'Sat', assistance.sat)
+  drawGridItem(margin, y, contentW, 'Dirección', assistance.direccion, 20)
   y += 7
-  const pobW = colW * 0.7
-  const cpW = colW * 0.3
-  drawGridItem(margin, y, pobW, 'Población', assistance.ciudad, 25)
+  drawGridItem(margin, y, colW1, 'Provincia', assistance.provincia, 20)
+  drawGridItem(rightX, y, colW2, 'RMA', String(assistance.rma_number || 0), 20)
+  y += 7
+  const pobW = colW1 * 0.72
+  const cpW = colW1 * 0.28
+  drawGridItem(margin, y, pobW, 'Población', assistance.ciudad, 20)
   drawGridItem(margin + pobW, y, cpW, 'CP', assistance.codigo_postal, 10)
-  drawGridItem(margin + colW, y, colW, 'RMA', String(assistance.rma_number || 0))
-  y += 7
-  drawGridItem(margin + colW, y, colW, 'Tiempo Llamada', String(assistance.duracion_llamada || 0))
+  drawGridItem(rightX, y, colW2, 'Tiempo Llamada', String(assistance.duracion_llamada || 0), 28)
   
   y += 12
 
@@ -202,7 +212,7 @@ export async function GET(
 
   autoTable(doc, {
     startY: y,
-    margin: { left: margin, right: margin, top: 65 }, // Increased top margin to 65
+    margin: { left: margin, right: margin, top: 65 },
     head: [['Referencias', 'Cantidad', 'Observaciones', 'Garantía']],
     body: tableRows,
     theme: 'grid',
@@ -215,6 +225,26 @@ export async function GET(
 
   y = (doc as any).lastAutoTable.finalY + 10
 
+  // ---- SECTION 3.5: DATOS DE FACTURA DE JUSTIFICACIÓN ----
+  if (assistance.factura_numero || assistance.factura_fecha) {
+    if (y + 20 > 270) {
+      doc.addPage()
+      drawHeader(doc)
+      y = 65
+    }
+
+    doc.setFontSize(10).setFont('helvetica', 'bold').setTextColor(...palette.primary)
+    doc.text('Datos de la Factura de Justificación', margin, y)
+    y += 4
+
+    const factDateStr = assistance.factura_fecha ? String(assistance.factura_fecha).split('T')[0].split('-').reverse().join('/') : '-'
+
+    const factColW = contentW / 2
+    drawGridItem(margin, y, factColW, 'Nº Factura', assistance.factura_numero, 20)
+    drawGridItem(margin + factColW, y, factColW, 'Fecha Factura', factDateStr, 22)
+    y += 14
+  }
+
   // ---- SECTION 4: OBSERVACIONES Y ANOTACIONES ----
   const drawNoteSection = (title: string, text: string, color: [number, number, number] | null = null) => {
     const lines = doc.splitTextToSize(text || (color ? '' : '-'), contentW - 4)
@@ -224,7 +254,7 @@ export async function GET(
     if (y + neededH > 270) {
       doc.addPage()
       drawHeader(doc)
-      y = 65 // Increased y after page break to 65
+      y = 65
     }
     
     doc.setFontSize(9).setFont('helvetica', 'bold').setTextColor(...darkGray)
@@ -248,27 +278,432 @@ export async function GET(
   drawNoteSection('Solución', assistance.solucion_desc, [232, 245, 233])
   drawNoteSection('Observaciones Administración', assistance.comentarios_admin)
 
-  // ---- FINAL PAGINATION & FOOTERS ----
-  const totalPages = (doc as any).internal.getNumberOfPages()
-  const pageH = doc.internal.pageSize.getHeight()
-  
-  for (let i = 1; i <= totalPages; i++) {
-    doc.setPage(i)
-    doc.setFillColor(...yellowHeader)
-    doc.rect(margin, pageH - 15, contentW, 8, 'F')
-    doc.setFontSize(9).setFont('helvetica', 'normal').setTextColor(0, 0, 0)
-    doc.text(`Página ${i} de ${totalPages}`, pageW / 2, pageH - 9.5, { align: 'center' })
+  // Output base PDF to Buffer
+  const basePdfBuffer = Buffer.from(doc.output('arraybuffer'))
+
+  // Load into pdf-lib to merge attached documents page-by-page
+  const mainPdfDoc = await PDFDocument.load(basePdfBuffer)
+  const helvetica = await mainPdfDoc.embedFont(StandardFonts.Helvetica)
+  const helveticaBold = await mainPdfDoc.embedFont(StandardFonts.HelveticaBold)
+
+  let embeddedLogo: any = null
+  if (logoBuffer) {
+    try {
+      embeddedLogo = await mainPdfDoc.embedPng(logoBuffer)
+    } catch (e) {
+      console.warn('Error embedding logo in pdf-lib:', e)
+    }
   }
 
-  const pdfBuffer = Buffer.from(doc.output('arraybuffer'))
+  // Helper to draw standard Header on attached pages in pdf-lib
+  const drawPdfLibHeader = (page: any) => {
+    // Top yellow bar (0 to 28mm -> y = 762.52 pt to 841.89 pt)
+    page.drawRectangle({
+      x: 0,
+      y: 762.52,
+      width: 595.28,
+      height: 79.37,
+      color: rgb(1, 0.843, 0.251)
+    })
+
+    if (embeddedLogo) {
+      const targetH = 34
+      const targetW = (embeddedLogo.width / embeddedLogo.height) * targetH
+      page.drawImage(embeddedLogo, {
+        x: 34,
+        y: 785,
+        width: targetW,
+        height: targetH
+      })
+    }
+
+    page.drawText('INFORME DE ASISTENCIA TÉCNICA', {
+      x: 310,
+      y: 795,
+      size: 13,
+      font: helveticaBold,
+      color: rgb(0.16, 0.50, 0.72)
+    })
+
+    // Info Section Outer Box
+    page.drawRectangle({
+      x: 34,
+      y: 720,
+      width: 527,
+      height: 26,
+      borderColor: rgb(0.78, 0.78, 0.78),
+      borderWidth: 0.5
+    })
+    page.drawRectangle({
+      x: 34,
+      y: 720,
+      width: 90,
+      height: 26,
+      color: rgb(0.96, 0.96, 0.96)
+    })
+    page.drawText('Nº Incidencia', {
+      x: 40,
+      y: 730,
+      size: 8,
+      font: helvetica,
+      color: rgb(0.24, 0.24, 0.24)
+    })
+    page.drawText(String(assistance.external_id || assistance.id), {
+      x: 130,
+      y: 730,
+      size: 11,
+      font: helveticaBold,
+      color: rgb(0, 0, 0)
+    })
+
+    page.drawText(`Atendido por: ${atendidoPor}`, {
+      x: 270,
+      y: 730,
+      size: 8,
+      font: helvetica,
+      color: rgb(0, 0, 0)
+    })
+
+    page.drawText(`Fecha: ${formattedDate}`, {
+      x: 460,
+      y: 730,
+      size: 8,
+      font: helvetica,
+      color: rgb(0, 0, 0)
+    })
+
+    // Motivo Box
+    page.drawRectangle({
+      x: 34,
+      y: 686,
+      width: 527,
+      height: 26,
+      borderColor: rgb(0.78, 0.78, 0.78),
+      borderWidth: 0.5
+    })
+    page.drawRectangle({
+      x: 34,
+      y: 686,
+      width: 90,
+      height: 26,
+      color: rgb(0.96, 0.96, 0.96)
+    })
+    page.drawText('Motivo', {
+      x: 40,
+      y: 696,
+      size: 8,
+      font: helvetica,
+      color: rgb(0.24, 0.24, 0.24)
+    })
+    page.drawText(String(assistance.titulo || '-').substring(0, 75), {
+      x: 130,
+      y: 696,
+      size: 9,
+      font: helvetica,
+      color: rgb(0, 0, 0)
+    })
+  }
+
+  // Gather all attachments
+  const facturasList: any[] = assistance.adjuntos_facturas || []
+  const defectosList: any[] = assistance.adjuntos_defectos || []
+  const legacyAdjuntos: any[] = assistance.adjuntos || []
+
+  const allAttachments = [
+    ...facturasList.map(f => ({ ...f, sectionTitle: 'Factura / Doc. Administrativo' })),
+    ...defectosList.map(f => ({ ...f, sectionTitle: 'Evidencia Defecto Material' })),
+    ...legacyAdjuntos.map(f => ({ ...f, sectionTitle: 'Adjunto' }))
+  ]
+
+  // Process attachments page by page
+  for (const file of allAttachments) {
+    const category = getFileTypeCategory(file)
+    const sectionLabel = file.sectionTitle || 'Adjunto'
+    const fileName = file.name || 'Archivo adjunto'
+    const fileSizeStr = formatFileSize(file.size)
+
+    if (!file.url) continue
+
+    if (category === 'pdf') {
+      try {
+        const res = await fetch(file.url)
+        if (res.ok) {
+          const pdfBytes = await res.arrayBuffer()
+          const attachedDoc = await PDFDocument.load(pdfBytes)
+          const attachedPages = attachedDoc.getPages()
+          const totalAttachedPages = attachedPages.length
+
+          for (let pIdx = 0; pIdx < totalAttachedPages; pIdx++) {
+            const embeddedPage = await mainPdfDoc.embedPage(attachedPages[pIdx])
+            const newPage = mainPdfDoc.addPage([595.28, 841.89]) // A4
+
+            // Draw Header
+            drawPdfLibHeader(newPage)
+
+            // Title Banner above content
+            newPage.drawRectangle({
+              x: 34,
+              y: 654,
+              width: 527,
+              height: 20,
+              color: rgb(0.94, 0.94, 0.94),
+              borderColor: rgb(0.8, 0.8, 0.8),
+              borderWidth: 0.5
+            })
+            const labelText = `[${sectionLabel.toUpperCase()}] ${fileName.substring(0, 50)} (Página ${pIdx + 1} de ${totalAttachedPages})`
+            newPage.drawText(labelText, {
+              x: 40,
+              y: 660,
+              size: 8,
+              font: helveticaBold,
+              color: rgb(0.16, 0.50, 0.72)
+            })
+
+            // Calculate scale to fit inside usable content box (527 pt x 580 pt)
+            const maxW = 527
+            const maxH = 580
+            const scale = Math.min(maxW / embeddedPage.width, maxH / embeddedPage.height, 1)
+            const w = embeddedPage.width * scale
+            const h = embeddedPage.height * scale
+            const x = 34 + (maxW - w) / 2
+            const y = 50 + (maxH - h) / 2
+
+            // Draw embedded page
+            newPage.drawPage(embeddedPage, { x, y, width: w, height: h })
+
+            // Frame border
+            newPage.drawRectangle({
+              x,
+              y,
+              width: w,
+              height: h,
+              borderColor: rgb(0.85, 0.85, 0.85),
+              borderWidth: 0.5
+            })
+          }
+          continue
+        }
+      } catch (err) {
+        console.error('Error embedding PDF file in report:', file.url, err)
+      }
+    }
+
+    if (category === 'image') {
+      try {
+        const res = await fetch(file.url)
+        if (res.ok) {
+          const arrayBuffer = await res.arrayBuffer()
+          const buffer = Buffer.from(arrayBuffer)
+          const processed = await sharp(buffer)
+            .rotate()
+            .resize({ width: 1600, height: 1600, fit: 'inside', withoutEnlargement: true })
+            .toBuffer({ resolveWithObject: true })
+
+          const isJpeg = processed.info.format === 'jpeg'
+          const embeddedImg = isJpeg
+            ? await mainPdfDoc.embedJpg(processed.data)
+            : await mainPdfDoc.embedPng(processed.data)
+
+          const newPage = mainPdfDoc.addPage([595.28, 841.89]) // A4
+          drawPdfLibHeader(newPage)
+
+          // Title Banner
+          newPage.drawRectangle({
+            x: 34,
+            y: 654,
+            width: 527,
+            height: 20,
+            color: rgb(0.94, 0.94, 0.94),
+            borderColor: rgb(0.8, 0.8, 0.8),
+            borderWidth: 0.5
+          })
+          newPage.drawText(`[${sectionLabel.toUpperCase()}] ${fileName.substring(0, 60)}`, {
+            x: 40,
+            y: 660,
+            size: 8,
+            font: helveticaBold,
+            color: rgb(0.16, 0.50, 0.72)
+          })
+
+          const maxW = 527
+          const maxH = 580
+          const scale = Math.min(maxW / embeddedImg.width, maxH / embeddedImg.height, 1)
+          const w = embeddedImg.width * scale
+          const h = embeddedImg.height * scale
+          const x = 34 + (maxW - w) / 2
+          const y = 50 + (maxH - h) / 2
+
+          newPage.drawImage(embeddedImg, { x, y, width: w, height: h })
+          newPage.drawRectangle({
+            x,
+            y,
+            width: w,
+            height: h,
+            borderColor: rgb(0.85, 0.85, 0.85),
+            borderWidth: 0.5
+          })
+
+          continue
+        }
+      } catch (err) {
+        console.error('Error embedding image in report:', file.url, err)
+      }
+    }
+
+    // Fallback for Word, Video, or un-parseable files
+    const newPage = mainPdfDoc.addPage([595.28, 841.89])
+    drawPdfLibHeader(newPage)
+
+    // Title Card
+    newPage.drawRectangle({
+      x: 34,
+      y: 580,
+      width: 527,
+      height: 90,
+      color: rgb(0.98, 0.98, 0.98),
+      borderColor: rgb(0.8, 0.8, 0.8),
+      borderWidth: 0.5
+    })
+
+    newPage.drawRectangle({
+      x: 46,
+      y: 630,
+      width: 60,
+      height: 24,
+      color: rgb(0.16, 0.50, 0.72)
+    })
+    newPage.drawText(category.toUpperCase(), {
+      x: 52,
+      y: 638,
+      size: 8,
+      font: helveticaBold,
+      color: rgb(1, 1, 1)
+    })
+
+    newPage.drawText(`[${sectionLabel}] ${fileName.substring(0, 60)}`, {
+      x: 120,
+      y: 642,
+      size: 10,
+      font: helveticaBold,
+      color: rgb(0, 0, 0)
+    })
+
+    newPage.drawText(`Tamaño del archivo: ${fileSizeStr}`, {
+      x: 120,
+      y: 622,
+      size: 9,
+      font: helvetica,
+      color: rgb(0.4, 0.4, 0.4)
+    })
+
+    newPage.drawText(`URL de acceso: ${file.url.substring(0, 85)}`, {
+      x: 46,
+      y: 595,
+      size: 8,
+      font: helvetica,
+      color: rgb(0.16, 0.50, 0.72)
+    })
+  }
+
+  // Footer & Page Numbering across ALL pages in the document
+  const totalPages = mainPdfDoc.getPageCount()
+  for (let i = 0; i < totalPages; i++) {
+    const page = mainPdfDoc.getPage(i)
+    
+    // Draw footer yellow bar
+    page.drawRectangle({
+      x: 34,
+      y: 15,
+      width: 527,
+      height: 22,
+      color: rgb(1, 0.843, 0.251)
+    })
+
+    const footerText = `Página ${i + 1} de ${totalPages}`
+    const textWidth = helvetica.widthOfTextAtSize(footerText, 9)
+    page.drawText(footerText, {
+      x: (595.28 - textWidth) / 2,
+      y: 22,
+      size: 9,
+      font: helvetica,
+      color: rgb(0, 0, 0)
+    })
+  }
+
+  const finalPdfBytes = await mainPdfDoc.save()
   const incidenceId = assistance.external_id || assistance.id
   const filename = `${incidenceId} - Informe Asistencia.pdf`
 
-  return new NextResponse(pdfBuffer, {
+  return new NextResponse(Buffer.from(finalPdfBytes), {
     status: 200,
     headers: {
       'Content-Type': 'application/pdf',
       'Content-Disposition': `attachment; filename="${filename}"`,
     },
   })
+}
+
+function getFileTypeCategory(file: any): 'image' | 'video' | 'pdf' | 'word' | 'other' {
+  const type = (file?.type || '').toLowerCase()
+  const name = (file?.name || '').toLowerCase()
+
+  if (type.includes('image') || /\.(jpg|jpeg|png|webp|gif|svg|bmp)$/i.test(name)) {
+    return 'image'
+  }
+  if (type.includes('video') || /\.(mp4|webm|mov|avi|mkv|wmv)$/i.test(name)) {
+    return 'video'
+  }
+  if (type.includes('pdf') || /\.pdf$/i.test(name)) {
+    return 'pdf'
+  }
+  if (type.includes('word') || type.includes('officedocument') || /\.(doc|docx)$/i.test(name)) {
+    return 'word'
+  }
+  return 'other'
+}
+
+function formatFileSize(bytes?: number): string {
+  if (!bytes || bytes === 0) return 'Desconocido'
+  const k = 1024
+  const sizes = ['B', 'KB', 'MB', 'GB']
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`
+}
+
+function calculateElapsedTime(facturaFechaStr?: string, incidenciaFechaStr?: string): string {
+  if (!facturaFechaStr) return ''
+
+  try {
+    const start = new Date(facturaFechaStr + 'T00:00:00')
+    const end = incidenciaFechaStr ? new Date(String(incidenciaFechaStr).split('T')[0] + 'T00:00:00') : new Date()
+
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) return ''
+
+    const diffTime = end.getTime() - start.getTime()
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
+
+    if (diffDays < 0) {
+      return 'Fecha posterior'
+    }
+    if (diffDays === 0) {
+      return 'Mismo día'
+    }
+    if (diffDays < 30) {
+      return `${diffDays} día${diffDays === 1 ? '' : 's'}`
+    }
+
+    const years = Math.floor(diffDays / 365)
+    const remDaysAfterYears = diffDays % 365
+    const months = Math.floor(remDaysAfterYears / 30)
+    const remainingDays = remDaysAfterYears % 30
+
+    const parts: string[] = []
+    if (years > 0) parts.push(`${years}a`)
+    if (months > 0) parts.push(`${months}m`)
+    if (remainingDays > 0 && years === 0) parts.push(`${remainingDays}d`)
+
+    return `${parts.join(' ')} (${diffDays}d)`
+  } catch {
+    return ''
+  }
 }

@@ -37,13 +37,54 @@ import {
   Copy,
   FileText,
   FileDown,
-  ChevronsUpDown
+  ChevronsUpDown,
+  Clock,
+  RefreshCw
 } from 'lucide-react'
 import { toast } from 'sonner'
 import type { SupportAssistance, SupportAssistanceItem, UserRole } from '@/lib/types/database'
 import { format } from 'date-fns'
 import { cn } from '@/lib/utils'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { SatFileUploader } from '@/components/support/sat-file-uploader'
+
+function calculateElapsedTime(facturaFechaStr?: string, incidenciaFechaStr?: string): string {
+  if (!facturaFechaStr) return ''
+
+  try {
+    const start = new Date(facturaFechaStr + 'T00:00:00')
+    const end = incidenciaFechaStr ? new Date(incidenciaFechaStr + 'T00:00:00') : new Date()
+
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) return ''
+
+    const diffTime = end.getTime() - start.getTime()
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
+
+    if (diffDays < 0) {
+      return `Fecha posterior (${Math.abs(diffDays)} días después)`
+    }
+    if (diffDays === 0) {
+      return 'Mismo día'
+    }
+    if (diffDays < 30) {
+      return `${diffDays} día${diffDays === 1 ? '' : 's'}`
+    }
+
+    const years = Math.floor(diffDays / 365)
+    const remDaysAfterYears = diffDays % 365
+    const months = Math.floor(remDaysAfterYears / 30)
+    const remainingDays = remDaysAfterYears % 30
+
+    const parts: string[] = []
+    if (years > 0) parts.push(`${years} año${years > 1 ? 's' : ''}`)
+    if (months > 0) parts.push(`${months} mes${months > 1 ? 'es' : ''}`)
+    if (remainingDays > 0 && years === 0) parts.push(`${remainingDays} día${remainingDays > 1 ? 's' : ''}`)
+
+    return `${parts.join(', ')} (${diffDays} días)`
+  } catch {
+    return ''
+  }
+}
 
 interface AssistanceFormProps {
   assistance?: SupportAssistance & { items: SupportAssistanceItem[] }
@@ -146,13 +187,14 @@ function CustomerSearchInput({
 
   // Update selected customer when value changes
   useEffect(() => {
+    let isMounted = true
     const valueStr = String(value || '')
     if (!valueStr) {
       setSelectedCustomer(null)
       return
     }
 
-    // Handle free-text customers
+    // Handle free-text customers in draft mode
     if (valueStr.startsWith('free:')) {
       const customerName = valueStr.substring(5)
       setSelectedCustomer({ id: valueStr, company_name: customerName })
@@ -160,11 +202,39 @@ function CustomerSearchInput({
       return
     }
 
-    // Handle regular customers
+    // Handle regular customers from preloaded list
     const customer = customers.find(c => String(c.id) === valueStr)
-    setSelectedCustomer(customer || null)
     if (customer) {
+      setSelectedCustomer(customer)
       setSearchTerm('')
+      return
+    }
+
+    // Fallback: If customer ID exists but wasn't in preloaded active list, fetch directly
+    const fetchSingleCustomer = async () => {
+      try {
+        const supabase = createClient()
+        const { data } = await supabase
+          .from('customers')
+          .select('id, company_name')
+          .eq('id', value)
+          .maybeSingle()
+
+        if (isMounted && data) {
+          setSelectedCustomer(data as any)
+          setSearchTerm('')
+        } else if (isMounted) {
+          setSelectedCustomer(null)
+        }
+      } catch (err) {
+        if (isMounted) setSelectedCustomer(null)
+      }
+    }
+
+    fetchSingleCustomer()
+
+    return () => {
+      isMounted = false
     }
   }, [value, customers])
 
@@ -662,6 +732,7 @@ export function AssistanceForm({
     assistance?.items || [{ id: crypto.randomUUID(), cantidad: 1, en_garantia: false }]
   )
   const [availableContacts, setAvailableContacts] = useState<any[]>([])
+  const [loadingContacts, setLoadingContacts] = useState(false)
   const [availableSats, setAvailableSats] = useState<any[]>([])
   const [availableProducts, setAvailableProducts] = useState<any[]>([])
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
@@ -693,7 +764,36 @@ export function AssistanceForm({
     solucion_desc: assistance?.solucion_desc || '',
     comentarios_soporte: assistance?.comentarios_soporte || '',
     comentarios_admin: assistance?.comentarios_admin || '',
+    adjuntos_facturas: assistance?.adjuntos_facturas || [],
+    adjuntos_defectos: assistance?.adjuntos_defectos || [],
+    factura_numero: assistance?.factura_numero || '',
+    factura_fecha: assistance?.factura_fecha || '',
   })
+
+  // Refetch contacts on demand
+  const refetchContacts = async () => {
+    if (!formData.customer_id || typeof formData.customer_id === 'string') {
+      setAvailableContacts([])
+      return
+    }
+
+    setLoadingContacts(true)
+    try {
+      const supabase = createClient()
+      const { data, error } = await supabase
+        .from('clients_contacts')
+        .select('id, nombre, apellidos, telefono, email, codigo_postal, direccion')
+        .eq('customer_id', formData.customer_id)
+
+      if (error) throw error
+      setAvailableContacts(data || [])
+      toast.success('Lista de contactos actualizada')
+    } catch (err: any) {
+      toast.error('Error al actualizar contactos: ' + (err.message || ''))
+    } finally {
+      setLoadingContacts(false)
+    }
+  }
 
   // Fetch contacts when customer changes
   useEffect(() => {
@@ -703,13 +803,18 @@ export function AssistanceForm({
         return
       }
 
-      const supabase = createClient()
-      const { data } = await supabase
-        .from('clients_contacts')
-        .select('id, nombre, apellidos, telefono, email, codigo_postal, direccion')
-        .eq('customer_id', formData.customer_id)
-      
-      setAvailableContacts(data || [])
+      setLoadingContacts(true)
+      try {
+        const supabase = createClient()
+        const { data } = await supabase
+          .from('clients_contacts')
+          .select('id, nombre, apellidos, telefono, email, codigo_postal, direccion')
+          .eq('customer_id', formData.customer_id)
+        
+        setAvailableContacts(data || [])
+      } finally {
+        setLoadingContacts(false)
+      }
     }
 
     fetchContacts()
@@ -875,7 +980,7 @@ export function AssistanceForm({
             // Create new
             const { data: newCust, error: custErr } = await supabase
               .from('customers')
-              .insert({ company_name: customerName, created_by: currentUserId })
+              .insert({ company_name: customerName, created_by: currentUserId, status: 'active' })
               .select('id')
               .single()
             if (custErr) throw custErr
@@ -911,6 +1016,10 @@ export function AssistanceForm({
         solucion_desc: formData.solucion_desc,
         comentarios_soporte: formData.comentarios_soporte,
         comentarios_admin: formData.comentarios_admin,
+        adjuntos_facturas: formData.adjuntos_facturas || [],
+        adjuntos_defectos: formData.adjuntos_defectos || [],
+        factura_numero: formData.factura_numero || null,
+        factura_fecha: formData.factura_fecha || null,
       }
 
       // Solo añadir created_by si es una inserción nueva
@@ -1314,17 +1423,48 @@ export function AssistanceForm({
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-[10px] font-bold uppercase text-muted-foreground">8. Persona Contacto</Label>
-                  <ContactSearchInput 
-                    value={formData.contacto_nombre || ''}
-                    contacts={availableContacts}
-                    onSelect={(val) => setFormData(prev => ({ ...prev, contacto_nombre: val }))}
-                    onPhoneSelect={(phone) => setFormData(prev => ({ ...prev, contacto_telefono: phone }))}
-                    onEmailSelect={(email) => setFormData(prev => ({ ...prev, contacto_email: email }))}
-                    onPostalCodeSelect={(cp) => setFormData(prev => ({ ...prev, codigo_postal: cp }))}
-                    onAddressSelect={(addr) => setFormData(prev => ({ ...prev, direccion: addr }))}
-                    disabled={isViewer}
-                  />
+                  <div className="flex items-center justify-between">
+                    <Label className="text-[10px] font-bold uppercase text-muted-foreground">8. Persona Contacto</Label>
+                    {formData.customer_id && typeof formData.customer_id !== 'string' && (
+                      <button
+                        type="button"
+                        onClick={refetchContacts}
+                        disabled={loadingContacts || isViewer}
+                        className="text-[10px] text-primary hover:underline flex items-center gap-1 font-medium disabled:opacity-50"
+                        title="Refrescar lista de contactos del cliente"
+                      >
+                        <RefreshCw className={cn("w-3 h-3", loadingContacts && "animate-spin")} />
+                        Actualizar listado
+                      </button>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="flex-1 min-w-0">
+                      <ContactSearchInput 
+                        value={formData.contacto_nombre || ''}
+                        contacts={availableContacts}
+                        onSelect={(val) => setFormData(prev => ({ ...prev, contacto_nombre: val }))}
+                        onPhoneSelect={(phone) => setFormData(prev => ({ ...prev, contacto_telefono: phone }))}
+                        onEmailSelect={(email) => setFormData(prev => ({ ...prev, contacto_email: email }))}
+                        onPostalCodeSelect={(cp) => setFormData(prev => ({ ...prev, codigo_postal: cp }))}
+                        onAddressSelect={(addr) => setFormData(prev => ({ ...prev, direccion: addr }))}
+                        disabled={isViewer}
+                      />
+                    </div>
+                    {formData.customer_id && typeof formData.customer_id !== 'string' && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="h-9 w-9 p-0 shrink-0"
+                        onClick={refetchContacts}
+                        disabled={loadingContacts || isViewer}
+                        title="Actualizar listado de contactos"
+                      >
+                        <RefreshCw className={cn("w-3.5 h-3.5", loadingContacts && "animate-spin")} />
+                      </Button>
+                    )}
+                  </div>
                 </div>
                 <div className="space-y-1.5">
                   <div className="grid grid-cols-2 gap-2">
@@ -1643,7 +1783,89 @@ export function AssistanceForm({
           </div>
         </section>
 
-        {/* 4) BOTONES DE ACCIÓN INFERIORES */}
+        {/* 4) SECCION DE ARCHIVOS ADJUNTOS */}
+        <section className="space-y-3">
+          <h2 className="text-xs font-black uppercase tracking-[0.2em] text-primary flex items-center gap-2">
+            <span className="w-6 h-px bg-primary/30" />
+            4. Documentos y Archivos Adjuntos
+          </h2>
+          <Card className="shadow-sm border-border/80 bg-muted/10">
+            <CardContent className="p-4 space-y-6">
+              {/* Datos de Facturación */}
+              <div className="p-3.5 bg-background border border-border/80 rounded-lg space-y-3 shadow-none">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-primary flex items-center gap-2">
+                  <FileText className="w-4 h-4" />
+                  Datos de la Factura de Justificación
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="space-y-1.5">
+                    <Label className="text-[10px] font-bold uppercase text-muted-foreground">Nº Factura</Label>
+                    <Input
+                      value={formData.factura_numero || ''}
+                      onChange={(e) => setFormData({ ...formData, factura_numero: e.target.value })}
+                      placeholder="Ej: F2026-0012"
+                      className="h-9 text-xs font-mono shadow-sm"
+                      disabled={isViewer}
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label className="text-[10px] font-bold uppercase text-muted-foreground">Fecha Factura</Label>
+                    <Input
+                      type="date"
+                      value={formData.factura_fecha || ''}
+                      onChange={(e) => setFormData({ ...formData, factura_fecha: e.target.value })}
+                      className="h-9 text-xs shadow-sm"
+                      disabled={isViewer}
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label className="text-[10px] font-bold uppercase text-muted-foreground flex items-center gap-1.5">
+                      <Clock className="w-3.5 h-3.5 text-primary" />
+                      Tiempo Transcurrido (hasta apertura)
+                    </Label>
+                    <div className="h-9 px-3 py-2 border rounded-md bg-muted/30 text-xs font-semibold flex items-center text-foreground font-mono">
+                      {formData.factura_fecha ? (
+                        calculateElapsedTime(formData.factura_fecha, formData.fecha)
+                      ) : (
+                        <span className="text-muted-foreground italic font-normal text-[11px]">Indique fecha de factura...</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Field 1: Facturas y Documentos Administrativos */}
+                <SatFileUploader
+                  bucketName="sat_facturas"
+                  title="Facturas y Documentos Administrativos"
+                  description="Arrastra y suelta aquí facturas o documentos administrativos (PDF, Word o imágenes) que justifiquen la incidencia."
+                  acceptTypes=".pdf,.doc,.docx,.png,.jpg,.jpeg,.webp,.gif"
+                  files={formData.adjuntos_facturas || []}
+                  onChange={(newFiles) => setFormData(prev => ({ ...prev, adjuntos_facturas: newFiles }))}
+                  disabled={isViewer}
+                  assistanceId={assistance?.id || assistance?.external_id || undefined}
+                />
+
+                {/* Field 2: Defectos del Material */}
+                <SatFileUploader
+                  bucketName="sat_images"
+                  title="Archivos de Defectos del Material"
+                  description="Arrastra y suelta aquí imágenes, vídeos o documentos (PDF, Word, imágenes o vídeos) que muestren el defecto del material."
+                  acceptTypes=".pdf,.doc,.docx,.png,.jpg,.jpeg,.webp,.gif,.mp4,.webm,.mov,.avi,.mkv"
+                  files={formData.adjuntos_defectos || []}
+                  onChange={(newFiles) => setFormData(prev => ({ ...prev, adjuntos_defectos: newFiles }))}
+                  disabled={isViewer}
+                  assistanceId={assistance?.id || assistance?.external_id || undefined}
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </section>
+
+        {/* 5) BOTONES DE ACCIÓN INFERIORES */}
         <section className="pt-4 mt-6 border-t flex items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             {!isViewer && (

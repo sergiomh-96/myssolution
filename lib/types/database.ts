@@ -207,6 +207,15 @@ export interface Product {
   updated_at: string
 }
 
+export interface SatAttachment {
+  name: string
+  url: string
+  path: string
+  type: string
+  size?: number
+  created_at?: string
+}
+
 export interface SupportAssistance {
   id: number
   external_id: string | null
@@ -233,6 +242,12 @@ export interface SupportAssistance {
   comentarios_soporte: string | null
   comentarios_admin: string | null
   adjuntos: any[]
+  adjuntos_facturas?: SatAttachment[]
+  adjuntos_defectos?: SatAttachment[]
+  factura_numero?: string | null
+  factura_fecha?: string | null
+  fecha?: string
+  hora?: string
   direccion: string | null
   created_by: string
   created_at: string
